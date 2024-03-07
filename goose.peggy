@@ -15,6 +15,8 @@ DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
+BD              "statement delimiter"          = WS* (SEMICOLON / NEWLINE) WS*
+
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
 DOT               "dot"                         = '.'
@@ -106,27 +108,19 @@ COMMENT_MULTI     "multiline-comment"           = "/*" content:( !"*/" . )* "*/"
 IDENT          "identifier"              = x:LETTER y:( LETTER / DIGIT / UBAR )*
   { return { tag:"IDENT", type: undefined, val: x + y } }
 
-// # Literals =======================
-
-integer        "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
-  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'INT'}, val: a + b.map(i => i[1]).join('') } }
-
-string_lit     "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
-  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'STR'}, val: content.join('') } }
-
 // # Types ==================================
 
-
-Type            "type"                          = BaseTypeLit
+Type            "type"                          = CompoundType
                                                 / LPAREN Type RPAREN
-                                                / PointerType
                                                 / TypeName
 
 TypeName        "type name"                     = val:([a-z_]i+)
  { return { tag: "TYPE", type: { base: 'BASE', type: val.join('') } } }
 
-BaseTypeLit     "type literal"                  = ArrayType
+CompoundType     "type literal"                  = ArrayType
                                                 / ChannelType
+                                                / FunctionType
+                                                / PointerType
 
 PointerType 	"pointer type" 					= ASTERISK inner:Type
 	{ return { tag: "TYPE", type: { base: "PTR", inner } } }
@@ -142,167 +136,93 @@ ChannelDualType     "chan-dual type"                  = "chan" WS inner:Type
 ChannelOutType     "chan-out type"                  = ARROW WS? "chan" WS inner:Type
     { return { tag: "TYPE", type:{ base: "CHAN", mode: 'OUT', inner } } }  
 
-
 ChannelInType     "chan-in type"                  = "chan" WS? ARROW WS? inner:Type
 	{ return { tag: "TYPE", type:{ base: "CHAN", mode: 'IN', inner } } }  
 
+FunctionType      "function type"                 = "func" WS? inputT:FnParamListType WS? returnT:(Type?)
+  { return { tag: "TYPE", type:{ base: "FUNC", inputT, returnT: returnT ?? [] } } }
 
-// # Function types -------------------------
-
-FunctionType    "function type"                   = "func" Signature
-Signature       "function signature"              = Parameters ( Result )?
-Result          "function result"                 = Parameters
-                                                  / Type
-Parameters      "function parameters"             = LPAREN ( ParameterList ( COMMA )? )? RPAREN
-ParameterList   "function parameter list"         = ParameterDecl ( COMMA ParameterDecl )?
-ParameterDecl   "function parameter declaration"  = ( IdentifierList )? ( ELLIPSIS )? Type
-
-// # Interface types ------------------------
-
-InterfaceType      "interface type"             = "interface" LBRACE ( MethodSpec BD )? RBRACE
-MethodSpec         "method specification"       = MethodName Signature
-                                                / InterfaceTypeName
-
-MethodName         "method name"                = identifier
-InterfaceTypeName  "interface type name"        = TypeName
-
-// # Map types ------------------------------
-
-MapType         "map type"                      = "map" LBRACK KeyType RBRACK ElementType
-KeyType         "map key type"                  = Type
-
-// # Channel types --------------------------
-
-ChannelType     "channel type"                  = ( "chan" / "chan" ARROW / ARROW "chan" ) ElementType
+FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ',' WS? Type)* WS? RPAREN
+  { return [a, ...(b.map(bb => bb[3]))] }
+                                                  / WS? LPAREN WS? RPAREN
+  { return []; }
 
 // # Blocks =================================
 
-Block           "block"                         = LBRACE StatementList RBRACE
-StatementList   "statement list"                = ( Statement BD )*
+Block           "block"                         = LBRACE WS* stmts:StatementList WS* RBRACE
+  { return { tag: "BLOCK", stmts } }
+
+StatementList   "statement list"                = v:( Statement BD )*
+  { return v.map(vv => vv[0]) }
 
 // # Declarations and scope =================
 
 Declaration     "declaration"                   = ConstDecl
-                                                / TypeDecl
                                                 / VarDecl
 
 TopLevelDecl    "top-level declaration"         = Declaration
                                                 / FunctionDecl
-                                                / MethodDecl
 
 // # Constant declarations ==================
 
-ConstDecl       "constant declaration"          = "const" ( ConstSpec / LPAREN ( ConstSpec BD )* RPAREN )
-ConstSpec       "constant specification"        = IdentifierList ( ( Type )? EQUAL ExpressionList )?
+ConstDecl       "constant declaration"          = "const" WS ident:IDENT identType:(Type?) EQUAL expr:Expression
+  { return { tag: "CONST_DECL", ident, identType, expr } }
 
-IdentifierList  "identifier list"               = identifier ( COMMA identifier )*
-ExpressionList  "expression list"               = Expression ( COMMA Expression )*
-
-// # Type declarations ======================
-
-TypeDecl        "type declaration"              = "type" ( TypeSpec / LPAREN ( TypeSpec BD )? RPAREN )
-TypeSpec        "type specification"            = AliasDecl
-                                                / TypeDef
-
-// # Alias declarations =====================
-
-AliasDecl       "type alias declaration"        = identifier EQUAL Type
-
-// # Type definitions =======================
-
-TypeDef         "type definition"               = identifier Type
-
-// # Variable declarations ==================
-
-VarDecl         "variable declaration"          = "var" ( VarSpec / LPAREN ( VarSpec BD )* RPAREN )
-VarSpec         "variabpe specification"        = IdentifierList ( Type ( EQUAL ExpressionList )* / EQUAL ExpressionList )
-
-// # Short variable declarations ============
-
-ShortVarDecl    "short declaration of variable" = IdentifierList DEFINE ExpressionList
+VarDecl         "variable declaration"          = "var" WS ident:IDENT identType:Type expr:(EQUAL expr:Expression)?
+  { return { tag: "VAR_DECL", ident, identType, expr: (expr ?? [null, null])[1] } }
 
 // # Function declarations ==================
 
-FunctionDecl    "function declaration"          = "func" FunctionName Signature ( FunctionBody )?
-FunctionName    "function name"                 = identifier
-FunctionBody    "function body"                 = Block
-
-// # Method declarations ====================
-
-MethodDecl      "method declaration"            = "func" Receiver MethodName Signature ( FunctionBody )?
-Receiver        "method receiver"               = Parameters
+FunctionDecl    "function declaration"          = "func" ident:IDENT inputT:FnParamListType WS? returnT:(Type?) body:Block
+  { return { tag: "FUNC_DECL", ident, inputT, returnT: returnT ?? [], body } }
 
 // # Expressions ============================
 
-Operand         "operand"                       = Literal
-                                                / OperandName
-                                                / LPAREN Expression RPAREN
+Operand         "operand"                       = v: Literal { return v; }
+                                                / v: IDENT { return v; }
+                                                / LPAREN v:Expression RPAREN { return v; }
 
-Literal         "literal"                       = BasicLit
-                                                / CompositeLit
+Literal         "literal"                       = IntegerLit
+                                                / StringLit
                                                 / FunctionLit
 
-BasicLit        "basic literal"                 = int_lit
-                                                / float_lit
-                                                / imaginary_lit
-                                                / rune_lit
-                                                / string_lit
+IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
+  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'INT'}, val: a + b.map(i => i[1]).join('') } }
 
-OperandName     "operand name"                  = identifier
-                                                / QualifiedIdent
+StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
+  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'STR'}, val: content.join('') } }
 
-// # Qualified identifiers ==================
-
-QualifiedIdent  "qualified identifier"          = PackageName DOT identifier
-
-// # Composite literals =====================
-
-CompositeLit    "composite literal"             = LiteralType LiteralValue
-LiteralType     "literal type"                  = StructType
-                                                / ArrayType
-                                                / LBRACK ELLIPSIS RBRACK ElementType
-                                                / SliceType
-                                                / MapType
-                                                / TypeName
-
-LiteralValue    "literal value"                 = LBRACE ( ElementList ( COMMA )? )? RBRACE
-ElementList     "element list"                  = KeyedElement ( COMMA KeyedElement )*
-KeyedElement    "keyed element"                 = ( Key COLON )? Element
-Key             "key of element list"           = FieldName
-                                                / Expression
-                                                / LiteralValue
-
-FieldName       "field name"                    = identifier
-Element         "element of list"               = Expression
-                                                / LiteralValue
-
-// # Function literals =====================
-
-FunctionLit     "function literal"              = "func" Signature FunctionBody
+FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) body:Block
+  { return { tag: "LITERAL", type:{ base: "FUNC", inputT, returnT: returnT ?? [] }, body } }
+  
+//////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 
 // # Primary expressions ===================
 
-PrimaryExpr     "primary expression"            = Operand
-                                                / Conversion
-                                                / MethodExpr
-                                                / PrimaryExpr Selector
-                                                / PrimaryExpr Index
-                                                / PrimaryExpr Slice
-                                                / PrimaryExpr TypeAssertion
-                                                / PrimaryExpr Arguments
+PrimaryExpr     "primary expression"            = a:Operand b:((Selector / Index / Arguments)*)
+  {
+    // Note the '*' makes a standalone Operand a valid PrimaryExpr.
+    let res = a
+    for (let i = b.length - 1; i > 0; i--) {
+      b[i].expr = res
+      res = b[i]
+    }
+    return res
+  }
 
-Selector        "selector in expression"        = DOT identifier
-Index           "index in expression"           = LBRACK Expression RBRACK
-Slice           "slice in expression"           = LBRACK ( Expression )? COLON ( Expression )? RBRACK
-                                                / LBRACK ( Expression )? COLON Expression COLON Expression RBRACK
+Selector        "selector in expression"        = DOT ident:IDENT
+  { return { tag: "SELECTOR", ident, expr: null /* to be filled when parsing PrimaryExpr */ } }
 
-TypeAssertion   "type assertion"                = DOT LPAREN Type RPAREN
-Arguments       "arguments"                     = LPAREN ( ( ExpressionList / Type ( COMMA ExpressionList )? ) ( ELLIPSIS )? ( COMMA )? )? RPAREN
+Index           "index in expression"           = LBRACK index:Expression RBRACK
+  { return { tag: "INDEXOR", index, expr: null /* to be filled when parsing PrimaryExpr */ } }
 
-// # Method expressions ===================
-
-MethodExpr      "method expression"             = ReceiverType DOT MethodName
-ReceiverType    "receiver type"                 = Type
+Arguments       "arguments"                     = LPAREN WS RPAREN
+  { return { tag: "CALLER", args: [], expr: null /* to be filled when parsing PrimaryExpr */ } }
+                                                / LPAREN WS arg1:Expression WS rest:(COMMA WS Expression WS)* RPAREN
+  { 
+    const args = [arg1, ...(rest.map(r => r[2]))]
+    return { tag: "CALLER", args, expr: null /* to be filled when parsing PrimaryExpr */ }
+  }
 
 // # Operators ============================
 
@@ -314,10 +234,23 @@ ReceiverType    "receiver type"                 = Type
 //     1             ||
 
 Expression      "expression"                    = UnaryExpr
+  { return { tag: "UNARY_EXPR", expr: UnaryExpr } }
                                                 / Expression binary_op Expression
 
-UnaryExpr       "unary expression"              = PrimaryExpr
-                                                / unary_op UnaryExpr
+UnaryExpr       "unary expression"              = b:(unary_op)* a:PrimaryExpr
+  {
+    // Note the '*' makes a standalone PrimaryExpr (which itself could be a standalone Operand)
+    // a valid UnaryExpr.
+    // Note as per golang spec ++ and -- are outside operator hierarchy as they
+    // form statements (E.g. p++ +p counts as two statements 'p++' and '+p').
+    // All unary operators are right-associative, and pre-fix.
+    let res = a
+    for (let i = b.length - 1; i > 0; i--) {
+      b[i].expr = res
+      res = b[i]
+    }
+    return res
+  }
 
 unary_op        "unary operator"                = PLUS          // "+"
                                                 / MINUS         // "-"
