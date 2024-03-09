@@ -359,7 +359,6 @@ mul_op          "multiplication operator"       = MUL           // "*"
 
 Statement       "statement"                     = Declaration
                                                 / LabeledStmt
-                                                / SimpleStmt
                                                 / GoStmt
                                                 / ReturnStmt
                                                 / BreakStmt
@@ -372,11 +371,10 @@ Statement       "statement"                     = Declaration
                                                 / SelectStmt
                                                 / ForStmt
                                                 / DeferStmt
-
-SimpleStmt      "simple statement"              = ExpressionStmt
-                                                / SendStmt
+                                                / ChanStmt
                                                 / IncDecStmt
                                                 / Assignment
+                                                / ExpressionStmt
 
 // # Labeled statements ===================
 
@@ -385,26 +383,30 @@ LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? Stat
 
 // # Expression statements ================
 
-ExpressionStmt  "expression statement"          = Expression
+ExpressionStmt  "expression statement"          = expr:Expression
+  { return { tag: "STMT", stmtType: "EXPR", expr } }
 
 // # Send statements ======================
 
-SendStmt        "send-statement"                = Expression WS? ARROW WS? Expression
-  { return { tag: "STMT", expr: expr[0], value: expr[4] } }
+ChanStmt        "chan-statement"                = lhs:Expression? WS? ARROW WS? rhs:Expression
+  { return { tag: "STMT", stmtType: "SEND", lhs, rhs } }
 
 // # IncDec statements ====================
 
-IncDecStmt      "increment/decrement statement" = Expression ( INC / DEC )
+IncDecStmt      "increment/decrement statement" = expr:Expression WS? INC
+  { return { tag: "STMT", stmtType: "INC", expr } }
+                                                / expr:Expression WS? DEC
+  { return { tag: "STMT", stmtType: "DEC", expr } }
 
 // # Assignments ==========================
 
-Assignment      "assignment"                    = ExpressionList assign_op ExpressionList
-
-assign_op       "assignment operator"           = ( add_op / mul_op )? EQUAL
+Assignment      "assignment"                    = lhs:IDENT WS? EQUAL WS? rhs:Expression
+  { return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs } }
 
 // # 'if' statements ======================
 
-IfStmt  "'if' statement"  = "if" ( SimpleStmt BD )? Expression Block ( "else" ( IfStmt / Block ) )?
+IfStmt  "'if' statement"  = "if" pre:( Assignment BD )? cond:Expression block:Block ( "else" ( IfStmt / Block ) )?
+// TODO
 
 // # 'switch' statements ==================
 
