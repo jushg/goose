@@ -5,7 +5,9 @@
 
 // # Source file organization ==============
 
-SourceFile     "source file"             = PackageClause BD ( ImportDecl BD )* ( TopLevelDecl BD )* EOF
+// TOPLEVEL     "source file"             = PackageClause BD ( ImportDecl BD )* ( TopLevelDecl BD )* EOF
+TOPLEVEL = Expression
+Statement = 'TODO--NOTVALIDYET'
 
 // # Characters =============================
 
@@ -354,6 +356,10 @@ mul_op          "multiplication operator"       = MUL           // "*"
                                                 / AND           // "&"
                                                 / AND_NOT       // "&^"
 
+/*
+
+TODO:
+
 // # Statements ===========================
 
 Statement       "statement"                     = Declaration
@@ -523,3 +529,5 @@ Keyword           "keyword"                     = "break"
                                                 / "var"
 
 EOF             "end-of-file"                   = !.
+
+*/
