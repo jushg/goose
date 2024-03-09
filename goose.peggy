@@ -6,8 +6,7 @@
 // # Source file organization ==============
 
 // TOPLEVEL     "source file"             = PackageClause BD ( ImportDecl BD )* ( TopLevelDecl BD )* EOF
-TOPLEVEL = Expression
-Statement = 'TODO--NOTVALIDYET'
+TOPLEVEL = Statement
 
 // # Characters =============================
 
@@ -356,43 +355,33 @@ mul_op          "multiplication operator"       = MUL           // "*"
                                                 / AND           // "&"
                                                 / AND_NOT       // "&^"
 
-/*
-
-TODO:
-
 // # Statements ===========================
 
 Statement       "statement"                     = Declaration
                                                 / LabeledStmt
-                                                / SimpleStm
+                                                / SimpleStmt
                                                 / GoStmt
                                                 / ReturnStmt
                                                 / BreakStmt
                                                 / ContinueStmt
-                                                / GotoStm
+                                                / GotoStmt
                                                 / FallthroughStmt
                                                 / Block
                                                 / IfStmt
                                                 / SwitchStmt
                                                 / SelectStmt
-                                                / ForStm
+                                                / ForStmt
                                                 / DeferStmt
 
-SimpleStmt      "simple statement"              = EmptyStmt
-                                                / ExpressionStmt
+SimpleStmt      "simple statement"              = ExpressionStmt
                                                 / SendStmt
                                                 / IncDecStmt
                                                 / Assignment
-                                                / ShortVarDecl
-
-// # Empty statements =====================
-
-EmptyStmt       "empty statement"               = ""
 
 // # Labeled statements ===================
 
-LabeledStmt     "labeled statement"             = Label COLON Statement
-Label           "label"                         = identifier
+LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? Statement
+  { stmt.label = label; return stmt; }
 
 // # Expression statements ================
 
@@ -400,8 +389,8 @@ ExpressionStmt  "expression statement"          = Expression
 
 // # Send statements ======================
 
-SendStmt        "send-statement"                = Channel ARROW Expression
-Channel         "channel"                       = Expression
+SendStmt        "send-statement"                = Expression WS? ARROW WS? Expression
+  { return { tag: "STMT", expr: expr[0], value: expr[4] } }
 
 // # IncDec statements ====================
 
@@ -529,5 +518,3 @@ Keyword           "keyword"                     = "break"
                                                 / "var"
 
 EOF             "end-of-file"                   = !.
-
-*/
