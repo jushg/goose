@@ -15,7 +15,7 @@ DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD              "statement delimiter"          = WS* (SEMICOLON / NEWLINE) WS*
+BD              "statement delimiter"          = WS? (SEMICOLON / NEWLINE) WS?
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
@@ -57,6 +57,14 @@ BQUO              "back quote/grave accent"     = [U+0060]        // ``
 
 NOT               "not"                         = BANG            // '!'
 
+NEG               "neg"                         = HAT             // '^'
+SHL               "shift left"                  = LSS LSS         // '<<'
+SHR               "shift right"                 = GTR GTR         // '>>'
+OR                "or"                          = BAR             // '|'
+XOR               "xor"                         = HAT             // '^'
+AND               "and"                         = AMPER           // '&'
+AND_NOT           "and not"                     = AMPER HAT       // '&^'
+
 ADD               "add"                         = PLUS            // '+'
 SUB               "subtract"                    = MINUS           // '-'
 MUL               "multiply"                    = ASTERISK        // '*'
@@ -94,13 +102,13 @@ SHR_ASSIGN        "assign: shift right"         = GTR GTR EQUAL   // '>>='
 ADDR              "address"                     = AMPER           // '&'
 REFR              "resolve reference"           = ASTERISK        // '*'
 
-WHITESPACE        "white space"               = [\n \t\r]+
+WS                "white space"               = [\n \t\r]+
 
 COMMENT_LINE      "end-of-line comment"         = "//" content:( ![\r\n] . )* [\r\n] 
   { return { tag: 'COMMENT_LINE', content: content.map(x => x[1]).join('').trim() } }
 
 COMMENT_MULTI     "multiline-comment"           = "/*" content:( !"*/" . )* "*/" 
-  { { tag: 'COMMENT_MULTI', content: content.map(x => x[1]).join('').trim() } }
+  { return { tag: 'COMMENT_MULTI', content: content.map(x => x[1]).join('').trim() } }
 
 
 // # Identifiers ============================
@@ -149,7 +157,7 @@ FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ','
 
 // # Blocks =================================
 
-Block           "block"                         = LBRACE WS* stmts:StatementList WS* RBRACE
+Block           "block"                         = LBRACE WS? stmts:StatementList WS? RBRACE
   { return { tag: "BLOCK", stmts } }
 
 StatementList   "statement list"                = v:( Statement BD )*
@@ -202,12 +210,10 @@ FunctionLit     "function literal"              = "func" inputT:FnParamListType 
 PrimaryExpr     "primary expression"            = a:Operand b:((Selector / Index / Arguments)*)
   {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
-    let res = a
-    for (let i = b.length - 1; i > 0; i--) {
-      b[i].expr = res
-      res = b[i]
-    }
-    return res
+    return b.reduce((acc, curr) => {
+      curr.expr = acc;
+      return curr;
+    }, a);
   }
 
 Selector        "selector in expression"        = DOT ident:IDENT
@@ -216,15 +222,18 @@ Selector        "selector in expression"        = DOT ident:IDENT
 Index           "index in expression"           = LBRACK index:Expression RBRACK
   { return { tag: "INDEXOR", index, expr: null /* to be filled when parsing PrimaryExpr */ } }
 
-Arguments       "arguments"                     = LPAREN WS RPAREN
+Arguments       "arguments"                     = LPAREN WS? RPAREN
   { return { tag: "CALLER", args: [], expr: null /* to be filled when parsing PrimaryExpr */ } }
-                                                / LPAREN WS arg1:Expression WS rest:(COMMA WS Expression WS)* RPAREN
-  { 
+                                                / LPAREN WS? arg1:Expression WS? rest:(COMMA WS? Expression WS?)* RPAREN
+  {
     const args = [arg1, ...(rest.map(r => r[2]))]
     return { tag: "CALLER", args, expr: null /* to be filled when parsing PrimaryExpr */ }
   }
 
 // # Operators ============================
+
+// Of highest precedence is the unary operators, which are right-associative and pre-fix.
+// After that comes the binary operators:
 
 // Precedence    Operator
 //     5             *  /  %  <<  >>  &  &^
@@ -233,45 +242,104 @@ Arguments       "arguments"                     = LPAREN WS RPAREN
 //     2             &&
 //     1             ||
 
-Expression      "expression"                    = UnaryExpr
-  { return { tag: "UNARY_EXPR", expr: UnaryExpr } }
-                                                / Expression binary_op Expression
+// To avoid left-recursive grammars, we use the following approach:
+// Expressions are defined as L1 expressions.
+// L1 expressions are standalone L2 or 2 L2 expressions with an L1 binary operator.
+// L2 expressions are standalone L3 or 2 L3 expressions with an L2 binary operator.
+// ... and so on. The last level is unary because unary has the highest precedence of all.
 
-UnaryExpr       "unary expression"              = b:(unary_op)* a:PrimaryExpr
+Expression      "expression"             = BinaryExprL1
+
+UnaryExpr       "unary expression"              = b:(unary_op  WS?)* a:PrimaryExpr
   {
     // Note the '*' makes a standalone PrimaryExpr (which itself could be a standalone Operand)
     // a valid UnaryExpr.
     // Note as per golang spec ++ and -- are outside operator hierarchy as they
     // form statements (E.g. p++ +p counts as two statements 'p++' and '+p').
     // All unary operators are right-associative, and pre-fix.
-    let res = a
-    for (let i = b.length - 1; i > 0; i--) {
-      b[i].expr = res
-      res = b[i]
-    }
-    return res
+    b = b.map(bb => bb[0]).reverse();
+    return b.reduce((acc, curr) => {
+      curr.expr = acc;
+      return curr;
+    }, a);
   }
 
-unary_op        "unary operator"                = PLUS          // "+"
-                                                / MINUS         // "-"
-                                                / NOT           // "!"
-                                                / NEG           // "^"
-                                                / ADDR          // "*"
-                                                / REFR          // "&"
-                                                / ARROW         // "<-"
+// We use this to avoid left-recursion failure in the binary operators, and to enforce operator precedence.
+BinaryExprL5    "binary expression level 5"     = a:UnaryExpr WS? b:(mul_op WS? UnaryExpr WS?)*
+  {
+    // Note the '*' makes a standalone UnaryExpr a valid BinaryExprL5.
+    return b.reduce((acc, curr) => {
+      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr.lhs = acc;
+      return curr;
+    }, a);
+  }
+  
+BinaryExprL4    "binary expression level 4"     = a:BinaryExprL5 WS? b:(add_op WS? BinaryExprL5 WS?)*
+  {
+    return b.reduce((acc, curr) => {
+      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr.lhs = acc;
+      return curr;
+    }, a);
+  }
 
+BinaryExprL3    "binary expression level 3"     = a:BinaryExprL4 WS? b:(rel_op WS? BinaryExprL4 WS?)*
+  {
+    return b.reduce((acc, curr) => {
+      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
+      curr.lhs = acc;
+      return curr;
+    }, a);
+  }
+
+BinaryExprL2    "binary expression level 2"     = a:BinaryExprL3 WS? b:(LAND WS? BinaryExprL3 WS?)*
+  {
+    return b.reduce((acc, curr) => {
+      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr.lhs = acc;
+      return curr;
+    }, a);
+  }
+
+BinaryExprL1    "binary expression level 1"     = a:BinaryExprL2 WS? b:(LOR WS? BinaryExprL2)*
+  {
+    return b.reduce((acc, curr) => {
+      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr.lhs = acc;
+      return curr;
+    }, a);
+  }
+  
+unary_op        "unary operator"                = PLUS          // "+"
+  { return { tag: "UNARY_OP", op: '+', expr: null } }
+                                                / MINUS         // "-"
+  { return { tag: "UNARY_OP", op: '-', expr: null } }
+                                                / NOT           // "!"
+  { return { tag: "UNARY_OP", op: '!', expr: null } }
+                                                / NEG           // "^"
+  { return { tag: "UNARY_OP", op: '^', expr: null } }
+                                                / ADDR          // "*"
+  { return { tag: "UNARY_OP", op: '&', expr: null } }
+                                                / REFR          // "&"
+  { return { tag: "UNARY_OP", op: '*', expr: null } }                                               
+                                                / ARROW         // "<-"
+  { return { tag: "UNARY_OP", op: '<-', expr: null } }
+
+/*
 binary_op       "binary operator"               = mul_op
                                                 / add_op
                                                 / rel_op
                                                 / LAND          // "&&"
                                                 / LOR           // "||"
+*/
 
 rel_op          "comparison operator"           = EQL           // "=="
                                                 / NEQ           // "!="
-                                                / LSS           // "<"
                                                 / LEQ           // "<="
-                                                / GTR           // ">"
+                                                / LSS           // "<"
                                                 / GEQ           // ">="
+                                                / GTR           // ">"
 
 add_op          "addition operator"             = ADD           // "+"
                                                 / SUB           // "-"
@@ -285,10 +353,6 @@ mul_op          "multiplication operator"       = MUL           // "*"
                                                 / SHR           // ">>"
                                                 / AND           // "&"
                                                 / AND_NOT       // "&^"
-
-// # Conversions ==========================
-
-Conversion      "type conversion"               = Type LPAREN Expression ( COMMA )? RPAREN
 
 // # Statements ===========================
 
