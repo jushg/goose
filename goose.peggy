@@ -271,7 +271,7 @@ BinaryExprL5    "binary expression level 5"     = a:UnaryExpr WS? b:(mul_op WS? 
   {
     // Note the '*' makes a standalone UnaryExpr a valid BinaryExprL5.
     return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
       curr.lhs = acc;
       return curr;
     }, a);
@@ -280,7 +280,7 @@ BinaryExprL5    "binary expression level 5"     = a:UnaryExpr WS? b:(mul_op WS? 
 BinaryExprL4    "binary expression level 4"     = a:BinaryExprL5 WS? b:(add_op WS? BinaryExprL5 WS?)*
   {
     return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
       curr.lhs = acc;
       return curr;
     }, a);
@@ -298,7 +298,7 @@ BinaryExprL3    "binary expression level 3"     = a:BinaryExprL4 WS? b:(rel_op W
 BinaryExprL2    "binary expression level 2"     = a:BinaryExprL3 WS? b:(LAND WS? BinaryExprL3 WS?)*
   {
     return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
       curr.lhs = acc;
       return curr;
     }, a);
@@ -307,7 +307,7 @@ BinaryExprL2    "binary expression level 2"     = a:BinaryExprL3 WS? b:(LAND WS?
 BinaryExprL1    "binary expression level 1"     = a:BinaryExprL2 WS? b:(LOR WS? BinaryExprL2)*
   {
     return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0].join(''), lhs:null, rhs: curr[2] }
+      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
       curr.lhs = acc;
       return curr;
     }, a);
