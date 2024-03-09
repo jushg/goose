@@ -5,7 +5,8 @@
 
 // # Source file organization ==============
 
-TOPLEVEL     "source file"             = ( TopLevelDecl BD )* EOF
+TOPLEVEL     "source file"             = a:( TopLevelDecl BD )* EOF
+	{ return a.map(aa => aa[0]); }
 
 // # Characters =============================
 
@@ -127,7 +128,7 @@ SHR_ASSIGN        "assign: shift right"         = GTR GTR EQUAL   // '>>='
 ADDR              "address"                     = AMPER           // '&'
 REFR              "resolve reference"           = ASTERISK        // '*'
 
-WS                "white space"               = [\n \t\r]+
+WS                "white space"               = [ \t]+
 
 COMMENT_LINE      "end-of-line comment"         = "//" content:( ![\r\n] . )* [\r\n] 
   { return { tag: 'COMMENT_LINE', content: content.map(x => x[1]).join('').trim() } }
