@@ -371,7 +371,12 @@ Statement       "statement"                     = Declaration
                                                 / SelectStmt
                                                 / ForStmt
                                                 / DeferStmt
-                                                / ChanStmt
+                                                / SendStmt
+                                                / IncDecStmt
+                                                / Assignment
+                                                / ExpressionStmt
+
+SimpleStatement "simple statement"              = Declaration
                                                 / IncDecStmt
                                                 / Assignment
                                                 / ExpressionStmt
@@ -388,7 +393,7 @@ ExpressionStmt  "expression statement"          = expr:Expression
 
 // # Send statements ======================
 
-ChanStmt        "chan-statement"                = lhs:Expression? WS? ARROW WS? rhs:Expression
+SendStmt        "send-statement"                = lhs:Expression? WS? ARROW WS? rhs:Expression
   { return { tag: "STMT", stmtType: "SEND", lhs, rhs } }
 
 // # IncDec statements ====================
@@ -405,118 +410,74 @@ Assignment      "assignment"                    = lhs:IDENT WS? EQUAL WS? rhs:Ex
 
 // # 'if' statements ======================
 
-IfStmt  "'if' statement"  = "if" pre:( Assignment BD )? cond:Expression block:Block ( "else" ( IfStmt / Block ) )?
+IfStmt  "'if' statement"  = "if" WS? pre:PreClause? WS? cond:Expression WS? block:Block WS? elseB:ElseClause?
+  { return { tag: "STMT", stmtType: "IF", pre, cond, block, else: elseB } }
+
+PreClause  "pre-clause"  = a:SimpleStatement WS? SEMICOLON { return a }
+ElseClause  "else clause"  = "else" WS? block:( IfStmt / Block ) { return block }
 // TODO
 
 // # 'switch' statements ==================
 
-SwitchStmt      "'switch' statement"            = ExprSwitchStmt
-                                                / TypeSwitchStmt
-
-// # Expression switches ------------------
-
-ExprSwitchStmt  "expression of 'switch' statement"  = "switch" ( SimpleStmt BD )? ( Expression )? LBRACE ( ExprCaseClause )* RBRACE
-ExprCaseClause  "expression of 'case' clause"       = ExprSwitchCase COLON StatementList
-ExprSwitchCase  "expression of switch's 'case'"     = "case" ExpressionList
-                                                    / "default"
-
-// # Type switches -------------------------
-
-TypeSwitchStmt  "type-switch statement"         = "switch" ( SimpleStmt BD )? TypeSwitchGuard LBRACE ( TypeCaseClause )* RBRACE
-TypeSwitchGuard "type-switch guard"             = ( identifier DEFINE ) PrimaryExpr DOT LPAREN "type" RPAREN
-TypeCaseClause  "type-switch clause"            = TypeSwitchCase COLON StatementList
-TypeSwitchCase  "type-switch case"              = "case" TypeList
-                                                / "default"
-
-TypeList        "type list"                     = Type ( COMMA Type )*
+SwitchStmt      "expression of 'switch' statement"  = "switch" WS? pre:PreClause? WS? expr:(Expression)? WS? LBRACE WS? cases:CaseClause* WS? RBRACE
+ { return { tag: "STMT", stmtType: "SWITCH", pre, expr, cases } }
+CaseClause      "expression of 'case' clause"       = a:ExprSwitchCase WS? COLON WS? b:StatementList
+  { return { tag: "CASE_CLAUSE", case: a, stmts: b } }
+ExprSwitchCase  "expression of switch's 'case'"     = "case" a:Expression { return a; }
+                                                    / "default"           { return "DEFAULT"; }
 
 // # 'for' statements ======================
 
-ForStmt         "'for' statement"               = "for" ( Condition / ForClause / RangeClause ) Block
-Condition       "'for' condition"               = Expression
+ForStmt         "'for' statement"               = "for" WS? clause:ForClause WS? block:Block
+  { return { tag: "STMT", stmtType: "FOR", clause, block } }
 
-// # 'for' statements with 'for' clause ----
-
-ForClause       "'for' clause"                  = ( InitStmt )? BD ( Condition )? BD ( PostStmt )?
-InitStmt        "initial statament in 'for'"    = SimpleStmt
-PostStmt        "post statement in 'for'"       = SimpleStmt
-
-// # 'for' statements with 'range' clause --
-
-RangeClause     "'range' clause"                = ( ExpressionList EQUAL / IdentifierList DEFINE )? "range" Expression
+ForClause       "'for' clause"                  = pre:SimpleStatement? BD cond:Expression? BD post:SimpleStatement?
+  { return { tag: "FOR_CLAUSE", pre, cond, post } }
+                                                / cond:Expression?
+  { return { tag: "FOR_CLAUSE", pre: null, cond, post: null } }
 
 // # 'go' statements =======================
 
-GoStmt          "'go' statement"                = "go" Expression
+GoStmt          "'go' statement"                = "go" WS? expr:Expression  
+  { return { tag: "STMT", stmtType: "GO", expr } }
 
 // # 'select' statements ===================
 
-SelectStmt      "'select' statement"            = "select" LBRACE ( CommClause )* RBRACE
-CommClause      "communication-clause"          = CommCase COLON StatementList
-CommCase        "comminucation 'case'"          = "case" ( SendStmt / RecvStmt )
-                                                / "default"
-
-RecvStmt        "receive-statement"             = ( ExpressionList EQUAL / IdentifierList DEFINE )? RecvExpr
-RecvExpr        "receive-expression"            = Expression
+SelectStmt      "'select' statement"            = "select" WS? LBRACE WS? cases:CommClause* WS? RBRACE
+CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? stmts:StatementList
+CommCase        "comminucation 'case'"          = "case" WS? caseCl:( SendStmt / UnaryExpr / Declaration / Assignment )   
+  { return caseCl; }
+                                                / "default"                                   
+  { return "DEFAULT"; }
 
 // # 'return' statements ===================
 
-ReturnStmt      "'return' statement"            = "return" ( ExpressionList )?
+ReturnStmt      "'return' statement"            = "return" WS? expr:Expression?
+  { return { tag: "STMT", stmtType: "RETURN", expr } }
 
 // # 'break' statements ====================
 
-BreakStmt       "'break' statement"             = "break" ( Label )?
+BreakStmt       "'break' statement"             = "break" WS? label:IDENT?
+  { return { tag: "STMT", stmtType: "BREAK", label } }
 
 // # 'continue' statements =================
 
-ContinueStmt    "'continue' statement"          = "continue" ( Label )?
+ContinueStmt    "'continue' statement"          = "continue" WS? label:IDENT?
+  { return { tag: "STMT", stmtType: "CONTINUE", label } }
 
 // # 'goto' statements =====================
 
-GotoStmt        "'goto' statement"              = "goto" Label
+GotoStmt        "'goto' statement"              = "goto" WS? label:IDENT
+  { return { tag: "STMT", stmtType: "GOTO", label } }
 
 // # 'fallthrough' statements ==============
 
 FallthroughStmt "'fallthrough' statement"       = "fallthrough"
+  { return { tag: "STMT", stmtType: "FALLTHROUGH" } }
 
 // # 'defer' statements ====================
 
-DeferStmt       "'defer' statement"             = "defer" Expression
-
-// # Operators and delimiters ##################################################
-// via https://github.com/golang/go/src/go/token/token.go
-
-// # Keywords ===============================
-// via https://github.com/golang/go/src/go/token/token.go
-
-Keyword           "keyword"                     = "break"
-                                                / "case"
-                                                / "chan"
-                                                / "const"
-                                                / "continue"
-
-                                                / "default"
-                                                / "defer"
-                                                / "else"
-                                                / "fallthrough"
-                                                / "for"
-
-                                                / "func"
-                                                / "go"
-                                                / "goto"
-                                                / "if"
-                                                / "import"
-
-                                                / "interface"
-                                                / "map"
-                                                / "package"
-                                                / "range"
-                                                / "return"
-
-                                                / "select"
-                                                / "struct"
-                                                / "switch"
-                                                / "type"
-                                                / "var"
+DeferStmt       "'defer' statement"             = "defer" WS? expr:Expression
+  { return { tag: "STMT", stmtType: "DEFER", expr } }
 
 EOF             "end-of-file"                   = !.
