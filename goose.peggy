@@ -5,12 +5,11 @@
 
 // # Source file organization ==============
 
-// TOPLEVEL     "source file"             = PackageClause BD ( ImportDecl BD )* ( TopLevelDecl BD )* EOF
-TOPLEVEL = Statement
+TOPLEVEL     "source file"             = ( TopLevelDecl BD )* EOF
 
 // # Characters =============================
 
-NEWLINE        "newline"                 = [\n] / [\r\n]
+NEWLINE        "newline"                 = [\n]* / [\r\n]*
 LETTER         "letter"                  = [a-z]i
 DIGIT          "digit"                   = [0-9]
 
@@ -60,11 +59,14 @@ NOT               "not"                         = BANG            // '!'
 
 NEG               "neg"                         = HAT             // '^'
 SHL               "shift left"                  = LSS LSS         // '<<'
+  { return '<<' }
 SHR               "shift right"                 = GTR GTR         // '>>'
+  { return '>>' }
 OR                "or"                          = BAR             // '|'
 XOR               "xor"                         = HAT             // '^'
 AND               "and"                         = AMPER           // '&'
 AND_NOT           "and not"                     = AMPER HAT       // '&^'
+  { return '&^' }
 
 ADD               "add"                         = PLUS            // '+'
 SUB               "subtract"                    = MINUS           // '-'
@@ -73,32 +75,54 @@ QUO               "quotient"                    = SLASH           // '/'
 REM               "remainder"                   = PERCENT         // '%'
 
 LAND              "logical AND"                 = AMPER AMPER     // '&&'
+  { return '&&' }
 LOR               "logical OR"                  = BAR BAR         // '||'
+  { return '||' }
 ARROW             "arrow"                       = LSS MINUS       // '<-'
+  { return '<-' }
 INC               "increment"                   = PLUS PLUS       // '++'
+  { return '++' }
 DEC               "decrement"                   = MINUS MINUS     // '--'
+  { return '--' }
 
 EQL               "equal"                       = EQUAL EQUAL     // '=='
+  { return '==' }
 NEQ               "not equal"                   = BANG EQUAL      // '!='
+  { return '!=' }
 LEQ               "less or equal"               = LSS EQUAL       // '<='
+  { return '<=' }
 GEQ               "greater or equal"            = GTR EQUAL       // '>='
+  { return '>=' }
 DEFINE            "define"                      = COLON EQUAL     // ':='
+  { return ':=' }
 ELLIPSIS          "ellipsis"                    = DOT DOT DOT     // '...'
+  { return '...' }
 
 ASSIGN            "assign"                      = EQUAL           // '='
 ADD_ASSIGN        "assign: add"                 = PLUS EQUAL      // '+='
+  { return '+=' }
 SUB_ASSIGN        "assign: subtract"            = MINUS EQUAL     // '-='
+  { return '-=' }
 MUL_ASSIGN        "assign: multiply"            = ASTERISK EQUAL  // '*='
+  { return '*=' }
 QUO_ASSIGN        "assign: quotient"            = SLASH EQUAL     // '/='
+  { return '/=' }
 REM_ASSIGN        "assign: remainder"           = PERCENT EQUAL   // '%='
+  { return '%=' }
 
 AND_ASSIGN        "assign: logical AND"         = AMPER EQUAL     // '&='
+  { return '&=' }
 OR_ASSIGN         "assign: logical OR"          = BAR EQUAL       // '|='
+  { return '|=' }
 XOR_ASSIGN        "assign: logical XOR"         = HAT EQUAL       // '^='
+  { return '^=' }
 AND_NOT_ASSIGN    "assign: logical AND NOT"     = AMPER HAT EQUAL // '&^='
+  { return '&^=' }
 
 SHL_ASSIGN        "assign: shift left"          = LSS LSS EQUAL   // '<<='
+  { return '<<=' }
 SHR_ASSIGN        "assign: shift right"         = GTR GTR EQUAL   // '>>='
+  { return '>>=' }
 
 ADDR              "address"                     = AMPER           // '&'
 REFR              "resolve reference"           = ASTERISK        // '*'
@@ -115,7 +139,7 @@ COMMENT_MULTI     "multiline-comment"           = "/*" content:( !"*/" . )* "*/"
 // # Identifiers ============================
 
 IDENT          "identifier"              = x:LETTER y:( LETTER / DIGIT / UBAR )*
-  { return { tag:"IDENT", type: undefined, val: x + y } }
+  { return { tag:"IDENT", type: undefined, val: x + y.join('') } }
 
 // # Types ==================================
 
@@ -158,7 +182,7 @@ FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ','
 
 // # Blocks =================================
 
-Block           "block"                         = LBRACE WS? stmts:StatementList WS? RBRACE
+Block           "block"                         = LBRACE BD? stmts:StatementList BD? RBRACE
   { return { tag: "BLOCK", stmts } }
 
 StatementList   "statement list"                = v:( Statement BD )*
@@ -182,7 +206,7 @@ VarDecl         "variable declaration"          = "var" WS ident:IDENT identType
 
 // # Function declarations ==================
 
-FunctionDecl    "function declaration"          = "func" ident:IDENT inputT:FnParamListType WS? returnT:(Type?) body:Block
+FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputT:FnParamListType WS? returnT:(Type?) body:Block
   { return { tag: "FUNC_DECL", ident, inputT, returnT: returnT ?? [], body } }
 
 // # Expressions ============================
@@ -405,8 +429,8 @@ IncDecStmt      "increment/decrement statement" = expr:Expression WS? INC
 
 // # Assignments ==========================
 
-Assignment      "assignment"                    = lhs:IDENT WS? EQUAL WS? rhs:Expression
-  { return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs } }
+Assignment      "assignment"                    = lhs:IDENT WS? c:COLON? EQUAL WS? rhs:Expression
+  { return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs, op: c ? ":=" : "=" } }
 
 // # 'if' statements ======================
 
