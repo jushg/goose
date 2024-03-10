@@ -148,8 +148,8 @@ Type            "type"                          = CompoundType
                                                 / LPAREN Type RPAREN
                                                 / TypeName
 
-TypeName        "type name"                     = val:([a-z_]i+)
- { return { tag: "TYPE", type: { base: 'BASE', type: val.join('') } } }
+TypeName        "type name"                     = val:( 'string' / 'int' / 'bool')
+ { return { tag: "TYPE", type: { base: 'BASE', type: val } } }
 
 CompoundType     "type literal"                  = ArrayType
                                                 / ChannelType
@@ -219,6 +219,10 @@ Operand         "operand"                       = v: Literal { return v; }
 Literal         "literal"                       = IntegerLit
                                                 / StringLit
                                                 / FunctionLit
+                                                / BoolLit
+
+BoolLit        "bool literal"            = "true" / "false"
+  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'BOOL'}, val: text } }
 
 IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
   { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'INT'}, val: a + b.map(i => i[1]).join('') } }
@@ -250,8 +254,9 @@ Index           "index in expression"           = LBRACK index:Expression RBRACK
 
 Arguments       "arguments"                     = LPAREN WS? RPAREN
   { return { tag: "CALLER", args: [], expr: null /* to be filled when parsing PrimaryExpr */ } }
-                                                / LPAREN WS? arg1:Expression WS? rest:(COMMA WS? Expression WS?)* RPAREN
+                                                / LPAREN WS? arg1:(Expression/Type) WS? rest:(COMMA WS? Expression WS?)* RPAREN
   {
+    // Note that arg1 is allowed to be a type (e.g. with `make` and `new`).
     const args = [arg1, ...(rest.map(r => r[2]))]
     return { tag: "CALLER", args, expr: null /* to be filled when parsing PrimaryExpr */ }
   }
