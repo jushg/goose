@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "updateParser": "peggy -o src/parser/index.js --format es src/parser/goose.peggy"
+  },
   "dependencies": {
     "peggy": "^4.0.2"
   }
