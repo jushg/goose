@@ -208,7 +208,7 @@ VarDecl         "variable declaration"          = "var" WS ident:IDENT identType
 // # Function declarations ==================
 
 FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputT:FnParamListType WS? returnT:(Type?) body:Block
-  { return makeFuncDecl(ident, inputT, returnT ?? [], body) }
+  { return makeFuncDecl(ident, inputT, returnT, body) }
 
 // # Expressions ============================
 
@@ -234,7 +234,7 @@ StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] 
   { return makeStrLiteralObj(content.join('')) }
 
 FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) body:Block
-  { return makeFuncLiteral(inputT, returnT ?? [], body ) }
+  { return makeFuncLiteral(inputT, returnT, body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 

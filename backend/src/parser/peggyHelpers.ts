@@ -10,7 +10,6 @@ export type ChanTypeObj<T, M = "DUAL" | "IN" | "OUT"> = TypeObj<{ base: "CHAN"; 
 export type FuncTypeObj<I, O> = TypeObj<{ base: "FUNC"; inputT: I; returnT: O }>
 
 export type AnyTypeObj = NilTypeObj | BoolTypeObj | IntTypeObj | StrTypeObj | PtrTypeObj<any> | ArrayTypeObj<any> | ChanTypeObj<any> | FuncTypeObj<any, any>
-export type UnknownTypeObj = TypeObj<{ base: "UNKNOWN" }>
 
 function makeStringType() : StrTypeObj {
     return { tag: "TYPE", type: { base:"STR" } };
@@ -43,9 +42,9 @@ function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj | null>(i
     return { tag: "TYPE", type: { base:"FUNC", inputT, returnT } };
 }
 
-export type IdentObj = { tag: "IDENT", type: null | AnyTypeObj, val: string }
+export type IdentObj = { tag: "IDENT", val: string }
 function makeIdent(val: string) : IdentObj {
-    return { tag:"IDENT", type: null, val };
+    return { tag:"IDENT", val };
 }
 
 export type BlockObj = { tag: "BLOCK", stmts: StmtObj[] }
@@ -77,10 +76,10 @@ export type FuncDeclObj = {
     tag: "FUNC_DECL";
     ident: string;
     inputT: AnyTypeObj[];
-    returnT: AnyTypeObj[];
+    returnT: AnyTypeObj | null;
     body: BlockObj;
 }
-function makeFuncDecl(ident: string, inputT: AnyTypeObj[], returnT: AnyTypeObj[], body: BlockObj) : FuncDeclObj {
+function makeFuncDecl(ident: string, inputT: AnyTypeObj[], returnT: AnyTypeObj | null, body: BlockObj) : FuncDeclObj {
     return { tag: "FUNC_DECL", ident, inputT, returnT, body };
 }
 

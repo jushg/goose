@@ -36,7 +36,7 @@ function makeFunctionType(inputT, returnT) {
     return { tag: "TYPE", type: { base: "FUNC", inputT, returnT } };
 }
 function makeIdent(val) {
-    return { tag: "IDENT", type: null, val };
+    return { tag: "IDENT", val };
 }
 function makeBlock(stmts) {
     return { tag: "BLOCK", stmts };
@@ -628,7 +628,7 @@ function peg$parse(input, options) {
   var peg$f39 = function(v) { return v.map(vv => vv[0]) };
   var peg$f40 = function(ident, identType, expr) { return makeConstDecl(ident, identType, expr) };
   var peg$f41 = function(ident, identType, expr) { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); };
-  var peg$f42 = function(ident, inputT, returnT, body) { return makeFuncDecl(ident, inputT, returnT ?? [], body) };
+  var peg$f42 = function(ident, inputT, returnT, body) { return makeFuncDecl(ident, inputT, returnT, body) };
   var peg$f43 = function(v) { return v; };
   var peg$f44 = function(v) { return v; };
   var peg$f45 = function(v) { return v; };
@@ -636,7 +636,7 @@ function peg$parse(input, options) {
   var peg$f47 = function(v) { return makeBoolLiteral(v === "true") };
   var peg$f48 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb !== "_").map(i => i[1]).join(''))) };
   var peg$f49 = function(content) { return makeStrLiteralObj(content.join('')) };
-  var peg$f50 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT ?? [], body ) };
+  var peg$f50 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT, body ) };
   var peg$f51 = function(fn, arg1, rest) {
     const args = [arg1, ...(rest.map(r => r[2]))]
     return { tag: fn === "make" ? "MAKE" : "NEW", args }
