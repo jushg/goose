@@ -53,6 +53,9 @@ function makeStrLiteralObj(val) {
 function makeNilLiteralObj() {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "NIL" } } };
 }
+function makeFuncLiteral(inputT, returnT, body) {
+    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
+}
 function primaryExprReduceHelper(expr, op) {
     if (op.tag === "SELECTOR") {
         return { tag: "SELECTOR", obj: expr, ident: op.ident };
@@ -100,14 +103,14 @@ function makeCaseClause(caseExpr, body) {
 function makeForStmt(pre, cond, post, body) {
     return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
 }
-function makeBreakStmt() {
-    return { tag: "STMT", stmtType: "BREAK" };
+function makeBreakStmt(breakLabel) {
+    return { tag: "STMT", stmtType: "BREAK", breakLabel };
 }
-function makeContStmt() {
-    return { tag: "STMT", stmtType: "CONTINUE" };
+function makeContStmt(contLabel) {
+    return { tag: "STMT", stmtType: "CONTINUE", contLabel };
 }
-function makeGoToStmt(label) {
-    return { tag: "STMT", stmtType: "GOTO", label };
+function makeGoToStmt(gotoLabel) {
+    return { tag: "STMT", stmtType: "GOTO", gotoLabel };
 }
 function makeFallthroughStmt() {
     return { tag: "STMT", stmtType: "FALLTHROUGH" };
@@ -117,6 +120,15 @@ function makeDeferStmt(stmt) {
 }
 function makeGoStmt(stmt) {
     return { tag: "STMT", stmtType: "GO", stmt };
+}
+function makeSelectStmt(cases) {
+    return { tag: "STMT", stmtType: "SELECT", cases };
+}
+function makeSelectCase(comm, body) {
+    return { tag: "SELECT_CASE", comm, body };
+}
+function makeReturnStmt(expr) {
+    return { tag: "STMT", stmtType: "RETURN", expr };
 }
 //# sourceMappingURL=index.js.map
 
@@ -545,7 +557,7 @@ function peg$parse(input, options) {
   var peg$e185 = peg$otherExpectation("'select' statement");
   var peg$e186 = peg$literalExpectation("select", false);
   var peg$e187 = peg$otherExpectation("communication-clause");
-  var peg$e188 = peg$otherExpectation("comminucation 'case'");
+  var peg$e188 = peg$otherExpectation("communication 'case'");
   var peg$e189 = peg$otherExpectation("'return' statement");
   var peg$e190 = peg$literalExpectation("return", false);
   var peg$e191 = peg$otherExpectation("'break' statement");
@@ -595,28 +607,25 @@ function peg$parse(input, options) {
   var peg$f32 = function(inner) { return makeChanDualType(inner) };
   var peg$f33 = function(inner) { return makeChanOutType(inner) };
   var peg$f34 = function(inner) { return makeChanInType(inner) };
-  var peg$f35 = function(inputT, returnT) { return { tag: "TYPE", type:{ base: "FUNC", inputT, returnT: returnT ?? [] } } };
+  var peg$f35 = function(inputT, returnT) { return makeFunctionType(inputT, returnT) };
   var peg$f36 = function(a, b) { return [a, ...(b.map(bb => bb[3]))] };
   var peg$f37 = function() { return []; };
-  var peg$f38 = function(stmts) { return { tag: "BLOCK", stmts } };
+  var peg$f38 = function(stmts) { return makeBlock(stmts); };
   var peg$f39 = function(v) { return v.map(vv => vv[0]) };
-  var peg$f40 = function(ident, identType, expr) { return { tag: "CONST_DECL", ident, identType, expr } };
-  var peg$f41 = function(ident, identType, expr) { return { tag: "VAR_DECL", ident, identType, expr: (expr ?? [null, null])[1] } };
-  var peg$f42 = function(ident, inputT, returnT, body) { return { tag: "FUNC_DECL", ident, inputT, returnT: returnT ?? [], body } };
+  var peg$f40 = function(ident, identType, expr) { return makeConstDecl(ident, identType, expr) };
+  var peg$f41 = function(ident, identType, expr) { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); };
+  var peg$f42 = function(ident, inputT, returnT, body) { return makeFuncDecl(ident, inputT, returnT ?? [], body) };
   var peg$f43 = function(v) { return v; };
   var peg$f44 = function(v) { return v; };
   var peg$f45 = function(v) { return v; };
-  var peg$f46 = function() { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'NIL'}, val: 'nil' } };
-  var peg$f47 = function() { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'BOOL'}, val: text } };
-  var peg$f48 = function(a, b) { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'INT'}, val: a + b.map(i => i[1]).join('') } };
-  var peg$f49 = function(content) { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'STR'}, val: content.join('') } };
-  var peg$f50 = function(inputT, returnT, body) { return { tag: "LITERAL", type:{ base: "FUNC", inputT, returnT: returnT ?? [] }, body } };
+  var peg$f46 = function() { return makeNilLiteralObj() };
+  var peg$f47 = function(v) { return makeBoolLiteral(v === "true") };
+  var peg$f48 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb !== "_").map(i => i[1]).join(''))) };
+  var peg$f49 = function(content) { return makeStrLiteralObj(content.join('')) };
+  var peg$f50 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT: returnT ?? [], body ) };
   var peg$f51 = function(a, b) {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
-    return b.reduce((acc, curr) => {
-      curr.expr = acc;
-      return curr;
-    }, a);
+    return b.reduce(primaryExprReduceHelper, a);
   };
   var peg$f52 = function(ident) { return { tag: "SELECTOR", ident } };
   var peg$f53 = function(index) { return { tag: "INDEX", index } };
@@ -640,32 +649,16 @@ function peg$parse(input, options) {
     return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   };
   var peg$f58 = function(a, b) {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   };
   var peg$f59 = function(a, b) {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   };
   var peg$f60 = function(a, b) {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   };
   var peg$f61 = function(a, b) {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   };
   var peg$f62 = function() { return '+' };
   var peg$f63 = function() { return '-' };
@@ -675,30 +668,33 @@ function peg$parse(input, options) {
   var peg$f67 = function() { return '*' };
   var peg$f68 = function() { return '<-' };
   var peg$f69 = function(label) { stmt.label = label; return stmt; };
-  var peg$f70 = function(expr) { return { tag: "STMT", stmtType: "EXPR", expr } };
-  var peg$f71 = function(lhs, rhs) { return { tag: "STMT", stmtType: "CHAN", lhs, rhs } };
-  var peg$f72 = function(expr) { return { tag: "STMT", stmtType: "INC", expr } };
-  var peg$f73 = function(expr) { return { tag: "STMT", stmtType: "DEC", expr } };
-  var peg$f74 = function(lhs, c, rhs) { return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs, op: c ? ":=" : "=" } };
-  var peg$f75 = function(pre, cond, block, elseB) { return { tag: "STMT", stmtType: "IF", pre, cond, block, else: elseB } };
+  var peg$f70 = function(expr) { return makeExpressionStmt(expr) };
+  var peg$f71 = function(lhs, rhs) { return makeChanStmt(lhs, rhs) };
+  var peg$f72 = function(expr) { return makeIncStmt(expr) };
+  var peg$f73 = function(expr) { return makeDecStmt(expr) };
+  var peg$f74 = function(lhs, c, rhs) { return makeAssignmentStmt(lhs, op: c ? ":=" : "=", rhs) };
+  var peg$f75 = function(pre, cond, block, elseB) { return makeIfStmt(pre, cond, block, elseB) };
   var peg$f76 = function(a) { return a };
   var peg$f77 = function(block) { return block };
-  var peg$f78 = function(pre, expr, cases) { return { tag: "STMT", stmtType: "SWITCH", pre, expr, cases } };
-  var peg$f79 = function(a, b) { return { tag: "CASE_CLAUSE", case: a, stmts: b } };
+  var peg$f78 = function(pre, expr, cases) { return makeSwitchStmt(pre, expr, cases) };
+  var peg$f79 = function(a, b) { return makeCaseClause(a, b) };
   var peg$f80 = function(a) { return a; };
   var peg$f81 = function() { return "DEFAULT"; };
-  var peg$f82 = function(clause, block) { return { tag: "STMT", stmtType: "FOR", clause, block } };
-  var peg$f83 = function(pre, cond, post) { return { tag: "FOR_CLAUSE", pre, cond, post } };
-  var peg$f84 = function(cond) { return { tag: "FOR_CLAUSE", pre: null, cond, post: null } };
-  var peg$f85 = function(expr) { return { tag: "STMT", stmtType: "GO", expr } };
-  var peg$f86 = function(caseCl) { return caseCl; };
-  var peg$f87 = function() { return "DEFAULT"; };
-  var peg$f88 = function(expr) { return { tag: "STMT", stmtType: "RETURN", expr } };
-  var peg$f89 = function(label) { return { tag: "STMT", stmtType: "BREAK", label } };
-  var peg$f90 = function(label) { return { tag: "STMT", stmtType: "CONTINUE", label } };
-  var peg$f91 = function(label) { return { tag: "STMT", stmtType: "GOTO", label } };
-  var peg$f92 = function() { return { tag: "STMT", stmtType: "FALLTHROUGH" } };
-  var peg$f93 = function(expr) { return { tag: "STMT", stmtType: "DEFER", expr } };
+  var peg$f82 = function(clause, block) { return makeForStmt(clause.pre, clause.cond, clause.post, body) };
+  var peg$f83 = function(block) { return makeForStmt(null, null, null, block)};
+  var peg$f84 = function(pre, cond, post) { return { tag: "FOR_CLAUSE", pre, cond, post } };
+  var peg$f85 = function(cond) { return { tag: "FOR_CLAUSE", pre: null, cond, post: null } };
+  var peg$f86 = function(expr) { return makeGoStmt(expr) };
+  var peg$f87 = function(cases) { return makeSelectStmt(cases) };
+  var peg$f88 = function(caseCl, stmts) { return makeSelectCase(caseCl, stmts) };
+  var peg$f89 = function(caseCl) { return caseCl; };
+  var peg$f90 = function() { return "DEFAULT"; };
+  var peg$f91 = function(expr) { return makeReturnStmt(expr) };
+  var peg$f92 = function(label) { return makeBreakStmt(label) };
+  var peg$f93 = function(label) { return makeContStmt(label) };
+  var peg$f94 = function(label) { return makeGoToStmt(label) };
+  var peg$f95 = function() { return makeFallthroughStmt() };
+  var peg$f96 = function(expr) { return makeDeferStmt(expr) };
   var peg$currPos = options.peg$currPos | 0;
   var peg$savedPos = peg$currPos;
   var peg$posDetailsCache = [{ line: 1, column: 1 }];
@@ -3709,15 +3705,15 @@ function peg$parse(input, options) {
     var s0, s1;
 
     peg$silentFails++;
+    s0 = peg$currPos;
     if (input.substr(peg$currPos, 4) === peg$c34) {
-      s0 = peg$c34;
+      s1 = peg$c34;
       peg$currPos += 4;
     } else {
-      s0 = peg$FAILED;
+      s1 = peg$FAILED;
       if (peg$silentFails === 0) { peg$fail(peg$e140); }
     }
-    if (s0 === peg$FAILED) {
-      s0 = peg$currPos;
+    if (s1 === peg$FAILED) {
       if (input.substr(peg$currPos, 5) === peg$c35) {
         s1 = peg$c35;
         peg$currPos += 5;
@@ -3725,12 +3721,12 @@ function peg$parse(input, options) {
         s1 = peg$FAILED;
         if (peg$silentFails === 0) { peg$fail(peg$e141); }
       }
-      if (s1 !== peg$FAILED) {
-        peg$savedPos = s0;
-        s1 = peg$f47();
-      }
-      s0 = s1;
     }
+    if (s1 !== peg$FAILED) {
+      peg$savedPos = s0;
+      s1 = peg$f47(s1);
+    }
+    s0 = s1;
     peg$silentFails--;
     if (s0 === peg$FAILED) {
       s1 = peg$FAILED;
@@ -5369,6 +5365,33 @@ function peg$parse(input, options) {
       peg$currPos = s0;
       s0 = peg$FAILED;
     }
+    if (s0 === peg$FAILED) {
+      s0 = peg$currPos;
+      if (input.substr(peg$currPos, 3) === peg$c42) {
+        s1 = peg$c42;
+        peg$currPos += 3;
+      } else {
+        s1 = peg$FAILED;
+        if (peg$silentFails === 0) { peg$fail(peg$e181); }
+      }
+      if (s1 !== peg$FAILED) {
+        s2 = peg$parseWS();
+        if (s2 === peg$FAILED) {
+          s2 = null;
+        }
+        s3 = peg$parseBlock();
+        if (s3 !== peg$FAILED) {
+          peg$savedPos = s0;
+          s0 = peg$f83(s3);
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+    }
     peg$silentFails--;
     if (s0 === peg$FAILED) {
       s1 = peg$FAILED;
@@ -5400,7 +5423,7 @@ function peg$parse(input, options) {
           s5 = null;
         }
         peg$savedPos = s0;
-        s0 = peg$f83(s1, s3, s5);
+        s0 = peg$f84(s1, s3, s5);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -5416,7 +5439,7 @@ function peg$parse(input, options) {
         s1 = null;
       }
       peg$savedPos = s0;
-      s1 = peg$f84(s1);
+      s1 = peg$f85(s1);
       s0 = s1;
     }
     peg$silentFails--;
@@ -5448,7 +5471,7 @@ function peg$parse(input, options) {
       s3 = peg$parseExpression();
       if (s3 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f85(s3);
+        s0 = peg$f86(s3);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -5501,8 +5524,8 @@ function peg$parse(input, options) {
         }
         s7 = peg$parseRBRACE();
         if (s7 !== peg$FAILED) {
-          s1 = [s1, s2, s3, s4, s5, s6, s7];
-          s0 = s1;
+          peg$savedPos = s0;
+          s0 = peg$f87(s5);
         } else {
           peg$currPos = s0;
           s0 = peg$FAILED;
@@ -5543,8 +5566,8 @@ function peg$parse(input, options) {
         }
         s5 = peg$parseStatementList();
         if (s5 !== peg$FAILED) {
-          s1 = [s1, s2, s3, s4, s5];
-          s0 = s1;
+          peg$savedPos = s0;
+          s0 = peg$f88(s1, s5);
         } else {
           peg$currPos = s0;
           s0 = peg$FAILED;
@@ -5587,15 +5610,12 @@ function peg$parse(input, options) {
       if (s3 === peg$FAILED) {
         s3 = peg$parseUnaryExpr();
         if (s3 === peg$FAILED) {
-          s3 = peg$parseDeclaration();
-          if (s3 === peg$FAILED) {
-            s3 = peg$parseAssignment();
-          }
+          s3 = peg$parseAssignment();
         }
       }
       if (s3 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f86(s3);
+        s0 = peg$f89(s3);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -5615,7 +5635,7 @@ function peg$parse(input, options) {
       }
       if (s1 !== peg$FAILED) {
         peg$savedPos = s0;
-        s1 = peg$f87();
+        s1 = peg$f90();
       }
       s0 = s1;
     }
@@ -5650,7 +5670,7 @@ function peg$parse(input, options) {
         s3 = null;
       }
       peg$savedPos = s0;
-      s0 = peg$f88(s3);
+      s0 = peg$f91(s3);
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
@@ -5686,7 +5706,7 @@ function peg$parse(input, options) {
         s3 = null;
       }
       peg$savedPos = s0;
-      s0 = peg$f89(s3);
+      s0 = peg$f92(s3);
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
@@ -5722,7 +5742,7 @@ function peg$parse(input, options) {
         s3 = null;
       }
       peg$savedPos = s0;
-      s0 = peg$f90(s3);
+      s0 = peg$f93(s3);
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
@@ -5756,7 +5776,7 @@ function peg$parse(input, options) {
       s3 = peg$parseIDENT();
       if (s3 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f91(s3);
+        s0 = peg$f94(s3);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -5788,7 +5808,7 @@ function peg$parse(input, options) {
     }
     if (s1 !== peg$FAILED) {
       peg$savedPos = s0;
-      s1 = peg$f92();
+      s1 = peg$f95();
     }
     s0 = s1;
     peg$silentFails--;
@@ -5820,7 +5840,7 @@ function peg$parse(input, options) {
       s3 = peg$parseExpression();
       if (s3 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f93(s3);
+        s0 = peg$f96(s3);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;

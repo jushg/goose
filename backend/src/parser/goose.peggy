@@ -174,7 +174,7 @@ ChannelInType     "chan-in type"                  = "chan" WS? ARROW WS? inner:T
 	{ return makeChanInType(inner) }  
 
 FunctionType      "function type"                 = "func" WS? inputT:FnParamListType WS? returnT:(Type?)
-  { return { tag: "TYPE", type:{ base: "FUNC", inputT, returnT: returnT ?? [] } } }
+  { return makeFunctionType(inputT, returnT) }
 
 FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ',' WS? Type)* WS? RPAREN
   { return [a, ...(b.map(bb => bb[3]))] }
@@ -184,7 +184,7 @@ FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ','
 // # Blocks =================================
 
 Block           "block"                         = LBRACE BD? stmts:StatementList BD? RBRACE
-  { return { tag: "BLOCK", stmts } }
+  { return makeBlock(stmts); }
 
 StatementList   "statement list"                = v:( Statement BD )*
   { return v.map(vv => vv[0]) }
@@ -200,15 +200,15 @@ TopLevelDecl    "top-level declaration"         = Declaration
 // # Constant declarations ==================
 
 ConstDecl       "constant declaration"          = "const" WS ident:IDENT identType:(Type?) EQUAL expr:Expression
-  { return { tag: "CONST_DECL", ident, identType, expr } }
+  { return makeConstDecl(ident, identType, expr) }
 
 VarDecl         "variable declaration"          = "var" WS ident:IDENT identType:Type expr:(EQUAL expr:Expression)?
-  { return { tag: "VAR_DECL", ident, identType, expr: (expr ?? [null, null])[1] } }
+  { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); }
 
 // # Function declarations ==================
 
 FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputT:FnParamListType WS? returnT:(Type?) body:Block
-  { return { tag: "FUNC_DECL", ident, inputT, returnT: returnT ?? [], body } }
+  { return makeFuncDecl(ident, inputT, returnT ?? [], body) }
 
 // # Expressions ============================
 
@@ -222,19 +222,19 @@ Literal         "literal"                       = IntegerLit
                                                 / BoolLit
 
 NilLit          "nil literal"                  = "nil"
-  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'NIL'}, val: 'nil' } }
+  { return makeNilLiteralObj() }
 
-BoolLit        "bool literal"            ="true" / "false"
-  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'BOOL'}, val: text } }
+BoolLit        "bool literal"            =v:("true" / "false")
+  { return makeBoolLiteral(v === "true") }
 
 IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
-  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'INT'}, val: a + b.map(i => i[1]).join('') } }
+  { return makeIntLiteralObj(Number(a + b.filter(bb !== "_").map(i => i[1]).join(''))) }
 
 StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
-  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'STR'}, val: content.join('') } }
+  { return makeStrLiteralObj(content.join('')) }
 
 FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) body:Block
-  { return { tag: "LITERAL", type:{ base: "FUNC", inputT, returnT: returnT ?? [] }, body } }
+  { return makeFuncLiteral(inputT, returnT: returnT ?? [], body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 
@@ -243,10 +243,7 @@ FunctionLit     "function literal"              = "func" inputT:FnParamListType 
 PrimaryExpr     "primary expression"            = a:Operand b:((Selector / Index / Arguments)*)
   {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
-    return b.reduce((acc, curr) => {
-      curr.expr = acc;
-      return curr;
-    }, a);
+    return b.reduce(primaryExprReduceHelper, a);
   }
 
 Selector        "selector in expression"        = DOT ident:IDENT
@@ -304,38 +301,22 @@ BinaryExprL5    "binary expression level 5"     = a:UnaryExpr WS? b:(mul_op WS? 
   
 BinaryExprL4    "binary expression level 4"     = a:BinaryExprL5 WS? b:(add_op WS? BinaryExprL5 WS?)*
   {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   }
 
 BinaryExprL3    "binary expression level 3"     = a:BinaryExprL4 WS? b:(rel_op WS? BinaryExprL4 WS?)*
   {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   }
 
 BinaryExprL2    "binary expression level 2"     = a:BinaryExprL3 WS? b:(LAND WS? BinaryExprL3 WS?)*
   {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   }
 
 BinaryExprL1    "binary expression level 1"     = a:BinaryExprL2 WS? b:(LOR WS? BinaryExprL2)*
   {
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   }
   
 unary_op        "unary operator"                = PLUS          // "+"
@@ -416,29 +397,29 @@ LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? Stat
 // # Expression statements ================
 
 ExpressionStmt  "expression statement"          = expr:Expression
-  { return { tag: "STMT", stmtType: "EXPR", expr } }
+  { return makeExpressionStmt(expr) }
 
 // # Send statements ======================
 
 ChanStmt        "chan-statement"                = lhs:Expression? WS? ARROW WS? rhs:Expression
-  { return { tag: "STMT", stmtType: "CHAN", lhs, rhs } }
+  { return makeChanStmt(lhs, rhs) }
 
 // # IncDec statements ====================
 
 IncDecStmt      "increment/decrement statement" = expr:Expression WS? INC
-  { return { tag: "STMT", stmtType: "INC", expr } }
+  { return makeIncStmt(expr) }
                                                 / expr:Expression WS? DEC
-  { return { tag: "STMT", stmtType: "DEC", expr } }
+  { return makeDecStmt(expr) }
 
 // # Assignments ==========================
 
 Assignment      "assignment"                    = lhs:IDENT WS? c:COLON? EQUAL WS? rhs:Expression
-  { return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs, op: c ? ":=" : "=" } }
+  { return makeAssignmentStmt(lhs, op: c ? ":=" : "=", rhs) }
 
 // # 'if' statements ======================
 
 IfStmt  "'if' statement"  = "if" WS? pre:PreClause? WS? cond:Expression WS? block:Block WS? elseB:ElseClause?
-  { return { tag: "STMT", stmtType: "IF", pre, cond, block, else: elseB } }
+  { return makeIfStmt(pre, cond, block, elseB) }
 
 PreClause  "pre-clause"  = a:SimpleStatement WS? SEMICOLON { return a }
 ElseClause  "else clause"  = "else" WS? block:( IfStmt / Block ) { return block }
@@ -447,16 +428,18 @@ ElseClause  "else clause"  = "else" WS? block:( IfStmt / Block ) { return block 
 // # 'switch' statements ==================
 
 SwitchStmt      "expression of 'switch' statement"  = "switch" WS? pre:PreClause? WS? expr:(Expression)? WS? LBRACE WS? cases:CaseClause* WS? RBRACE
- { return { tag: "STMT", stmtType: "SWITCH", pre, expr, cases } }
+ { return makeSwitchStmt(pre, expr, cases) }
 CaseClause      "expression of 'case' clause"       = a:ExprSwitchCase WS? COLON WS? b:StatementList
-  { return { tag: "CASE_CLAUSE", case: a, stmts: b } }
+  { return makeCaseClause(a, b) }
 ExprSwitchCase  "expression of switch's 'case'"     = "case" a:Expression { return a; }
                                                     / "default"           { return "DEFAULT"; }
 
 // # 'for' statements ======================
 
 ForStmt         "'for' statement"               = "for" WS? clause:ForClause WS? block:Block
-  { return { tag: "STMT", stmtType: "FOR", clause, block } }
+  { return makeForStmt(clause.pre, clause.cond, clause.post, body) }
+                                                / "for" WS? block:Block
+  { return makeForStmt(null, null, null, block)}
 
 ForClause       "'for' clause"                  = pre:SimpleStatement? BD cond:Expression? BD post:SimpleStatement?
   { return { tag: "FOR_CLAUSE", pre, cond, post } }
@@ -466,13 +449,15 @@ ForClause       "'for' clause"                  = pre:SimpleStatement? BD cond:E
 // # 'go' statements =======================
 
 GoStmt          "'go' statement"                = "go" WS? expr:Expression  
-  { return { tag: "STMT", stmtType: "GO", expr } }
+  { return makeGoStmt(expr) }
 
 // # 'select' statements ===================
 
 SelectStmt      "'select' statement"            = "select" WS? LBRACE WS? cases:CommClause* WS? RBRACE
+  { return makeSelectStmt(cases) }
 CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? stmts:StatementList
-CommCase        "comminucation 'case'"          = "case" WS? caseCl:( ChanStmt / UnaryExpr / Declaration / Assignment )   
+  { return makeSelectCase(caseCl, stmts) }
+CommCase        "communication 'case'"          = "case" WS? caseCl:( ChanStmt / UnaryExpr / Assignment )   
   { return caseCl; }
                                                 / "default"                                   
   { return "DEFAULT"; }
@@ -480,31 +465,31 @@ CommCase        "comminucation 'case'"          = "case" WS? caseCl:( ChanStmt /
 // # 'return' statements ===================
 
 ReturnStmt      "'return' statement"            = "return" WS? expr:Expression?
-  { return { tag: "STMT", stmtType: "RETURN", expr } }
+  { return makeReturnStmt(expr) }
 
 // # 'break' statements ====================
 
 BreakStmt       "'break' statement"             = "break" WS? label:IDENT?
-  { return { tag: "STMT", stmtType: "BREAK", label } }
+  { return makeBreakStmt(label) }
 
 // # 'continue' statements =================
 
 ContinueStmt    "'continue' statement"          = "continue" WS? label:IDENT?
-  { return { tag: "STMT", stmtType: "CONTINUE", label } }
+  { return makeContStmt(label) }
 
 // # 'goto' statements =====================
 
 GotoStmt        "'goto' statement"              = "goto" WS? label:IDENT
-  { return { tag: "STMT", stmtType: "GOTO", label } }
+  { return makeGoToStmt(label) }
 
 // # 'fallthrough' statements ==============
 
 FallthroughStmt "'fallthrough' statement"       = "fallthrough"
-  { return { tag: "STMT", stmtType: "FALLTHROUGH" } }
+  { return makeFallthroughStmt() }
 
 // # 'defer' statements ====================
 
 DeferStmt       "'defer' statement"             = "defer" WS? expr:Expression
-  { return { tag: "STMT", stmtType: "DEFER", expr } }
+  { return makeDeferStmt(expr) }
 
 EOF             "end-of-file"                   = !.

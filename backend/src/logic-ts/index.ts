@@ -30,7 +30,7 @@ function makeArrayType<T extends AnyTypeObj>(len: ExprObj, inner: T) : ArrayType
 function makeChanType<T extends AnyTypeObj, M extends "DUAL" | "IN" | "OUT">(inner: T, mode: M) : ChanTypeObj<T, M> {
     return { tag: "TYPE", type: { base:"CHAN", inner, mode } };
 }
-function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj[]>(inputT: I, returnT: O) : FuncTypeObj<I, O> {
+function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj | null>(inputT: I, returnT: O) : FuncTypeObj<I, O> {
     return { tag: "TYPE", type: { base:"FUNC", inputT, returnT } };
 }
 
@@ -47,10 +47,10 @@ function makeBlock(stmts: StmtObj[]) : BlockObj {
 export type ConstDeclObj = {
     tag: "CONST_DECL";
     ident: string;
-    type: AnyTypeObj;
+    type: AnyTypeObj | null;
     val: ExprObj;
 }
-function makeConstDecl(ident: string, type: AnyTypeObj, val: ExprObj) : ConstDeclObj {
+function makeConstDecl(ident: string, type: AnyTypeObj | null, val: ExprObj) : ConstDeclObj {
     return { tag: "CONST_DECL", ident, type, val };
 }
 
@@ -95,7 +95,16 @@ function makeNilLiteralObj() : NilLiteralObj {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base:"NIL" } } };
 }
 
-export type AnyLiteralObj = BoolLiteralObj | IntLiteralObj | StrLiteralObj | NilLiteralObj
+export type FuncLiteralObj = {
+    tag: "LITERAL";
+    type: FuncTypeObj<AnyTypeObj[], AnyTypeObj | null>;
+    body: BlockObj;
+}
+function makeFuncLiteral(inputT: AnyTypeObj[], returnT: AnyTypeObj | null, body: BlockObj) : FuncLiteralObj {
+    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
+}
+
+export type AnyLiteralObj = BoolLiteralObj | IntLiteralObj | StrLiteralObj | NilLiteralObj | FuncLiteralObj
 
 export type SelectorObj = {
     tag: "SELECTOR";
@@ -248,28 +257,28 @@ function makeForStmt(pre: StmtObj | undefined, cond: ExprObj | undefined, post: 
 export type BreakStmtObj = {
     tag: "STMT";
     stmtType: "BREAK";
-    label?: string;
+    breakLabel?: string;
 }
-function makeBreakStmt() : BreakStmtObj {
-    return { tag: "STMT", stmtType: "BREAK" };
+function makeBreakStmt(breakLabel?: string) : BreakStmtObj {
+    return { tag: "STMT", stmtType: "BREAK", breakLabel };
 }
 
 export type ContStmtObj = {
     tag: "STMT";
     stmtType: "CONTINUE";
-    label?: string;
+    contLabel?: string;
 }
-function makeContStmt() : ContStmtObj {
-    return { tag: "STMT", stmtType: "CONTINUE" };
+function makeContStmt(contLabel?: string) : ContStmtObj {
+    return { tag: "STMT", stmtType: "CONTINUE", contLabel };
 }
 
 export type GotoStmtObj = {
     tag: "STMT";
     stmtType: "GOTO";
-    label: string;
+    gotoLabel: string;
 }
-function makeGoToStmt(label: string) : GotoStmtObj {
-    return { tag: "STMT", stmtType: "GOTO", label };
+function makeGoToStmt(gotoLabel: string) : GotoStmtObj {
+    return { tag: "STMT", stmtType: "GOTO", gotoLabel };
 }
 
 export type FallthroughStmtObj = {
@@ -283,19 +292,46 @@ function makeFallthroughStmt() : FallthroughStmtObj {
 export type DeferStmtObj = {
     tag: "STMT";
     stmtType: "DEFER";
-    stmt: CallObj;
+    stmt: StmtObj;
 }
-function makeDeferStmt(stmt: CallObj) : DeferStmtObj {
+function makeDeferStmt(stmt: StmtObj) : DeferStmtObj {
     return { tag: "STMT", stmtType: "DEFER", stmt };
 }
 
 export type GoStmtObj = {
     tag: "STMT";
     stmtType: "GO";
-    stmt: CallObj;
+    stmt: StmtObj;
 }
-function makeGoStmt(stmt: CallObj) : GoStmtObj {
+function makeGoStmt(stmt: StmtObj) : GoStmtObj {
     return { tag: "STMT", stmtType: "GO", stmt };
 }
 
-export type StmtObj = ExpressionStmtObj | ChanStmtObj | IncStmtObj | DecStmtObj | AssignmentStmtObj | IfStmtObj | SwitchStmtObj | ForStmtObj | BreakStmtObj | ContStmtObj | GotoStmtObj | FallthroughStmtObj | DeferStmtObj | GoStmtObj
+export type SelectStmtObj = {
+    tag: "STMT";
+    stmtType: "SELECT";
+    cases: SelectCaseObj[];
+}
+function makeSelectStmt(cases: SelectCaseObj[]) : SelectStmtObj {
+    return { tag: "STMT", stmtType: "SELECT", cases };
+}
+
+export type SelectCaseObj = {
+    tag: "SELECT_CASE";
+    comm: ChanStmtObj | UnaryExprObj | AssignmentStmtObj | "DEFAULT";
+    body: StmtObj[];
+}
+function makeSelectCase(comm: ChanStmtObj | UnaryExprObj | AssignmentStmtObj | "DEFAULT", body: StmtObj[]) : SelectCaseObj {
+    return { tag: "SELECT_CASE", comm, body };
+}
+
+export type ReturnStmtObj = {
+    tag: "STMT";
+    stmtType: "RETURN";
+    expr: ExprObj;
+}
+function makeReturnStmt(expr: ExprObj) : ReturnStmtObj {
+    return { tag: "STMT", stmtType: "RETURN", expr };
+}
+
+export type StmtObj = ExpressionStmtObj | ChanStmtObj | IncStmtObj | DecStmtObj | AssignmentStmtObj | IfStmtObj | SwitchStmtObj | SelectStmtObj | ForStmtObj | BreakStmtObj | ContStmtObj | GotoStmtObj | FallthroughStmtObj | DeferStmtObj | GoStmtObj | ReturnStmtObj
