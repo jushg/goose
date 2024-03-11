@@ -5,18 +5,31 @@
   "license": "MIT",
   "scripts": {
     "updateParser": "npm run updatePeggySource && peggy -o src/parser/peg/index.js --format es src/parser/peg/donotedit.peggy",
-    "updatePeggySource_transpileHelpersTs": "tsc src/parser/peggyHelpers.ts --module esnext",
+    "updatePeggySource_transpileHelpersTs": "tsc src/parser/peggyHelpers.ts --module nodenext",
     "updatePeggySource_wipeFile": "rm src/parser/peg/donotedit.peggy ; true",
     "updatePeggySource_buildFile": "npm run updatePeggySource_buildFile_fromHelperTs && npm run updatePeggySource_buildFile_fromPEG",
-    "updatePeggySource_buildFile_fromHelperTs": "echo '{{\n' > src/parser/peg/donotedit.peggy && cat src/parser/peggyHelpers.js | grep -v '^export' >> src/parser/peg/donotedit.peggy && echo '\n\n}}\n\n' >> src/parser/peg/donotedit.peggy ;",
+    "updatePeggySource_buildFile_fromHelperTs": "echo '{{\n' > src/parser/peg/donotedit.peggy && cat src/parser/peggyHelpers.js | grep -v '^export' | tail -n +3 >> src/parser/peg/donotedit.peggy && echo '\n\n}}\n\n' >> src/parser/peg/donotedit.peggy ;",
     "updatePeggySource_buildFile_fromPEG": "cat src/parser/peg/goose.peggy >> src/parser/peg/donotedit.peggy",
     "updatePeggySource_rmTranspiledFile": "rm src/parser/peggyHelpers.js",
-    "updatePeggySource": "npm run updatePeggySource_transpileHelpersTs && npm run updatePeggySource_wipeFile && npm run updatePeggySource_buildFile && npm run updatePeggySource_rmTranspiledFile"
+    "updatePeggySource": "npm run updatePeggySource_transpileHelpersTs && npm run updatePeggySource_wipeFile && npm run updatePeggySource_buildFile && npm run updatePeggySource_rmTranspiledFile",
+    "test": "npm run updateParser > /dev/null && tsc && jest"
   },
   "dependencies": {
     "peggy": "^4.0.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-typescript": "^7.23.3",
+    "@types/jest": "^29.5.12",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "tsc": "^2.0.4",
     "typescript": "^5.4.2"
+  },
+  "jest": {
+    "testMatch": [
+      "**/?(*.)+(spec|test).[j]s?(x)"
+    ]
   }
 }
