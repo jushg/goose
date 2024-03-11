@@ -1,5 +1,5 @@
 import { StmtObj } from '../parser';
-import { Instruction } from '../instructions/base';
+import { Instruction } from '../instruction/base';
 
 // Dummy function, just for testing.
 export function compile(s: StmtObj) {

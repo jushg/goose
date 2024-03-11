@@ -16,6 +16,7 @@ export type JobState = {
     RTS: any[]
 }
 
+
 export type MachineState = {
     // GLOBAL_ENV is the env that contains all the primitive functions
     GLOBAL_ENV: number
@@ -27,6 +28,8 @@ export type MachineState = {
     JOB_QUEUE: JobQueue
     //global finish flag -> end program if set
     IS_RUNNING: boolean
+    // Time slice for current job
+    TIME_SLICE: number
 }
 
 

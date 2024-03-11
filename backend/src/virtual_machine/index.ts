@@ -1,6 +1,7 @@
 import { ExecutionState, MachineState, JobState, JobQueue } from "../common/state"
-import { Instruction } from "../instructions/base"
+import { Instruction } from "../instruction/base"
 import { ProgramFile } from "../compiler"
+import { STANDARD_TIME_SLICE } from "../common/constant"
 
 // called whenever the machine is first run
 function initialize(entryIndex: number): ExecutionState {
@@ -17,7 +18,8 @@ function initialize(entryIndex: number): ExecutionState {
         HEAP: [],
         FREE: 0,
         JOB_QUEUE: new JobQueue,
-        IS_RUNNING: true
+        IS_RUNNING: true,
+        TIME_SLICE: STANDARD_TIME_SLICE
     }
 
     return {
@@ -27,9 +29,29 @@ function initialize(entryIndex: number): ExecutionState {
 
 }
 
+function isBlocked(curState: ExecutionState): boolean {
+    // Check if curJobState is block by another thread
+    return false
+}
+
+function isTimeout(curState: ExecutionState): boolean {
+    return curState.machineState.TIME_SLICE === 0
+}
+
 function executeStep(curState: ExecutionState, instructions: Instruction[]): ExecutionState {
     // TODO: Check details
+    if (isBlocked(curState) || isTimeout(curState)) {
+        let nextJob = curState.machineState.JOB_QUEUE.dequeue()
+        let curJob = curState.jobState
+        if(nextJob) {
+            curState.machineState.JOB_QUEUE.enqueue(curJob)
+            curState.jobState = nextJob
+            return curState
+        }
+    }
+
     let nextPCIndx = curState.jobState.PC
+    curState.machineState.TIME_SLICE--
     return instructions[nextPCIndx].execute(curState)
 }
 
