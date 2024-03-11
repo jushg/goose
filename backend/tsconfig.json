@@ -1,0 +1,18 @@
+{
+    "declaration": true,
+    "include": [
+        "src/logic-ts/index.ts"
+    ],
+    "buildOptions": {
+        "outDir": "src/logic-js",
+    },
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "es2020", // set to the *lowest* target you support
+        "strict": true,
+        "verbatimModuleSyntax": true,
+        "declaration": true,
+        "sourceMap": true,
+        "declarationMap": true
+    }
+}
