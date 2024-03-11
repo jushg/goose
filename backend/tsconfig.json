@@ -3,9 +3,6 @@
     "include": [
         "src/logic-ts/index.ts"
     ],
-    "buildOptions": {
-        "outDir": "src/logic-js",
-    },
     "compilerOptions": {
         "module": "ESNext",
         "target": "es2020",
