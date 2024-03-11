@@ -5,18 +5,18 @@
 
 // # Source file organization ==============
 
-TOPLEVEL     "source file"             = a:( TopLevelDecl BD )* EOF
+TOPLEVEL     "source file"             = BD a:( TopLevelDecl BD )* EOF
 	{ return a.map(aa => aa[0]); }
 
 // # Characters =============================
 
-NEWLINE        "newline"                 = [\n]* / [\r\n]*
+NEWLINE        "newline"                 = '\n' (WS/'\n')* / [\n]*
 LETTER         "letter"                  = [a-z]i
 DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD              "statement delimiter"          = WS? (SEMICOLON / NEWLINE) WS?
+BD              "statement delimiter"          = WS* (SEMICOLON / NEWLINE) WS*
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
@@ -240,7 +240,13 @@ FunctionLit     "function literal"              = "func" inputT:FnParamListType 
 
 // # Primary expressions ===================
 
-PrimaryExpr     "primary expression"            = a:Operand b:((Selector / Index / Arguments)*)
+PrimaryExpr     "primary expression"            = fn:("make"/"new") LPAREN WS? arg1:Type WS? rest:(COMMA WS? Expression WS?)* RPAREN
+    // Note that arg1 must be a type with `make` and `new`. This also means make, new are reserved and cannot be used as identifiers.
+  {
+    const args = [arg1, ...(rest.map(r => r[2]))]
+    return { tag: fn === "make" ? "MAKE" : "NEW", args }
+  }
+                                                / a:Operand b:((Selector / Index / Arguments)*)
   {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
     return b.reduce(primaryExprReduceHelper, a);
@@ -254,9 +260,8 @@ Index           "index in expression"           = LBRACK index:Expression RBRACK
 
 Arguments       "arguments"                     = LPAREN WS? RPAREN
   { return { tag: "CALL", args: [] } }
-                                                / LPAREN WS? arg1:(Expression/Type) WS? rest:(COMMA WS? Expression WS?)* RPAREN
+                                                / LPAREN WS? arg1:Expression WS? rest:(COMMA WS? Expression WS?)* RPAREN
   {
-    // Note that arg1 is allowed to be a type (e.g. with `make` and `new`).
     const args = [arg1, ...(rest.map(r => r[2]))]
     return { tag: "CALL", args }
   }

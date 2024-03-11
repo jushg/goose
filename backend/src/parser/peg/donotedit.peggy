@@ -10,46 +10,55 @@ function makeIntType() {
     return { tag: "TYPE", type: { base: "INT" } };
 }
 function makePtrType(inner) {
-    return { tag: "TYPE", type: { base: "PTR", inner: inner } };
+    return { tag: "TYPE", type: { base: "PTR", inner } };
 }
 function makeArrayType(len, inner) {
-    return { tag: "TYPE", type: { base: "ARRAY", len: len, inner: inner } };
+    return { tag: "TYPE", type: { base: "ARRAY", len, inner } };
 }
 function makeChanType(inner, mode) {
-    return { tag: "TYPE", type: { base: "CHAN", inner: inner, mode: mode } };
+    return { tag: "TYPE", type: { base: "CHAN", inner, mode } };
+}
+function makeChanDualType(inner) {
+    return makeChanType(inner, "DUAL");
+}
+function makeChanInType(inner) {
+    return makeChanType(inner, "IN");
+}
+function makeChanOutType(inner) {
+    return makeChanType(inner, "OUT");
 }
 function makeFunctionType(inputT, returnT) {
-    return { tag: "TYPE", type: { base: "FUNC", inputT: inputT, returnT: returnT } };
+    return { tag: "TYPE", type: { base: "FUNC", inputT, returnT } };
 }
 function makeIdent(val) {
-    return { tag: "IDENT", type: null, val: val };
+    return { tag: "IDENT", type: null, val };
 }
 function makeBlock(stmts) {
-    return { tag: "BLOCK", stmts: stmts };
+    return { tag: "BLOCK", stmts };
 }
 function makeConstDecl(ident, type, val) {
-    return { tag: "CONST_DECL", ident: ident, type: type, val: val };
+    return { tag: "CONST_DECL", ident, type, val };
 }
 function makeVarDecl(ident, type, val) {
-    return { tag: "VAR_DECL", ident: ident, type: type, val: val };
+    return { tag: "VAR_DECL", ident, type, val };
 }
 function makeFuncDecl(ident, inputT, returnT, body) {
-    return { tag: "FUNC_DECL", ident: ident, inputT: inputT, returnT: returnT, body: body };
+    return { tag: "FUNC_DECL", ident, inputT, returnT, body };
 }
 function makeBoolLiteral(val) {
-    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val: val };
+    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
 }
 function makeIntLiteralObj(val) {
-    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "INT" } }, val: val };
+    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "INT" } }, val };
 }
 function makeStrLiteralObj(val) {
-    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "STR" } }, val: val };
+    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "STR" } }, val };
 }
 function makeNilLiteralObj() {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "NIL" } } };
 }
 function makeFuncLiteral(inputT, returnT, body) {
-    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body: body };
+    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
 }
 function primaryExprReduceHelper(expr, op) {
     if (op.tag === "SELECTOR") {
@@ -66,64 +75,64 @@ function primaryExprReduceHelper(expr, op) {
     }
 }
 function makeUnaryExpr(expr, op) {
-    return { tag: "UNARY_EXPR", expr: expr, op: op };
+    return { tag: "UNARY_EXPR", expr, op };
 }
 function makeBinaryExpr(lhs, op, rhs) {
-    return { tag: "BINARY_EXPR", lhs: lhs, op: op, rhs: rhs };
+    return { tag: "BINARY_EXPR", lhs, op, rhs };
 }
 function makeExpressionStmt(expr) {
-    return { tag: "STMT", stmtType: "EXPR", expr: expr };
+    return { tag: "STMT", stmtType: "EXPR", expr };
 }
 function makeChanStmt(lhs, rhs) {
-    return { tag: "STMT", stmtType: "SEND", lhs: lhs, rhs: rhs };
+    return { tag: "STMT", stmtType: "SEND", lhs, rhs };
 }
 function makeIncStmt(expr) {
-    return { tag: "STMT", stmtType: "INC", expr: expr };
+    return { tag: "STMT", stmtType: "INC", expr };
 }
 function makeDecStmt(expr) {
-    return { tag: "STMT", stmtType: "DEC", expr: expr };
+    return { tag: "STMT", stmtType: "DEC", expr };
 }
 function makeAssignmentStmt(lhs, op, rhs) {
-    return { tag: "STMT", stmtType: "ASSIGN", lhs: lhs, rhs: rhs, op: op };
+    return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs, op };
 }
 function makeIfStmt(pre, cond, body, elseBody) {
-    return { tag: "STMT", stmtType: "IF", pre: pre, cond: cond, body: body, elseBody: elseBody };
+    return { tag: "STMT", stmtType: "IF", pre, cond, body, elseBody };
 }
 function makeSwitchStmt(pre, cond, cases) {
-    return { tag: "STMT", stmtType: "SWITCH", pre: pre, cond: cond, cases: cases };
+    return { tag: "STMT", stmtType: "SWITCH", pre, cond, cases };
 }
 function makeCaseClause(caseExpr, body) {
-    return { tag: "CASE_CLAUSE", case: caseExpr, body: body };
+    return { tag: "CASE_CLAUSE", case: caseExpr, body };
 }
 function makeForStmt(pre, cond, post, body) {
-    return { tag: "STMT", stmtType: "FOR", pre: pre, cond: cond, post: post, body: body };
+    return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
 }
 function makeBreakStmt(breakLabel) {
-    return { tag: "STMT", stmtType: "BREAK", breakLabel: breakLabel };
+    return { tag: "STMT", stmtType: "BREAK", breakLabel };
 }
 function makeContStmt(contLabel) {
-    return { tag: "STMT", stmtType: "CONTINUE", contLabel: contLabel };
+    return { tag: "STMT", stmtType: "CONTINUE", contLabel };
 }
 function makeGoToStmt(gotoLabel) {
-    return { tag: "STMT", stmtType: "GOTO", gotoLabel: gotoLabel };
+    return { tag: "STMT", stmtType: "GOTO", gotoLabel };
 }
 function makeFallthroughStmt() {
     return { tag: "STMT", stmtType: "FALLTHROUGH" };
 }
 function makeDeferStmt(stmt) {
-    return { tag: "STMT", stmtType: "DEFER", stmt: stmt };
+    return { tag: "STMT", stmtType: "DEFER", stmt };
 }
 function makeGoStmt(stmt) {
-    return { tag: "STMT", stmtType: "GO", stmt: stmt };
+    return { tag: "STMT", stmtType: "GO", stmt };
 }
 function makeSelectStmt(cases) {
-    return { tag: "STMT", stmtType: "SELECT", cases: cases };
+    return { tag: "STMT", stmtType: "SELECT", cases };
 }
 function makeSelectCase(comm, body) {
-    return { tag: "SELECT_CASE", comm: comm, body: body };
+    return { tag: "SELECT_CASE", comm, body };
 }
 function makeReturnStmt(expr) {
-    return { tag: "STMT", stmtType: "RETURN", expr: expr };
+    return { tag: "STMT", stmtType: "RETURN", expr };
 }
 
 
@@ -137,18 +146,18 @@ function makeReturnStmt(expr) {
 
 // # Source file organization ==============
 
-TOPLEVEL     "source file"             = a:( TopLevelDecl BD )* EOF
+TOPLEVEL     "source file"             = BD a:( TopLevelDecl BD )* EOF
 	{ return a.map(aa => aa[0]); }
 
 // # Characters =============================
 
-NEWLINE        "newline"                 = [\n]* / [\r\n]*
+NEWLINE        "newline"                 = '\n' (WS/'\n')* / [\n]*
 LETTER         "letter"                  = [a-z]i
 DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD              "statement delimiter"          = WS? (SEMICOLON / NEWLINE) WS?
+BD              "statement delimiter"          = WS* (SEMICOLON / NEWLINE) WS*
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
@@ -372,7 +381,13 @@ FunctionLit     "function literal"              = "func" inputT:FnParamListType 
 
 // # Primary expressions ===================
 
-PrimaryExpr     "primary expression"            = a:Operand b:((Selector / Index / Arguments)*)
+PrimaryExpr     "primary expression"            = fn:("make"/"new") LPAREN WS? arg1:Type WS? rest:(COMMA WS? Expression WS?)* RPAREN
+    // Note that arg1 must be a type with `make` and `new`. This also means make, new are reserved and cannot be used as identifiers.
+  {
+    const args = [arg1, ...(rest.map(r => r[2]))]
+    return { tag: fn === "make" ? "MAKE" : "NEW", args }
+  }
+                                                / a:Operand b:((Selector / Index / Arguments)*)
   {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
     return b.reduce(primaryExprReduceHelper, a);
@@ -386,9 +401,8 @@ Index           "index in expression"           = LBRACK index:Expression RBRACK
 
 Arguments       "arguments"                     = LPAREN WS? RPAREN
   { return { tag: "CALL", args: [] } }
-                                                / LPAREN WS? arg1:(Expression/Type) WS? rest:(COMMA WS? Expression WS?)* RPAREN
+                                                / LPAREN WS? arg1:Expression WS? rest:(COMMA WS? Expression WS?)* RPAREN
   {
-    // Note that arg1 is allowed to be a type (e.g. with `make` and `new`).
     const args = [arg1, ...(rest.map(r => r[2]))]
     return { tag: "CALL", args }
   }

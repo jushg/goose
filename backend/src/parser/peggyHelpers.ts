@@ -30,6 +30,15 @@ function makeArrayType<T extends AnyTypeObj>(len: ExprObj, inner: T) : ArrayType
 function makeChanType<T extends AnyTypeObj, M extends "DUAL" | "IN" | "OUT">(inner: T, mode: M) : ChanTypeObj<T, M> {
     return { tag: "TYPE", type: { base:"CHAN", inner, mode } };
 }
+function makeChanDualType<T extends AnyTypeObj>(inner: T) : ChanTypeObj<T, "DUAL"> {
+    return makeChanType(inner, "DUAL");
+}
+function makeChanInType<T extends AnyTypeObj>(inner: T) : ChanTypeObj<T, "IN"> {
+    return makeChanType(inner, "IN");
+}
+function makeChanOutType<T extends AnyTypeObj>(inner: T) : ChanTypeObj<T, "OUT"> {
+    return makeChanType(inner, "OUT");
+} 
 function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj | null>(inputT: I, returnT: O) : FuncTypeObj<I, O> {
     return { tag: "TYPE", type: { base:"FUNC", inputT, returnT } };
 }
@@ -122,6 +131,17 @@ export type CallObj = {
     args: ExprObj[];
 }
 
+export type MakeCallObj = {
+    tag: "MAKE";
+    type: AnyTypeObj;
+    len: ExprObj | null;
+}
+export type NewCallObj = {
+    tag: "New";
+    type: AnyTypeObj;
+    len: ExprObj | null;
+}
+
 function primaryExprReduceHelper(expr: ExprObj, op: any) : SelectorObj | IndexObj | CallObj {
     if (op.tag === "SELECTOR") {
         return { tag: "SELECTOR", obj: expr, ident: op.ident };
@@ -153,7 +173,7 @@ function makeBinaryExpr(lhs: ExprObj, op: string, rhs: ExprObj) {
     return { tag: "BINARY_EXPR", lhs, op, rhs };
 }
 
-export type ExprObj = IdentObj | AnyLiteralObj | SelectorObj | IndexObj | CallObj | UnaryExprObj | BinaryExprObj
+export type ExprObj = IdentObj | AnyLiteralObj | SelectorObj | IndexObj | CallObj | UnaryExprObj | BinaryExprObj | MakeCallObj | NewCallObj
 
 export type ExpressionStmtObj = {
     tag: "STMT";
