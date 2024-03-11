@@ -18,11 +18,10 @@ func main() {
       tag: 'FUNC_DECL',
       ident: {
         tag: 'IDENT',
-        type: null,
         val: 'main'
       },
       inputT: [],
-      returnT: [],
+      returnT: null,
       body: {
         tag: 'BLOCK',
         stmts: [
@@ -31,7 +30,6 @@ func main() {
             stmtType: 'ASSIGN',
             lhs: {
               tag: 'IDENT',
-              type: null,
               val: 'messages'
             },
             rhs: {
@@ -66,7 +64,7 @@ func main() {
                   type: {
                     base: 'FUNC',
                     inputT: [],
-                    returnT: []
+                    returnT: null
                   }
                 },
                 body: {
@@ -79,7 +77,6 @@ func main() {
                         tag: 'BINARY_EXPR',
                         lhs: {
                           tag: 'IDENT',
-                          type: null,
                           val: 'messages'
                         },
                         op: '<',
@@ -110,14 +107,12 @@ func main() {
             stmtType: 'ASSIGN',
             lhs: {
               tag: 'IDENT',
-              type: null,
               val: 'msg'
             },
             rhs: {
               tag: 'UNARY_EXPR',
               expr: {
                 tag: 'IDENT',
-                type: null,
                 val: 'messages'
               },
               op: '<-'
@@ -131,13 +126,11 @@ func main() {
               tag: 'CALL',
               func: {
                 tag: 'IDENT',
-                type: null,
                 val: 'Println'
               },
               args: [
                 {
                   tag: 'IDENT',
-                  type: null,
                   val: 'msg'
                 }
               ]
