@@ -4,11 +4,14 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "updateParser": "npm run updatePeggySource && peggy -o src/parser/index.js --format es src/parser/donotedit.peggy",
-    "transpileLogicTs": "tsc src/logic-ts/index.ts --module esnext",
-    "wipePeggySource": "rm src/parser/donotedit.peggy ; true",
-    "updatePeggySourceHelper": "echo '{{\n' > src/parser/donotedit.peggy && cat src/logic-ts/index.js | grep -v '^export' >> src/parser/donotedit.peggy && echo '\n\n}}\n\n' >> src/parser/donotedit.peggy ; cat src/parser/goose.peggy >> src/parser/donotedit.peggy",
-    "updatePeggySource": "npm run transpileLogicTs && npm run wipePeggySource && npm run updatePeggySourceHelper && rm src/logic-ts/index.js"
+    "updateParser": "npm run updatePeggySource && peggy -o src/parser/peg/index.js --format es src/parser/peg/donotedit.peggy",
+    "updatePeggySource_transpileHelpersTs": "tsc src/parser/peggyHelpers.ts --module esnext",
+    "updatePeggySource_wipeFile": "rm src/parser/peg/donotedit.peggy ; true",
+    "updatePeggySource_buildFile": "npm run updatePeggySource_buildFile_fromHelperTs && npm run updatePeggySource_buildFile_fromPEG",
+    "updatePeggySource_buildFile_fromHelperTs": "echo '{{\n' > src/parser/peg/donotedit.peggy && cat src/parser/peggyHelpers.js | grep -v '^export' >> src/parser/peg/donotedit.peggy && echo '\n\n}}\n\n' >> src/parser/peg/donotedit.peggy ;",
+    "updatePeggySource_buildFile_fromPEG": "cat src/parser/peg/goose.peggy >> src/parser/peg/donotedit.peggy",
+    "updatePeggySource_rmTranspiledFile": "rm src/parser/peggyHelpers.js",
+    "updatePeggySource": "npm run updatePeggySource_transpileHelpersTs && npm run updatePeggySource_wipeFile && npm run updatePeggySource_buildFile && npm run updatePeggySource_rmTranspiledFile"
   },
   "dependencies": {
     "peggy": "^4.0.2"
