@@ -4,7 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "updateParser": "peggy -o src/parser/index.js --format es src/parser/goose.peggy"
+    "updateParser": "npm run updatePeggySource && peggy -o src/parser/index.js --format es src/parser/donotedit.peggy",
+    "wipePeggySource": "rm src/parser/donotedit.peggy ; true",
+    "updatePeggySourceHelper": "echo '{{\n' > src/parser/donotedit.peggy && cat src/logic-ts/index.js | grep -v '^export' >> src/parser/donotedit.peggy && echo '\n\n}}\n\n' >> src/parser/donotedit.peggy ; cat src/parser/goose.peggy >> src/parser/donotedit.peggy",
+    "updatePeggySource": "tsc && npm run wipePeggySource && npm run updatePeggySourceHelper && rm src/logic-ts/*.js* src/logic-ts/*.d.ts*"
   },
   "dependencies": {
     "peggy": "^4.0.2"

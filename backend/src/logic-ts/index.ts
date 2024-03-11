@@ -12,35 +12,35 @@ export type FuncTypeObj<I, O> = TypeObj<{ base: "FUNC"; inputT: I; returnT: O }>
 export type AnyTypeObj = NilTypeObj | BoolTypeObj | IntTypeObj | StrTypeObj | PtrTypeObj<any> | ArrayTypeObj<any> | ChanTypeObj<any> | FuncTypeObj<any, any>
 export type UnknownTypeObj = TypeObj<{ base: "UNKNOWN" }>
 
-export function makeStringType() : StrTypeObj {
+function makeStringType() : StrTypeObj {
     return { tag: "TYPE", type: { base:"STR" } };
 }
-export function makeBoolType() : BoolTypeObj {
+function makeBoolType() : BoolTypeObj {
     return { tag: "TYPE", type: { base:"BOOL" } };
 }
-export function makeIntType() : IntTypeObj {
+function makeIntType() : IntTypeObj {
     return { tag: "TYPE", type: { base:"INT" } };
 }
-export function makePtrType<T extends AnyTypeObj>(inner: T) : PtrTypeObj<T> {
+function makePtrType<T extends AnyTypeObj>(inner: T) : PtrTypeObj<T> {
     return { tag: "TYPE", type: { base:"PTR", inner } };
 }
-export function makeArrayType<T extends AnyTypeObj>(len: ExprObj, inner: T) : ArrayTypeObj<T> {
+function makeArrayType<T extends AnyTypeObj>(len: ExprObj, inner: T) : ArrayTypeObj<T> {
     return { tag: "TYPE", type: { base:"ARRAY", len, inner } };
 }
-export function makeChanType<T extends AnyTypeObj, M extends "DUAL" | "IN" | "OUT">(inner: T, mode: M) : ChanTypeObj<T, M> {
+function makeChanType<T extends AnyTypeObj, M extends "DUAL" | "IN" | "OUT">(inner: T, mode: M) : ChanTypeObj<T, M> {
     return { tag: "TYPE", type: { base:"CHAN", inner, mode } };
 }
-export function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj[]>(inputT: I, returnT: O) : FuncTypeObj<I, O> {
+function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj[]>(inputT: I, returnT: O) : FuncTypeObj<I, O> {
     return { tag: "TYPE", type: { base:"FUNC", inputT, returnT } };
 }
 
 export type IdentObj = { tag: "IDENT", type: null | AnyTypeObj, val: string }
-export function makeIdent(val: string) : IdentObj {
+function makeIdent(val: string) : IdentObj {
     return { tag:"IDENT", type: null, val };
 }
 
 export type BlockObj = { tag: "BLOCK", stmts: StmtObj[] }
-export function makeBlock(stmts: StmtObj[]) : BlockObj {
+function makeBlock(stmts: StmtObj[]) : BlockObj {
     return { tag: "BLOCK", stmts };
 }
 
@@ -50,7 +50,7 @@ export type ConstDeclObj = {
     type: AnyTypeObj;
     val: ExprObj;
 }
-export function makeConstDecl(ident: string, type: AnyTypeObj, val: ExprObj) : ConstDeclObj {
+function makeConstDecl(ident: string, type: AnyTypeObj, val: ExprObj) : ConstDeclObj {
     return { tag: "CONST_DECL", ident, type, val };
 }
 
@@ -60,7 +60,7 @@ export type VarDeclObj = {
     type: AnyTypeObj;
     val: ExprObj | null;
 }
-export function makeVarDecl(ident: string, type: AnyTypeObj, val: ExprObj | null) : VarDeclObj {
+function makeVarDecl(ident: string, type: AnyTypeObj, val: ExprObj | null) : VarDeclObj {
     return { tag: "VAR_DECL", ident, type, val };
 }
 
@@ -71,27 +71,27 @@ export type FuncDeclObj = {
     returnT: AnyTypeObj[];
     body: BlockObj;
 }
-export function makeFuncDecl(ident: string, inputT: AnyTypeObj[], returnT: AnyTypeObj[], body: BlockObj) : FuncDeclObj {
+function makeFuncDecl(ident: string, inputT: AnyTypeObj[], returnT: AnyTypeObj[], body: BlockObj) : FuncDeclObj {
     return { tag: "FUNC_DECL", ident, inputT, returnT, body };
 }
 
 export type BoolLiteralObj = { tag: "LITERAL", type: BoolTypeObj, val: boolean }
-export function makeBoolLiteral(val: boolean) : BoolLiteralObj {
+function makeBoolLiteral(val: boolean) : BoolLiteralObj {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base:"BOOL" } }, val };
 }
 
 export type IntLiteralObj = { tag: "LITERAL", type: IntTypeObj, val: number }
-export function makeIntLiteralObj(val: number) : IntLiteralObj {
+function makeIntLiteralObj(val: number) : IntLiteralObj {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base:"INT" } }, val };
 }
 
 export type StrLiteralObj = { tag: "LITERAL", type: StrTypeObj, val: string }
-export function makeStrLiteralObj(val: string) : StrLiteralObj {
+function makeStrLiteralObj(val: string) : StrLiteralObj {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base:"STR" } }, val };
 }
 
 export type NilLiteralObj = { tag: "LITERAL", type: NilTypeObj  }
-export function makeNilLiteralObj() : NilLiteralObj {
+function makeNilLiteralObj() : NilLiteralObj {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base:"NIL" } } };
 }
 
@@ -113,7 +113,7 @@ export type CallObj = {
     args: ExprObj[];
 }
 
-export function primaryExprReduceHelper(expr: ExprObj, op: any) : SelectorObj | IndexObj | CallObj {
+function primaryExprReduceHelper(expr: ExprObj, op: any) : SelectorObj | IndexObj | CallObj {
     if (op.tag === "SELECTOR") {
         return { tag: "SELECTOR", obj: expr, ident: op.ident };
     } else if (op.tag === "INDEX") {
@@ -130,7 +130,7 @@ export type UnaryExprObj = {
     op: string;
     expr: ExprObj;
 }
-export function makeUnaryExpr(expr: ExprObj, op: string) {
+function makeUnaryExpr(expr: ExprObj, op: string) {
     return { tag: "UNARY_EXPR", expr, op };
 }
 
@@ -140,7 +140,7 @@ export type BinaryExprObj = {
     lhs: ExprObj;
     rhs: ExprObj;
 }
-export function makeBinaryExpr(lhs: ExprObj, op: string, rhs: ExprObj) {
+function makeBinaryExpr(lhs: ExprObj, op: string, rhs: ExprObj) {
     return { tag: "BINARY_EXPR", lhs, op, rhs };
 }
 
@@ -152,7 +152,7 @@ export type ExpressionStmtObj = {
     expr: ExprObj;
     label?: string;
 }
-export function makeExpressionStmt(expr: ExprObj) : ExpressionStmtObj {
+function makeExpressionStmt(expr: ExprObj) : ExpressionStmtObj {
     return { tag: "STMT", stmtType: "EXPR", expr };
 }
 
@@ -163,7 +163,7 @@ export type ChanStmtObj = {
     rhs: ExprObj;
     label?: string;
 }
-export function makeChanStmt(lhs: ExprObj, rhs: ExprObj) : ChanStmtObj {
+function makeChanStmt(lhs: ExprObj, rhs: ExprObj) : ChanStmtObj {
     return { tag: "STMT", stmtType: "SEND", lhs, rhs };
 }
 
@@ -173,7 +173,7 @@ export type IncStmtObj = {
     expr: ExprObj;
     label?: string;
 }
-export function makeIncStmt(expr: ExprObj) : IncStmtObj {
+function makeIncStmt(expr: ExprObj) : IncStmtObj {
     return { tag: "STMT", stmtType: "INC", expr };
 }
 export type DecStmtObj = { 
@@ -182,7 +182,7 @@ export type DecStmtObj = {
     expr: ExprObj;
     label?: string;
 }
-export function makeDecStmt(expr: ExprObj) : DecStmtObj {
+function makeDecStmt(expr: ExprObj) : DecStmtObj {
     return { tag: "STMT", stmtType: "DEC", expr };
 }
 
@@ -194,7 +194,7 @@ export type AssignmentStmtObj = {
     op: "=" | ":=";
     label?: string;
 }
-export function makeAssignmentStmt(lhs: ExprObj, op: "=" | ":=", rhs: ExprObj) : AssignmentStmtObj {
+function makeAssignmentStmt(lhs: ExprObj, op: "=" | ":=", rhs: ExprObj) : AssignmentStmtObj {
     return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs, op };
 }
 
@@ -207,7 +207,7 @@ export type IfStmtObj = {
     elseBody?: BlockObj | IfStmtObj;
     label?: string;
 }
-export function makeIfStmt(pre: ExprObj | undefined, cond: ExprObj, body: BlockObj, elseBody: BlockObj | IfStmtObj | undefined) : IfStmtObj {
+function makeIfStmt(pre: ExprObj | undefined, cond: ExprObj, body: BlockObj, elseBody: BlockObj | IfStmtObj | undefined) : IfStmtObj {
     return { tag: "STMT", stmtType: "IF", pre, cond, body, elseBody };
 }
 
@@ -219,7 +219,7 @@ export type SwitchStmtObj = {
     cases: CaseClauseObj[];
     label?: string;
 }
-export function makeSwitchStmt(pre: ExprObj | undefined, cond: ExprObj, cases: CaseClauseObj[]) : SwitchStmtObj {
+function makeSwitchStmt(pre: ExprObj | undefined, cond: ExprObj, cases: CaseClauseObj[]) : SwitchStmtObj {
     return { tag: "STMT", stmtType: "SWITCH", pre, cond, cases };
 }
 
@@ -228,7 +228,7 @@ export type CaseClauseObj = {
     case: ExprObj | "DEFAULT";
     body: StmtObj[]
 }
-export function makeCaseClause(caseExpr: ExprObj | "DEFAULT", body: StmtObj[]) : CaseClauseObj {
+function makeCaseClause(caseExpr: ExprObj | "DEFAULT", body: StmtObj[]) : CaseClauseObj {
     return { tag: "CASE_CLAUSE", case: caseExpr, body };
 }
 
@@ -241,7 +241,7 @@ export type ForStmtObj = {
     body: BlockObj;
     label?: string;
 }
-export function makeForStmt(pre: StmtObj | undefined, cond: ExprObj | undefined, post: StmtObj | undefined, body: BlockObj) : ForStmtObj {
+function makeForStmt(pre: StmtObj | undefined, cond: ExprObj | undefined, post: StmtObj | undefined, body: BlockObj) : ForStmtObj {
     return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
 }
 
@@ -250,7 +250,7 @@ export type BreakStmtObj = {
     stmtType: "BREAK";
     label?: string;
 }
-export function makeBreakStmt() : BreakStmtObj {
+function makeBreakStmt() : BreakStmtObj {
     return { tag: "STMT", stmtType: "BREAK" };
 }
 
@@ -259,7 +259,7 @@ export type ContStmtObj = {
     stmtType: "CONTINUE";
     label?: string;
 }
-export function makeContStmt() : ContStmtObj {
+function makeContStmt() : ContStmtObj {
     return { tag: "STMT", stmtType: "CONTINUE" };
 }
 
@@ -268,7 +268,7 @@ export type GotoStmtObj = {
     stmtType: "GOTO";
     label: string;
 }
-export function makeGoToStmt(label: string) : GotoStmtObj {
+function makeGoToStmt(label: string) : GotoStmtObj {
     return { tag: "STMT", stmtType: "GOTO", label };
 }
 
@@ -276,7 +276,7 @@ export type FallthroughStmtObj = {
     tag: "STMT";
     stmtType: "FALLTHROUGH";
 }
-export function makeFallthroughStmt() : FallthroughStmtObj {
+function makeFallthroughStmt() : FallthroughStmtObj {
     return { tag: "STMT", stmtType: "FALLTHROUGH" };
 }
 
@@ -285,7 +285,7 @@ export type DeferStmtObj = {
     stmtType: "DEFER";
     stmt: CallObj;
 }
-export function makeDeferStmt(stmt: CallObj) : DeferStmtObj {
+function makeDeferStmt(stmt: CallObj) : DeferStmtObj {
     return { tag: "STMT", stmtType: "DEFER", stmt };
 }
 
@@ -294,7 +294,7 @@ export type GoStmtObj = {
     stmtType: "GO";
     stmt: CallObj;
 }
-export function makeGoStmt(stmt: CallObj) : GoStmtObj {
+function makeGoStmt(stmt: CallObj) : GoStmtObj {
     return { tag: "STMT", stmtType: "GO", stmt };
 }
 

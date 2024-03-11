@@ -140,7 +140,7 @@ COMMENT_MULTI     "multiline-comment"           = "/*" content:( !"*/" . )* "*/"
 // # Identifiers ============================
 
 IDENT          "identifier"              = x:LETTER y:( LETTER / DIGIT / UBAR )*
-  { return { tag:"IDENT", type: undefined, val: x + y.join('') } }
+  { return makeIdent(x + y.join('')); }
 
 // # Types ==================================
 
@@ -149,7 +149,7 @@ Type            "type"                          = CompoundType
                                                 / TypeName
 
 TypeName        "type name"                     = val:( 'string' / 'int' / 'bool')
- { return { tag: "TYPE", type: { base: 'BASE', type: val } } }
+ { return val == 'string' ? makeStringType() : val == 'int' ? makeIntType() : makeBoolType()}
 
 CompoundType     "type literal"                  = ArrayType
                                                 / ChannelType
@@ -157,21 +157,21 @@ CompoundType     "type literal"                  = ArrayType
                                                 / PointerType
 
 PointerType 	"pointer type" 					= ASTERISK inner:Type
-	{ return { tag: "TYPE", type: { base: "PTR", inner } } }
+	{ return makePtrType(inner); }
 
 ArrayType       "array type"                    = LBRACK len:Expression RBRACK elementType:Type
-	{ return { tag: "TYPE", type: { base: "ARRAY", len, inner } } }
+	{ return makeArrayType(len, elementType);}
 
 ChannelType     "channel type"                  = ChannelOutType / ChannelInType / ChannelDualType
 
 ChannelDualType     "chan-dual type"                  = "chan" WS inner:Type
-    { return { tag: "TYPE", type:{ base: "CHAN", mode: 'DUAL', inner } } }  
+    { return makeChanDualType(inner) }  
 
 ChannelOutType     "chan-out type"                  = ARROW WS? "chan" WS inner:Type
-    { return { tag: "TYPE", type:{ base: "CHAN", mode: 'OUT', inner } } }  
+    { return makeChanOutType(inner) }  
 
 ChannelInType     "chan-in type"                  = "chan" WS? ARROW WS? inner:Type
-	{ return { tag: "TYPE", type:{ base: "CHAN", mode: 'IN', inner } } }  
+	{ return makeChanInType(inner) }  
 
 FunctionType      "function type"                 = "func" WS? inputT:FnParamListType WS? returnT:(Type?)
   { return { tag: "TYPE", type:{ base: "FUNC", inputT, returnT: returnT ?? [] } } }
@@ -221,7 +221,10 @@ Literal         "literal"                       = IntegerLit
                                                 / FunctionLit
                                                 / BoolLit
 
-BoolLit        "bool literal"            = "true" / "false"
+NilLit          "nil literal"                  = "nil"
+  { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'NIL'}, val: 'nil' } }
+
+BoolLit        "bool literal"            ="true" / "false"
   { return { tag: 'LITERAL', type: { base: 'BASE', inner: 'BOOL'}, val: text } }
 
 IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
@@ -247,18 +250,18 @@ PrimaryExpr     "primary expression"            = a:Operand b:((Selector / Index
   }
 
 Selector        "selector in expression"        = DOT ident:IDENT
-  { return { tag: "SELECTOR", ident, expr: null /* to be filled when parsing PrimaryExpr */ } }
+  { return { tag: "SELECTOR", ident } }
 
 Index           "index in expression"           = LBRACK index:Expression RBRACK
-  { return { tag: "INDEXOR", index, expr: null /* to be filled when parsing PrimaryExpr */ } }
+  { return { tag: "INDEX", index } }
 
 Arguments       "arguments"                     = LPAREN WS? RPAREN
-  { return { tag: "CALLER", args: [], expr: null /* to be filled when parsing PrimaryExpr */ } }
+  { return { tag: "CALL", args: [] } }
                                                 / LPAREN WS? arg1:(Expression/Type) WS? rest:(COMMA WS? Expression WS?)* RPAREN
   {
     // Note that arg1 is allowed to be a type (e.g. with `make` and `new`).
     const args = [arg1, ...(rest.map(r => r[2]))]
-    return { tag: "CALLER", args, expr: null /* to be filled when parsing PrimaryExpr */ }
+    return { tag: "CALL", args }
   }
 
 // # Operators ============================
@@ -289,21 +292,14 @@ UnaryExpr       "unary expression"              = b:(unary_op  WS?)* a:PrimaryEx
     // form statements (E.g. p++ +p counts as two statements 'p++' and '+p').
     // All unary operators are right-associative, and pre-fix.
     b = b.map(bb => bb[0]).reverse();
-    return b.reduce((acc, curr) => {
-      curr.expr = acc;
-      return curr;
-    }, a);
+    return b.reduce(makeUnaryExpr, a);
   }
 
 // We use this to avoid left-recursion failure in the binary operators, and to enforce operator precedence.
 BinaryExprL5    "binary expression level 5"     = a:UnaryExpr WS? b:(mul_op WS? UnaryExpr WS?)*
   {
     // Note the '*' makes a standalone UnaryExpr a valid BinaryExprL5.
-    return b.reduce((acc, curr) => {
-      curr = { tag: "BINARY_OP", op: curr[0], lhs:null, rhs: curr[2] }
-      curr.lhs = acc;
-      return curr;
-    }, a);
+    return b.reduce((acc, curr) => makeBinaryExpr(acc, curr[0], curr[2]), a);
   }
   
 BinaryExprL4    "binary expression level 4"     = a:BinaryExprL5 WS? b:(add_op WS? BinaryExprL5 WS?)*
@@ -343,19 +339,19 @@ BinaryExprL1    "binary expression level 1"     = a:BinaryExprL2 WS? b:(LOR WS? 
   }
   
 unary_op        "unary operator"                = PLUS          // "+"
-  { return { tag: "UNARY_OP", op: '+', expr: null } }
+  { return '+' }
                                                 / MINUS         // "-"
-  { return { tag: "UNARY_OP", op: '-', expr: null } }
+  { return '-' }
                                                 / NOT           // "!"
-  { return { tag: "UNARY_OP", op: '!', expr: null } }
+  { return '!' }
                                                 / NEG           // "^"
-  { return { tag: "UNARY_OP", op: '^', expr: null } }
+  { return '^' }
                                                 / ADDR          // "*"
-  { return { tag: "UNARY_OP", op: '&', expr: null } }
+  { return '&' }
                                                 / REFR          // "&"
-  { return { tag: "UNARY_OP", op: '*', expr: null } }                                               
+  { return '*' }                                               
                                                 / ARROW         // "<-"
-  { return { tag: "UNARY_OP", op: '<-', expr: null } }
+  { return '<-' }
 
 /*
 binary_op       "binary operator"               = mul_op
@@ -401,7 +397,8 @@ Statement       "statement"                     = Declaration
                                                 / SelectStmt
                                                 / ForStmt
                                                 / DeferStmt
-                                                / SendStmt
+                                                / GoStmt
+                                                / ChanStmt
                                                 / IncDecStmt
                                                 / Assignment
                                                 / ExpressionStmt
@@ -423,8 +420,8 @@ ExpressionStmt  "expression statement"          = expr:Expression
 
 // # Send statements ======================
 
-SendStmt        "send-statement"                = lhs:Expression? WS? ARROW WS? rhs:Expression
-  { return { tag: "STMT", stmtType: "SEND", lhs, rhs } }
+ChanStmt        "chan-statement"                = lhs:Expression? WS? ARROW WS? rhs:Expression
+  { return { tag: "STMT", stmtType: "CHAN", lhs, rhs } }
 
 // # IncDec statements ====================
 
@@ -475,7 +472,7 @@ GoStmt          "'go' statement"                = "go" WS? expr:Expression
 
 SelectStmt      "'select' statement"            = "select" WS? LBRACE WS? cases:CommClause* WS? RBRACE
 CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? stmts:StatementList
-CommCase        "comminucation 'case'"          = "case" WS? caseCl:( SendStmt / UnaryExpr / Declaration / Assignment )   
+CommCase        "comminucation 'case'"          = "case" WS? caseCl:( ChanStmt / UnaryExpr / Declaration / Assignment )   
   { return caseCl; }
                                                 / "default"                                   
   { return "DEFAULT"; }
