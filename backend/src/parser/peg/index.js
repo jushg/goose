@@ -621,7 +621,7 @@ function peg$parse(input, options) {
   var peg$f47 = function(v) { return makeBoolLiteral(v === "true") };
   var peg$f48 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb !== "_").map(i => i[1]).join(''))) };
   var peg$f49 = function(content) { return makeStrLiteralObj(content.join('')) };
-  var peg$f50 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT: returnT ?? [], body ) };
+  var peg$f50 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT ?? [], body ) };
   var peg$f51 = function(a, b) {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
     return b.reduce(primaryExprReduceHelper, a);
@@ -671,7 +671,7 @@ function peg$parse(input, options) {
   var peg$f71 = function(lhs, rhs) { return makeChanStmt(lhs, rhs) };
   var peg$f72 = function(expr) { return makeIncStmt(expr) };
   var peg$f73 = function(expr) { return makeDecStmt(expr) };
-  var peg$f74 = function(lhs, c, rhs) { return makeAssignmentStmt(lhs, op: c ? ":=" : "=", rhs) };
+  var peg$f74 = function(lhs, c, rhs) { return makeAssignmentStmt(lhs, c ? ":=" : "=", rhs) };
   var peg$f75 = function(pre, cond, block, elseB) { return makeIfStmt(pre, cond, block, elseB) };
   var peg$f76 = function(a) { return a };
   var peg$f77 = function(block) { return block };

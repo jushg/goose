@@ -234,7 +234,7 @@ StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] 
   { return makeStrLiteralObj(content.join('')) }
 
 FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) body:Block
-  { return makeFuncLiteral(inputT, returnT: returnT ?? [], body ) }
+  { return makeFuncLiteral(inputT, returnT ?? [], body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 
@@ -414,7 +414,7 @@ IncDecStmt      "increment/decrement statement" = expr:Expression WS? INC
 // # Assignments ==========================
 
 Assignment      "assignment"                    = lhs:IDENT WS? c:COLON? EQUAL WS? rhs:Expression
-  { return makeAssignmentStmt(lhs, op: c ? ":=" : "=", rhs) }
+  { return makeAssignmentStmt(lhs, c ? ":=" : "=", rhs) }
 
 // # 'if' statements ======================
 
