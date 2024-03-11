@@ -10,46 +10,46 @@ function makeIntType() {
     return { tag: "TYPE", type: { base: "INT" } };
 }
 function makePtrType(inner) {
-    return { tag: "TYPE", type: { base: "PTR", inner } };
+    return { tag: "TYPE", type: { base: "PTR", inner: inner } };
 }
 function makeArrayType(len, inner) {
-    return { tag: "TYPE", type: { base: "ARRAY", len, inner } };
+    return { tag: "TYPE", type: { base: "ARRAY", len: len, inner: inner } };
 }
 function makeChanType(inner, mode) {
-    return { tag: "TYPE", type: { base: "CHAN", inner, mode } };
+    return { tag: "TYPE", type: { base: "CHAN", inner: inner, mode: mode } };
 }
 function makeFunctionType(inputT, returnT) {
-    return { tag: "TYPE", type: { base: "FUNC", inputT, returnT } };
+    return { tag: "TYPE", type: { base: "FUNC", inputT: inputT, returnT: returnT } };
 }
 function makeIdent(val) {
-    return { tag: "IDENT", type: null, val };
+    return { tag: "IDENT", type: null, val: val };
 }
 function makeBlock(stmts) {
-    return { tag: "BLOCK", stmts };
+    return { tag: "BLOCK", stmts: stmts };
 }
 function makeConstDecl(ident, type, val) {
-    return { tag: "CONST_DECL", ident, type, val };
+    return { tag: "CONST_DECL", ident: ident, type: type, val: val };
 }
 function makeVarDecl(ident, type, val) {
-    return { tag: "VAR_DECL", ident, type, val };
+    return { tag: "VAR_DECL", ident: ident, type: type, val: val };
 }
 function makeFuncDecl(ident, inputT, returnT, body) {
-    return { tag: "FUNC_DECL", ident, inputT, returnT, body };
+    return { tag: "FUNC_DECL", ident: ident, inputT: inputT, returnT: returnT, body: body };
 }
 function makeBoolLiteral(val) {
-    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
+    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val: val };
 }
 function makeIntLiteralObj(val) {
-    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "INT" } }, val };
+    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "INT" } }, val: val };
 }
 function makeStrLiteralObj(val) {
-    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "STR" } }, val };
+    return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "STR" } }, val: val };
 }
 function makeNilLiteralObj() {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "NIL" } } };
 }
 function makeFuncLiteral(inputT, returnT, body) {
-    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
+    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body: body };
 }
 function primaryExprReduceHelper(expr, op) {
     if (op.tag === "SELECTOR") {
@@ -66,66 +66,65 @@ function primaryExprReduceHelper(expr, op) {
     }
 }
 function makeUnaryExpr(expr, op) {
-    return { tag: "UNARY_EXPR", expr, op };
+    return { tag: "UNARY_EXPR", expr: expr, op: op };
 }
 function makeBinaryExpr(lhs, op, rhs) {
-    return { tag: "BINARY_EXPR", lhs, op, rhs };
+    return { tag: "BINARY_EXPR", lhs: lhs, op: op, rhs: rhs };
 }
 function makeExpressionStmt(expr) {
-    return { tag: "STMT", stmtType: "EXPR", expr };
+    return { tag: "STMT", stmtType: "EXPR", expr: expr };
 }
 function makeChanStmt(lhs, rhs) {
-    return { tag: "STMT", stmtType: "SEND", lhs, rhs };
+    return { tag: "STMT", stmtType: "SEND", lhs: lhs, rhs: rhs };
 }
 function makeIncStmt(expr) {
-    return { tag: "STMT", stmtType: "INC", expr };
+    return { tag: "STMT", stmtType: "INC", expr: expr };
 }
 function makeDecStmt(expr) {
-    return { tag: "STMT", stmtType: "DEC", expr };
+    return { tag: "STMT", stmtType: "DEC", expr: expr };
 }
 function makeAssignmentStmt(lhs, op, rhs) {
-    return { tag: "STMT", stmtType: "ASSIGN", lhs, rhs, op };
+    return { tag: "STMT", stmtType: "ASSIGN", lhs: lhs, rhs: rhs, op: op };
 }
 function makeIfStmt(pre, cond, body, elseBody) {
-    return { tag: "STMT", stmtType: "IF", pre, cond, body, elseBody };
+    return { tag: "STMT", stmtType: "IF", pre: pre, cond: cond, body: body, elseBody: elseBody };
 }
 function makeSwitchStmt(pre, cond, cases) {
-    return { tag: "STMT", stmtType: "SWITCH", pre, cond, cases };
+    return { tag: "STMT", stmtType: "SWITCH", pre: pre, cond: cond, cases: cases };
 }
 function makeCaseClause(caseExpr, body) {
-    return { tag: "CASE_CLAUSE", case: caseExpr, body };
+    return { tag: "CASE_CLAUSE", case: caseExpr, body: body };
 }
 function makeForStmt(pre, cond, post, body) {
-    return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
+    return { tag: "STMT", stmtType: "FOR", pre: pre, cond: cond, post: post, body: body };
 }
 function makeBreakStmt(breakLabel) {
-    return { tag: "STMT", stmtType: "BREAK", breakLabel };
+    return { tag: "STMT", stmtType: "BREAK", breakLabel: breakLabel };
 }
 function makeContStmt(contLabel) {
-    return { tag: "STMT", stmtType: "CONTINUE", contLabel };
+    return { tag: "STMT", stmtType: "CONTINUE", contLabel: contLabel };
 }
 function makeGoToStmt(gotoLabel) {
-    return { tag: "STMT", stmtType: "GOTO", gotoLabel };
+    return { tag: "STMT", stmtType: "GOTO", gotoLabel: gotoLabel };
 }
 function makeFallthroughStmt() {
     return { tag: "STMT", stmtType: "FALLTHROUGH" };
 }
 function makeDeferStmt(stmt) {
-    return { tag: "STMT", stmtType: "DEFER", stmt };
+    return { tag: "STMT", stmtType: "DEFER", stmt: stmt };
 }
 function makeGoStmt(stmt) {
-    return { tag: "STMT", stmtType: "GO", stmt };
+    return { tag: "STMT", stmtType: "GO", stmt: stmt };
 }
 function makeSelectStmt(cases) {
-    return { tag: "STMT", stmtType: "SELECT", cases };
+    return { tag: "STMT", stmtType: "SELECT", cases: cases };
 }
 function makeSelectCase(comm, body) {
-    return { tag: "SELECT_CASE", comm, body };
+    return { tag: "SELECT_CASE", comm: comm, body: body };
 }
 function makeReturnStmt(expr) {
-    return { tag: "STMT", stmtType: "RETURN", expr };
+    return { tag: "STMT", stmtType: "RETURN", expr: expr };
 }
-//# sourceMappingURL=index.js.map
 
 
 }}
