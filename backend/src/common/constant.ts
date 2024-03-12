@@ -1,2 +1,1 @@
-
-export const STANDARD_TIME_SLICE = 100
+export const STANDARD_TIME_SLICE = 100;

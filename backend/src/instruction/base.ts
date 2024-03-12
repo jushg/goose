@@ -1,29 +1,43 @@
-import { ExecutionState } from "../common/state"
+import { ExecutionState } from "../common/state";
 
 export interface Instruction {
-    opCode: OpCode
-    execute: (curState: ExecutionState) => ExecutionState
+  opCode: OpCode;
+  execute: (curState: ExecutionState) => ExecutionState;
 }
 
 export enum OpCode {
-    NOP = 0,
-    LDC = 1, // Load value, no type checking here
-    UNOP = 2,
-    BINOP = 3,
-    Pop = 4,
-    JOF = 5,
-    GOTO = 6,
-    ENTER_SCOPE = 7,
-    EXIT_SCOPE = 8,
-    LD = 9,
-    ASSIGN = 10,
-    LDF = 11,
-    CALL = 12,
-    TAIL_CALL = 13,
-    RESET = 14,
-    DONE = 15,
+  NOP = 1,
+  LDC, // Load value, no type checking here
+  POP,
+  JOF,
+  GOTO,
+  ENTER_SCOPE,
+  EXIT_SCOPE,
+  LD,
+  ASSIGN,
+  LDF,
+  CALL,
+  TAIL_CALL,
+  RESET,
+  DONE,
 
-    // Concurrent instructs, atomic, use for concurrent constructs
-    TEST_AND_SET = 1000,
-    CLEAR = 1001,
+  // Concurrent instructs, atomic, use for concurrent constructs
+  TEST_AND_SET = 1000,
+  CLEAR,
+  GOROUTINE,
 }
+
+`c <- 1`;
+
+`
+c = { mutex, value }
+c.val = 1
+WHILE ( TEST_AND_SET (c.lock, initial: EMPTY, new: EMPTY) )
+`;
+
+`x := <-c`;
+
+`
+c.val = 1
+WHILE ( TEST_AND_SET (c.lock, initial: EMPTY, new: EMPTY) )
+`;

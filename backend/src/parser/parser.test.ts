@@ -1,7 +1,8 @@
 import { parse } from ".";
 
-test('first test', () => {
-  expect(parse(`
+test("first test", () => {
+  expect(
+    parse(`
 
 func main() {
   messages := make(chan string)
@@ -13,131 +14,132 @@ func main() {
   Println(msg)
 }  
   
-  `)).toEqual([
+  `)
+  ).toEqual([
     {
-      tag: 'FUNC_DECL',
+      tag: "FUNC_DECL",
       ident: {
-        tag: 'IDENT',
-        val: 'main'
+        tag: "IDENT",
+        val: "main",
       },
       inputT: [],
       returnT: null,
       body: {
-        tag: 'BLOCK',
+        tag: "BLOCK",
         stmts: [
           {
-            tag: 'STMT',
-            stmtType: 'ASSIGN',
+            tag: "STMT",
+            stmtType: "ASSIGN",
             lhs: {
-              tag: 'IDENT',
-              val: 'messages'
+              tag: "IDENT",
+              val: "messages",
             },
             rhs: {
-              tag: 'MAKE',
+              tag: "MAKE",
               args: [
                 {
-                  tag: 'TYPE',
+                  tag: "TYPE",
                   type: {
-                    base: 'CHAN',
+                    base: "CHAN",
                     inner: {
-                      tag: 'TYPE',
+                      tag: "TYPE",
                       type: {
-                        base: 'STR'
-                      }
+                        base: "STR",
+                      },
                     },
-                    mode: 'DUAL'
-                  }
-                }
-              ]
+                    mode: "DUAL",
+                  },
+                },
+              ],
             },
-            op: ':='
+            op: ":=",
           },
           {
-            tag: 'STMT',
-            stmtType: 'GO',
+            tag: "STMT",
+            stmtType: "GO",
             stmt: {
-              tag: 'CALL',
+              tag: "CALL",
               func: {
-                tag: 'LITERAL',
+                tag: "LITERAL",
                 type: {
-                  tag: 'TYPE',
+                  tag: "TYPE",
                   type: {
-                    base: 'FUNC',
+                    base: "FUNC",
                     inputT: [],
-                    returnT: null
-                  }
+                    returnT: null,
+                  },
                 },
                 body: {
-                  tag: 'BLOCK',
+                  tag: "BLOCK",
                   stmts: [
                     {
-                      tag: 'STMT',
-                      stmtType: 'EXPR',
+                      tag: "STMT",
+                      stmtType: "EXPR",
                       expr: {
-                        tag: 'BINARY_EXPR',
+                        tag: "BINARY_EXPR",
                         lhs: {
-                          tag: 'IDENT',
-                          val: 'messages'
+                          tag: "IDENT",
+                          val: "messages",
                         },
-                        op: '<',
+                        op: "<",
                         rhs: {
-                          tag: 'UNARY_EXPR',
+                          tag: "UNARY_EXPR",
                           expr: {
-                            tag: 'LITERAL',
+                            tag: "LITERAL",
                             type: {
-                              tag: 'TYPE',
+                              tag: "TYPE",
                               type: {
-                                base: 'STR'
-                              }
+                                base: "STR",
+                              },
                             },
-                            val: 'ping'
+                            val: "ping",
                           },
-                          op: '-'
-                        }
-                      }
-                    }
-                  ]
-                }
+                          op: "-",
+                        },
+                      },
+                    },
+                  ],
+                },
               },
-              args: []
-            }
+              args: [],
+            },
           },
           {
-            tag: 'STMT',
-            stmtType: 'ASSIGN',
+            tag: "STMT",
+            stmtType: "ASSIGN",
             lhs: {
-              tag: 'IDENT',
-              val: 'msg'
+              tag: "IDENT",
+              val: "msg",
             },
             rhs: {
-              tag: 'UNARY_EXPR',
+              tag: "UNARY_EXPR",
               expr: {
-                tag: 'IDENT',
-                val: 'messages'
+                tag: "IDENT",
+                val: "messages",
               },
-              op: '<-'
+              op: "<-",
             },
-            op: ':='
+            op: ":=",
           },
           {
-            tag: 'STMT',
-            stmtType: 'EXPR',
+            tag: "STMT",
+            stmtType: "EXPR",
             expr: {
-              tag: 'CALL',
+              tag: "CALL",
               func: {
-                tag: 'IDENT',
-                val: 'Println'
+                tag: "IDENT",
+                val: "Println",
               },
               args: [
                 {
-                  tag: 'IDENT',
-                  val: 'msg'
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
+                  tag: "IDENT",
+                  val: "msg",
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ]);
 });

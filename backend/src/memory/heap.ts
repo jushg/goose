@@ -1,3 +1,3 @@
 export type HeapNode = {
-    // Todo: fill in this
-}
+  // Todo: fill in this
+};
