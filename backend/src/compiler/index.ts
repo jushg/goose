@@ -1,4 +1,5 @@
 import { StmtObj } from '../parser';
+import { Instruction } from '../instruction/base';
 
 // Dummy function, just for testing.
 export function compile(s: StmtObj) {
@@ -22,3 +23,10 @@ export function compile(s: StmtObj) {
             return 1
     }
 }
+
+
+export type ProgramFile = {
+    entryIndex: number,
+    instructions: Instruction[]
+}
+
