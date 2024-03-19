@@ -1,4 +1,4 @@
-import { HeapNode } from "../memory/heap";
+import { IMemoryManager } from "../memory/heap";
 
 export type ExecutionState = {
   machineState: MachineState;
@@ -20,7 +20,7 @@ export type MachineState = {
   // GLOBAL_ENV is the env that contains all the primitive functions
   GLOBAL_ENV: number;
   // HEAP is array containing all dynamically allocated data structures
-  HEAP: HeapNode[];
+  HEAP: IMemoryManager;
   // next free slot in heap
   FREE: number;
   // job queue
