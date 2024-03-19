@@ -1,5 +1,5 @@
 import { InstrAddr } from "../instruction/base";
-import { HEAP_NODE_BYTE_INDICES, HEAP_NODE_BYTE_SIZE } from "./heap";
+import { HEAP_NODE_BYTE_INDICES, HEAP_NODE_BYTE_SIZE } from "./";
 
 export class HeapAddr {
   addr: number;

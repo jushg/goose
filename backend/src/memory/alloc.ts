@@ -1,17 +1,18 @@
 import { InstrAddr } from "../instruction/base";
-import { HEAP_NODE_BYTE_SIZE, HEAP_NODE_SIZE_BYTES, IHeap, IMemoryAllocator, IMemoryManager } from "./heap";
+import { HEAP_NODE_BYTE_SIZE, HEAP_NODE_SIZE_BYTES, IAllocator, IHeap, IUntypedAllocator, validateHeap } from "./";
 import {
   GcFlag,
   HeapAddr, HeapInBytes,
   Type
 } from "./node";
 
-export class SimpleMemoryAllocator implements IMemoryAllocator {
+export class SimpleMemoryAllocator implements IUntypedAllocator {
   FREE_PTR: number = 1; // 0 is reserved for NULL
   memory: IHeap;
 
   constructor(memory: IHeap) {
     this.memory = memory;
+    validateHeap(memory);
   }
 
   getNewHeapAddress(): HeapAddr {
@@ -67,10 +68,10 @@ export class SimpleMemoryAllocator implements IMemoryAllocator {
   }
 }
 
-export class MemoryManager implements IMemoryManager {
-  alloc: IMemoryAllocator;
+export class MemoryManager implements IAllocator {
+  alloc: IUntypedAllocator;
 
-  constructor(alloc: IMemoryAllocator) {
+  constructor(alloc: IUntypedAllocator) {
     this.alloc = alloc;
   }
 

@@ -35,13 +35,7 @@ export function validateHeap(heap: IHeap) {
   }
 }
 
-export function validateHeapAddr(heap: IHeap, addr: HeapAddr) {
-  if (addr.addr < 0 || addr.addr >= heap.nodeCount) {
-    throw new Error("Invalid heap address");
-  }
-}
-
-export type IMemoryAllocator = {
+export type IUntypedAllocator = {
   getNewHeapAddress(): HeapAddr;
   getNewHeapAddresses(size: number): HeapAddr[];
   setHeapValueInBytes(addr: HeapAddr, val: number[]): void;
@@ -50,7 +44,7 @@ export type IMemoryAllocator = {
   getNodeCount(): number;
 };
 
-export type IMemoryManager = {
+export type IAllocator = {
   getHeapValue(addr: HeapAddr): HeapInBytes;
   setHeapValue(addr: HeapAddr, val: HeapInBytes): void;
   allocBool(data: boolean): HeapAddr;
@@ -61,9 +55,9 @@ export type IMemoryManager = {
   allocSymbol(identifier: string, valueAddr: HeapAddr): HeapAddr;
   allocHeapAddr(data: HeapAddr): HeapAddr;
   allocFrameAddr(enclosingFrame: HeapAddr, kvPairs: Record<string, HeapAddr>): HeapAddr;
-} & IMemoryAllocator;
+} & IUntypedAllocator;
 
-export function createHeapManager(heapNodeCount: number) : IMemoryManager {
+export function createHeapManager(heapNodeCount: number) : IAllocator {
   const size = heapNodeCount * HEAP_NODE_SIZE_BYTES;
   return new MemoryManager(new SimpleMemoryAllocator({ nodeCount: heapNodeCount, buf: new ArrayBuffer(size) })); 
 }

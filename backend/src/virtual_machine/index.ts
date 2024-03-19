@@ -7,7 +7,7 @@ import {
 } from "../common/state";
 import { ProgramFile } from "../compiler";
 import { Instruction } from "../instruction/base";
-import { createHeapManager } from "../memory/heap";
+import { createHeapManager } from "../memory";
 
 // called whenever the machine is first run
 function initialize(entryIndex: number): ExecutionState {
