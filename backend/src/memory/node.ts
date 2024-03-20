@@ -1,5 +1,5 @@
 import { InstrAddr } from "../instruction/base";
-import { HEAP_NODE_BYTE_INDICES, HEAP_NODE_BYTE_SIZE } from "./";
+import { HEAP_NODE_BYTE_INDICES, HEAP_NODE_BYTE_SIZE, MAX_INT, MIN_INT } from "./";
 
 export class HeapAddr {
   addr: number;
@@ -118,7 +118,7 @@ export class HeapInBytes {
 
       let child: number[] = [];
       if (heapVal.type !== Type.Bool && heapVal.type !== Type.Int) {
-        child = HeapInBytes.fromDataToBytes(heapVal.child.addr)
+        child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child.addr)
       }
 
       while (child.length < HEAP_NODE_BYTE_SIZE.child) {
@@ -127,13 +127,13 @@ export class HeapInBytes {
 
       let data: number[] = []
       if (heapVal.type === Type.Bool) {
-        data = HeapInBytes.fromDataToBytes((heapVal as HeapValue<Type.Bool>).data)
+        data = HeapInBytes.convertPrimitiveDataToBytes((heapVal as HeapValue<Type.Bool>).data)
       } else if (heapVal.type === Type.Int) {
-        data = HeapInBytes.fromDataToBytes((heapVal as HeapValue<Type.Int>).data)
+        data = HeapInBytes.convertPrimitiveDataToBytes((heapVal as HeapValue<Type.Int>).data)
       } else if (heapVal.type === Type.String || heapVal.type === Type.Symbol) {
-        data = HeapInBytes.fromDataToBytes(heapVal.data as string)
-      } else if (heapVal.type === Type.Lambda || heapVal.type === Type.FrameAddr || heapVal.type === Type.Value || heapVal.type === Type.HeapAddr) {
-        data = HeapInBytes.fromDataToBytes((heapVal as any).data.addr)
+        data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data as string)
+      } else if (heapVal.type === Type.Lambda || heapVal.type === Type.FrameAddr || heapVal.type === Type.Value) {
+        data = HeapInBytes.convertPrimitiveDataToBytes((heapVal as any).data.addr)
       }
 
       if (heapVal.type === Type.String || heapVal.type === Type.Symbol) {
@@ -163,15 +163,21 @@ export class HeapInBytes {
       return [...this._bytes];
     }
     
-    private static fromDataToBytes(data: boolean | number | string): number[] {
+    static convertPrimitiveDataToBytes(data: boolean | number | string): number[] {
       if (typeof data === "boolean") {
         return [data ? 1 : 0]
       } else if (typeof data === "number") {
+        if (data > MAX_INT || data < MIN_INT) {
+          throw new Error(`Number out of range for heap node: ${data}`);
+        }
+
         const arr = []
-        let d: number = data
+        
+        // Use 2's complement for negative numbers.
+        let d: number = data < 0 ? MAX_INT -data : data;
         while (d > 0) {
-          arr.push(d % 256);
-          d = d / 256;
+          arr.unshift(d % (2 ** 8)); // Order of bytes: MSB ... LSB
+          d = Math.floor(d / (2 ** 8));
         }
         
         return arr
@@ -191,12 +197,12 @@ export class HeapInBytes {
       }
     }
     
-    private static toTagByte(type: Type, gcFlag: GcFlag): number {
+    static toTagByte(type: Type, gcFlag: GcFlag): number {
       const t: string = type
       return (gcFlag === GcFlag.Marked ? t.toLowerCase() : t).charCodeAt(0)
     }
 
-    private static fromTagByte(tag: number): { type: Type, gcFlag: GcFlag } {
+    static fromTagByte(tag: number): { type: Type, gcFlag: GcFlag } {
       const t: string = String.fromCharCode(tag)
       return {
          type: t.toUpperCase() as Type,
@@ -204,7 +210,7 @@ export class HeapInBytes {
       }
     }
 
-    private static fromBytesToData(tag: number, childBytes: number[], dataBytes: number[]) {
+    static fromBytesToData(tag: number, childBytes: number[], dataBytes: number[]) {
       const { type, gcFlag } = this.fromTagByte(tag)
       switch (type) {
         case Type.Bool: {
@@ -213,38 +219,46 @@ export class HeapInBytes {
           return res
         }
         case Type.Int: {
-          const data = dataBytes.reduce((acc, cur) => acc * 256 + cur, 0)
+          let data = dataBytes.reduce((acc, cur) => acc * (2 ** 8) + cur, 0)
+
+          // Account for use of 2's complement for negative numbers.
+          data = data > MAX_INT ? -(data - MAX_INT) : data
           const res: HeapValue<Type.Int> = { type, gcFlag, data }
           return res
         }
         case Type.String: {
           const data = String.fromCharCode(...dataBytes)
-          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * 256 + cur))
+          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
           const res: HeapValue<Type.String> = { type, gcFlag, child, data }
           return res
         }
         case Type.Lambda: {
-          const data = InstrAddr.fromNum(dataBytes.reduce((acc, cur) => acc * 256 + cur))
-          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * 256 + cur))
+          const data = InstrAddr.fromNum(dataBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
+          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
           const res: HeapValue<Type.Lambda> = { type, gcFlag, child, data }
           return res;
         }
         case Type.FrameAddr: {
-          const data = HeapAddr.fromNum(dataBytes.reduce((acc, cur) => acc * 256 + cur))
-          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * 256 + cur))
+          const data = HeapAddr.fromNum(dataBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
+          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
           const res: HeapValue<Type.FrameAddr> = { type, gcFlag, child, data }
           return res;
         }
         case Type.Symbol: {
           const data =  String.fromCharCode(...dataBytes)
-          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * 256 + cur))
+          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
           const res: HeapValue<Type.Symbol> = { type, gcFlag, child, data }
           return res;
         }
         case Type.Value: {
-          const data =  HeapAddr.fromNum(dataBytes.reduce((acc, cur) => acc * 256 + cur))
-          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * 256 + cur))
+          const data =  HeapAddr.fromNum(dataBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
+          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
           const res: HeapValue<Type.Value> = { type, gcFlag, child, data }
+          return res;
+        }
+        case Type.HeapAddr: {
+          const child = HeapAddr.fromNum(childBytes.reduce((acc, cur) => acc * (2 ** 8) + cur))
+          const res: HeapValue<Type.HeapAddr> = { type, gcFlag, child }
           return res;
         }
           

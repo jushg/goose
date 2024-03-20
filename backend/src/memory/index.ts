@@ -13,6 +13,8 @@ export const HEAP_NODE_BYTE_INDICES = {
   data: HEAP_NODE_BYTE_SIZE.tag + HEAP_NODE_BYTE_SIZE.child,
 };
 export const HEAP_NODE_SIZE_BYTES = HEAP_NODE_BYTE_SIZE.tag + HEAP_NODE_BYTE_SIZE.child + HEAP_NODE_BYTE_SIZE.data;
+export const MAX_INT = Math.floor(2 ** (8 * HEAP_NODE_BYTE_SIZE.data) / 2) - 1;
+export const MIN_INT = -Math.floor(2 ** (8 * HEAP_NODE_BYTE_SIZE.data) / 2);
 
 export type IHeap = {
   nodeCount: number;
