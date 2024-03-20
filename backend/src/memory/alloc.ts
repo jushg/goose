@@ -25,9 +25,15 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
 
   getNewHeapAddresses(size: number): HeapAddr[] {
     const ptr = this.FREE_PTR;
+    const arr = [];
+
+    for (let i = 0; i < size; i++) {
+      arr.push(HeapAddr.fromNum(ptr + i));
+    }
+
     this.FREE_PTR += size;
     this.checkIfFull();
-    return Array(size).map((_, i) => HeapAddr.fromNum(ptr + i));
+    return arr;
   }
 
   setHeapValueInBytes(addr: HeapAddr, val: number[]): void {

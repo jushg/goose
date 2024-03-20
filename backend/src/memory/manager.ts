@@ -78,9 +78,13 @@ export class MemoryManager implements IAllocator {
       chunks.push(data.slice(i, i + MAX_CHUNK_SIZE_IN_BYTES));
     }
 
+    if (chunks.length === 0) {
+      chunks.push("");
+    }
+
     const addresses = this.alloc.getNewHeapAddresses(chunks.length);
     let prevAddr: HeapAddr = HeapAddr.NULL;
-    for (let i = chunks.length - 1; i > 0; i--) {
+    for (let i = chunks.length - 1; i >= 0; i--) {
       const h = HeapInBytes.fromData({
         type: Type.String,
         gcFlag: GcFlag.Unmarked,
@@ -129,9 +133,9 @@ export class MemoryManager implements IAllocator {
 
     const addresses = this.alloc.getNewHeapAddresses(chunks.length);
     let prevAddr: HeapAddr = valueAddr;
-    for (let i = chunks.length - 1; i > 0; i--) {
+    for (let i = chunks.length - 1; i >= 0; i--) {
       const h = HeapInBytes.fromData({
-        type: Type.String,
+        type: Type.Symbol,
         gcFlag: GcFlag.Unmarked,
         data: chunks[i],
         child: prevAddr,

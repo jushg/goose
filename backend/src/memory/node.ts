@@ -20,6 +20,10 @@ export class HeapAddr {
     return new HeapAddr(pointer);
   }
 
+  isNull() {
+    return this.addr === HeapAddr.NULL.addr;
+  }
+
   private constructor(address: number) {
     this.addr = address;
   }
