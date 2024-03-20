@@ -84,7 +84,7 @@ describe("Memory Manager", () => {
     for (const val of values) {
       const addr = manager.allocBool(val);
       const node = manager.getHeapValue(addr);
-      expect(node.toData()).toEqual({
+      expect(node.toHeapValue()).toEqual({
         type: Type.Bool,
         gcFlag: GcFlag.Unmarked,
         data: val,
@@ -97,8 +97,8 @@ describe("Memory Manager", () => {
     for (const val of values) {
       const addr = manager.allocInt(val);
       const node = manager.getHeapValue(addr);
-      const value = node.toData();
-      expect(node.toData()).toEqual({
+      const value = node.toHeapValue();
+      expect(node.toHeapValue()).toEqual({
         type: Type.Int,
         gcFlag: GcFlag.Unmarked,
         data: val,
@@ -111,7 +111,7 @@ describe("Memory Manager", () => {
     for (const val of values) {
       const addr = manager.allocString(val);
       const node = manager.getHeapValue(addr);
-      const value = node.toData();
+      const value = node.toHeapValue();
 
       expect(value).toBeDefined();
       expect(value).toHaveProperty("type", Type.String);
@@ -138,7 +138,7 @@ describe("Memory Manager", () => {
         expect(addr).toHaveProperty("addr");
 
         node = manager.getHeapValue(addr);
-        const value = node.toData();
+        const value = node.toHeapValue();
 
         expect(value).toBeDefined();
         expect(value).toHaveProperty("type", Type.String);
@@ -161,7 +161,7 @@ describe("Memory Manager", () => {
 
     const addr = manager.allocLambda(pcAddr, closureAddr);
     const node = manager.getHeapValue(addr);
-    const value = node.toData();
+    const value = node.toHeapValue();
 
     expect(value).toBeDefined();
     expect(value).toHaveProperty("type", Type.Lambda);
@@ -176,7 +176,7 @@ describe("Memory Manager", () => {
       const valueAddr = HeapAddr.fromNum(9);
       const addr = manager.allocSymbol(id, valueAddr);
       const node = manager.getHeapValue(addr);
-      const value = node.toData();
+      const value = node.toHeapValue();
 
       expect(value).toBeDefined();
       expect(value).toHaveProperty("type", Type.Symbol);
@@ -192,7 +192,7 @@ describe("Memory Manager", () => {
     const nextSymbol = HeapAddr.fromNum(10);
     const addr = manager.allocValue(valueAddr, nextSymbol);
     const node = manager.getHeapValue(addr);
-    const value = node.toData();
+    const value = node.toHeapValue();
 
     expect(value).toBeDefined();
     expect(value).toHaveProperty("type", Type.Value);
@@ -207,7 +207,7 @@ describe("Memory Manager", () => {
     const addr = manager.allocFrameAddr(enclosingFrameAddr, {});
 
     const node = manager.getHeapValue(addr);
-    const value = node.toData();
+    const value = node.toHeapValue();
 
     expect(value).toBeDefined();
     expect(value).toHaveProperty("type", Type.FrameAddr);
@@ -224,7 +224,7 @@ describe("Memory Manager", () => {
     const dataAddr = HeapAddr.fromNum(9);
     const addr = manager.allocHeapAddr(dataAddr);
     const node = manager.getHeapValue(addr);
-    const value = node.toData();
+    const value = node.toHeapValue();
 
     expect(value).toBeDefined();
     expect(value).toHaveProperty("type", Type.HeapAddr);

@@ -53,7 +53,7 @@ describe("HeapInBytes", () => {
         data,
       });
       const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
       expect(converted.data).toEqual(data);
       expect(converted.child).toBeUndefined();
     }
@@ -68,7 +68,7 @@ describe("HeapInBytes", () => {
         data,
       });
       const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
       expect(converted.data).toEqual(data);
       expect(converted.child).toBeUndefined();
     }
@@ -85,7 +85,7 @@ describe("HeapInBytes", () => {
         child: nextAddr,
       });
       const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
       expect(stringNormalizer(converted.data)).toStrictEqual(
         stringNormalizer(data)
       );
@@ -104,7 +104,7 @@ describe("HeapInBytes", () => {
         child: nextAddr,
       });
       const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
       expect(stringNormalizer(converted.data)).toStrictEqual(
         stringNormalizer(data)
       );
@@ -122,7 +122,7 @@ describe("HeapInBytes", () => {
       child: nextAddr,
     });
     const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
     expect(converted.data).toStrictEqual(pcAddr);
     expect(converted.child).toStrictEqual(nextAddr);
   });
@@ -137,7 +137,7 @@ describe("HeapInBytes", () => {
       child: nextAddr,
     });
     const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
     expect(converted.data).toStrictEqual(dataAddr);
     expect(converted.child).toStrictEqual(nextAddr);
   });
@@ -152,7 +152,7 @@ describe("HeapInBytes", () => {
       child: nextAddr,
     });
     const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
     expect(converted.data).toStrictEqual(dataAddr);
     expect(converted.child).toStrictEqual(nextAddr);
   });
@@ -165,7 +165,7 @@ describe("HeapInBytes", () => {
       child: nextAddr,
     });
     const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toData() as any;
+    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
     expect(converted.child).toStrictEqual(nextAddr);
     expect(converted.data).toBeUndefined();
   });

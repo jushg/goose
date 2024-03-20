@@ -187,7 +187,7 @@ export class HeapInBytes {
     return new HeapInBytes(tag, child, data);
   }
 
-  toData(): AnyHeapValue {
+  toHeapValue(): AnyHeapValue {
     const tag = this._bytes[HEAP_NODE_BYTE_INDICES.tag];
     const child = this._bytes.slice(
       HEAP_NODE_BYTE_INDICES.child,
