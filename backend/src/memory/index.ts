@@ -1,5 +1,6 @@
 import { InstrAddr } from "../instruction/base";
-import { MemoryManager, SimpleMemoryAllocator } from "./alloc";
+import { SimpleMemoryAllocator } from "./alloc";
+import { MemoryManager } from "./manager";
 import { HeapAddr, HeapInBytes } from "./node";
 
 export const HEAP_NODE_BYTE_SIZE = {
