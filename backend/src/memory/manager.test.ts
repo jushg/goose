@@ -1,23 +1,46 @@
-import { IUntypedAllocator } from ".";
+import { HEAP_NODE_BYTE_TOTAL_SIZE } from ".";
+import { SimpleMemoryAllocator } from "./alloc";
 import { MemoryManager } from "./manager";
 
-describe('Memory Manager', () => {
-  const createJestAllocAndMgr = () => {
-    const jestAlloc: IUntypedAllocator = {
-      getNewHeapAddress: jest.fn(),
-      getNewHeapAddresses: jest.fn(),
-      setHeapValueInBytes: jest.fn(),
-      getHeapValueInBytes: jest.fn(),
-      printHeap: jest.fn(),
-      getNodeCount: jest.fn(),
-    }
+describe("Memory Manager", () => {
+  const createCompoundSpy = (obj: any, methods: string[]) => {
+    // Return a map of method names to spies
+    return methods.reduce(
+      (acc: Record<string, jest.SpyInstance>, method: string) => {
+        acc[method] = jest.spyOn(obj, method);
+        return acc;
+      },
+      {}
+    );
+  };
 
-    return { jestAlloc, memory: new MemoryManager(jestAlloc)};
-  }
+  let memAlloc: SimpleMemoryAllocator;
+  let spy: Record<string, jest.SpyInstance>;
+  let manager: MemoryManager;
+  const nodeCount = 100;
 
-  test('should create a new memory manager', () => {
-    const { memory } = createJestAllocAndMgr();
-    expect(memory).toBeDefined();
-  })
+  beforeEach(() => {
+    memAlloc = new SimpleMemoryAllocator({
+      nodeCount,
+      buf: new ArrayBuffer(100 * HEAP_NODE_BYTE_TOTAL_SIZE),
+    });
+    spy = createCompoundSpy(memAlloc, [
+      "getNewHeapAddress",
+      "getNewHeapAddresses",
+      "setHeapValueInBytes",
+      "getHeapValueInBytes",
+      "printHeap",
+      "getNodeCount",
+    ]);
+    manager = new MemoryManager(memAlloc);
+  });
 
+  test("should create a new memory manager", () => {
+    expect(manager).toBeDefined();
+  });
+
+  test("should get the node count", () => {
+    expect(manager.getNodeCount()).toBe(nodeCount);
+    expect(spy.getNodeCount).toHaveBeenCalled();
+  });
 });
