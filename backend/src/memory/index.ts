@@ -79,3 +79,11 @@ export function createHeapManager(heapNodeCount: number): IAllocator {
     })
   );
 }
+
+export {
+  AnyHeapValue,
+  HeapAddr,
+  HeapInBytes,
+  HeapType,
+  HeapValue,
+} from "./node";

@@ -1,6 +1,6 @@
 import { InstrAddr } from "../instruction/base";
 import { HEAP_NODE_BYTE_SIZE, IAllocator, IUntypedAllocator } from "./";
-import { GcFlag, HeapAddr, HeapInBytes, Type } from "./node";
+import { GcFlag, HeapAddr, HeapInBytes, HeapType } from "./node";
 
 export class MemoryManager implements IAllocator {
   alloc: IUntypedAllocator;
@@ -50,7 +50,7 @@ export class MemoryManager implements IAllocator {
 
   allocBool(data: boolean): HeapAddr {
     const h = HeapInBytes.fromData({
-      type: Type.Bool,
+      type: HeapType.Bool,
       gcFlag: GcFlag.Unmarked,
       data,
     });
@@ -61,7 +61,7 @@ export class MemoryManager implements IAllocator {
 
   allocInt(data: number): HeapAddr {
     const h = HeapInBytes.fromData({
-      type: Type.Int,
+      type: HeapType.Int,
       gcFlag: GcFlag.Unmarked,
       data,
     });
@@ -86,7 +86,7 @@ export class MemoryManager implements IAllocator {
     let prevAddr: HeapAddr = HeapAddr.NULL;
     for (let i = chunks.length - 1; i >= 0; i--) {
       const h = HeapInBytes.fromData({
-        type: Type.String,
+        type: HeapType.String,
         gcFlag: GcFlag.Unmarked,
         data: chunks[i],
         child: prevAddr,
@@ -100,7 +100,7 @@ export class MemoryManager implements IAllocator {
 
   allocLambda(pc: InstrAddr, frame: HeapAddr): HeapAddr {
     const h = HeapInBytes.fromData({
-      type: Type.Lambda,
+      type: HeapType.Lambda,
       gcFlag: GcFlag.Unmarked,
       data: pc,
       child: frame,
@@ -113,7 +113,7 @@ export class MemoryManager implements IAllocator {
   allocValue(addr: HeapAddr, nextSymbol?: HeapAddr): HeapAddr {
     nextSymbol = nextSymbol ?? HeapAddr.NULL;
     const h = HeapInBytes.fromData({
-      type: Type.Value,
+      type: HeapType.Value,
       gcFlag: GcFlag.Unmarked,
       child: nextSymbol,
       data: addr,
@@ -135,7 +135,7 @@ export class MemoryManager implements IAllocator {
     let prevAddr: HeapAddr = valueAddr;
     for (let i = chunks.length - 1; i >= 0; i--) {
       const h = HeapInBytes.fromData({
-        type: Type.Symbol,
+        type: HeapType.Symbol,
         gcFlag: GcFlag.Unmarked,
         data: chunks[i],
         child: prevAddr,
@@ -149,7 +149,7 @@ export class MemoryManager implements IAllocator {
 
   allocHeapAddr(data: HeapAddr): HeapAddr {
     const h = HeapInBytes.fromData({
-      type: Type.HeapAddr,
+      type: HeapType.HeapAddr,
       gcFlag: GcFlag.Unmarked,
       child: data,
     });
@@ -170,7 +170,7 @@ export class MemoryManager implements IAllocator {
     );
 
     const h = HeapInBytes.fromData({
-      type: Type.FrameAddr,
+      type: HeapType.FrameAddr,
       gcFlag: GcFlag.Unmarked,
       child: enclosingFrame,
       data: linkedListOfSymbolValues,

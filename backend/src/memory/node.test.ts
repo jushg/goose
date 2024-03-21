@@ -1,6 +1,6 @@
 import { HEAP_NODE_BYTE_SIZE } from ".";
 import { InstrAddr } from "../instruction/base";
-import { GcFlag, HeapAddr, HeapInBytes, Type } from "./node";
+import { GcFlag, HeapAddr, HeapInBytes, HeapType } from "./node";
 
 describe("HeapInBytes", () => {
   const stringNormalizer = (s: string): string => {
@@ -30,7 +30,7 @@ describe("HeapInBytes", () => {
   });
 
   test("should correctly convert tag byte to type and gcFlag", () => {
-    const types: Type[] = Object.values(Type);
+    const types: HeapType[] = Object.values(HeapType);
     const gcFlags: GcFlag[] = Object.values(GcFlag);
 
     for (const type of types) {
@@ -48,7 +48,7 @@ describe("HeapInBytes", () => {
     const simpleData = [0, -1, 1, 2, 16, -2, -16, 10000, -10000];
     for (const data of simpleData) {
       const h = HeapInBytes.fromData({
-        type: Type.Int,
+        type: HeapType.Int,
         gcFlag: GcFlag.Unmarked,
         data,
       });
@@ -63,7 +63,7 @@ describe("HeapInBytes", () => {
     const simpleData = [true, false];
     for (const data of simpleData) {
       const h = HeapInBytes.fromData({
-        type: Type.Bool,
+        type: HeapType.Bool,
         gcFlag: GcFlag.Unmarked,
         data,
       });
@@ -79,7 +79,7 @@ describe("HeapInBytes", () => {
     for (const data of simpleData) {
       const nextAddr = HeapAddr.fromNum(6);
       const h = HeapInBytes.fromData({
-        type: Type.String,
+        type: HeapType.String,
         gcFlag: GcFlag.Unmarked,
         data,
         child: nextAddr,
@@ -98,7 +98,7 @@ describe("HeapInBytes", () => {
     for (const data of simpleData) {
       const nextAddr = HeapAddr.fromNum(9);
       const h = HeapInBytes.fromData({
-        type: Type.Symbol,
+        type: HeapType.Symbol,
         gcFlag: GcFlag.Unmarked,
         data,
         child: nextAddr,
@@ -116,7 +116,7 @@ describe("HeapInBytes", () => {
     const nextAddr = HeapAddr.fromNum(9);
     const pcAddr = InstrAddr.fromNum(10);
     const h = HeapInBytes.fromData({
-      type: Type.Lambda,
+      type: HeapType.Lambda,
       gcFlag: GcFlag.Unmarked,
       data: pcAddr,
       child: nextAddr,
@@ -131,7 +131,7 @@ describe("HeapInBytes", () => {
     const nextAddr = HeapAddr.fromNum(9);
     const dataAddr = HeapAddr.fromNum(10);
     const h = HeapInBytes.fromData({
-      type: Type.FrameAddr,
+      type: HeapType.FrameAddr,
       gcFlag: GcFlag.Unmarked,
       data: dataAddr,
       child: nextAddr,
@@ -146,7 +146,7 @@ describe("HeapInBytes", () => {
     const nextAddr = HeapAddr.fromNum(9);
     const dataAddr = HeapAddr.fromNum(10);
     const h = HeapInBytes.fromData({
-      type: Type.Value,
+      type: HeapType.Value,
       gcFlag: GcFlag.Unmarked,
       data: dataAddr,
       child: nextAddr,
@@ -160,7 +160,7 @@ describe("HeapInBytes", () => {
   test("should correctly convert heapAddr to bytes", () => {
     const nextAddr = HeapAddr.fromNum(9);
     const h = HeapInBytes.fromData({
-      type: Type.HeapAddr,
+      type: HeapType.HeapAddr,
       gcFlag: GcFlag.Unmarked,
       child: nextAddr,
     });

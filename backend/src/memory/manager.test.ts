@@ -2,7 +2,7 @@ import { HEAP_NODE_BYTE_SIZE, HEAP_NODE_BYTE_TOTAL_SIZE } from ".";
 import { InstrAddr } from "../instruction/base";
 import { SimpleMemoryAllocator } from "./alloc";
 import { MemoryManager } from "./manager";
-import { GcFlag, HeapAddr, Type } from "./node";
+import { GcFlag, HeapAddr, HeapType } from "./node";
 
 describe("Memory Manager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
@@ -85,7 +85,7 @@ describe("Memory Manager", () => {
       const addr = manager.allocBool(val);
       const node = manager.getHeapValue(addr);
       expect(node.toHeapValue()).toEqual({
-        type: Type.Bool,
+        type: HeapType.Bool,
         gcFlag: GcFlag.Unmarked,
         data: val,
       });
@@ -99,7 +99,7 @@ describe("Memory Manager", () => {
       const node = manager.getHeapValue(addr);
       const value = node.toHeapValue();
       expect(node.toHeapValue()).toEqual({
-        type: Type.Int,
+        type: HeapType.Int,
         gcFlag: GcFlag.Unmarked,
         data: val,
       });
@@ -114,7 +114,7 @@ describe("Memory Manager", () => {
       const value = node.toHeapValue();
 
       expect(value).toBeDefined();
-      expect(value).toHaveProperty("type", Type.String);
+      expect(value).toHaveProperty("type", HeapType.String);
       expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
       expect(value).toHaveProperty("data");
       expect((value as any).data.replace(/\0/g, "")).toEqual(val);
@@ -141,7 +141,7 @@ describe("Memory Manager", () => {
         const value = node.toHeapValue();
 
         expect(value).toBeDefined();
-        expect(value).toHaveProperty("type", Type.String);
+        expect(value).toHaveProperty("type", HeapType.String);
         expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
 
         expect(value).toHaveProperty("child");
@@ -164,7 +164,7 @@ describe("Memory Manager", () => {
     const value = node.toHeapValue();
 
     expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", Type.Lambda);
+    expect(value).toHaveProperty("type", HeapType.Lambda);
     expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
     expect(value).toHaveProperty("data", pcAddr);
     expect(value).toHaveProperty("child", closureAddr);
@@ -179,7 +179,7 @@ describe("Memory Manager", () => {
       const value = node.toHeapValue();
 
       expect(value).toBeDefined();
-      expect(value).toHaveProperty("type", Type.Symbol);
+      expect(value).toHaveProperty("type", HeapType.Symbol);
       expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
       expect(value).toHaveProperty("data");
       expect((value as any).data.replace(/\0/g, "")).toEqual(id);
@@ -195,7 +195,7 @@ describe("Memory Manager", () => {
     const value = node.toHeapValue();
 
     expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", Type.Value);
+    expect(value).toHaveProperty("type", HeapType.Value);
     expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
     expect(value).toHaveProperty("data", valueAddr);
     expect(value).toHaveProperty("child", nextSymbol);
@@ -210,7 +210,7 @@ describe("Memory Manager", () => {
     const value = node.toHeapValue();
 
     expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", Type.FrameAddr);
+    expect(value).toHaveProperty("type", HeapType.FrameAddr);
     expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
     expect(value).toHaveProperty("data", expectedKvAddr);
     expect(value).toHaveProperty("child", enclosingFrameAddr);
@@ -227,7 +227,7 @@ describe("Memory Manager", () => {
     const value = node.toHeapValue();
 
     expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", Type.HeapAddr);
+    expect(value).toHaveProperty("type", HeapType.HeapAddr);
     expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
     expect(value).toHaveProperty("child", dataAddr);
   });

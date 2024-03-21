@@ -29,7 +29,7 @@ export class HeapAddr {
   }
 }
 
-export enum Type {
+export enum HeapType {
   Bool = "B",
   Int = "I",
   String = "S",
@@ -41,12 +41,12 @@ export enum Type {
 }
 
 export type HeapTypesWithChildren =
-  | Type.String
-  | Type.Lambda
-  | Type.FrameAddr
-  | Type.Symbol
-  | Type.Value
-  | Type.HeapAddr;
+  | HeapType.String
+  | HeapType.Lambda
+  | HeapType.FrameAddr
+  | HeapType.Symbol
+  | HeapType.Value
+  | HeapType.HeapAddr;
 
 export enum GcFlag {
   Marked = "*",
@@ -55,47 +55,47 @@ export enum GcFlag {
 
 export type AnyHeapValue =
   | {
-      type: Type.Bool;
+      type: HeapType.Bool;
       gcFlag: GcFlag;
       data: boolean;
     }
   | {
-      type: Type.Int;
+      type: HeapType.Int;
       gcFlag: GcFlag;
       data: number;
     }
   | {
-      type: Type.String;
+      type: HeapType.String;
       gcFlag: GcFlag;
       child: HeapAddr;
       data: string;
     }
   | {
-      type: Type.Lambda;
+      type: HeapType.Lambda;
       gcFlag: GcFlag;
       child: HeapAddr /** location of closure frame */;
       data: InstrAddr /** PC addr of lambda */;
     }
   | {
-      type: Type.FrameAddr;
+      type: HeapType.FrameAddr;
       gcFlag: GcFlag;
       child: HeapAddr /** location of enclosing frame */;
       data: HeapAddr /** location of list of Symbol-Value pairs */;
     }
   | {
-      type: Type.Symbol;
+      type: HeapType.Symbol;
       gcFlag: GcFlag;
       child: HeapAddr;
       data: string;
     }
   | {
-      type: Type.Value;
+      type: HeapType.Value;
       gcFlag: GcFlag;
       child: HeapAddr /** location of next symbol in frame if exists */;
       data: HeapAddr /** location of value for this symbol */;
     }
   | {
-      type: Type.HeapAddr;
+      type: HeapType.HeapAddr;
       gcFlag: GcFlag;
       child: HeapAddr /** location of address of value being pointed to */;
     };
@@ -143,7 +143,7 @@ export class HeapInBytes {
     const tag = this.toTagByte(heapVal.type, heapVal.gcFlag);
 
     let child: number[] = [];
-    if (heapVal.type !== Type.Bool && heapVal.type !== Type.Int) {
+    if (heapVal.type !== HeapType.Bool && heapVal.type !== HeapType.Int) {
       child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child.addr);
     }
 
@@ -152,27 +152,30 @@ export class HeapInBytes {
     }
 
     let data: number[] = [];
-    if (heapVal.type === Type.Bool) {
+    if (heapVal.type === HeapType.Bool) {
       data = HeapInBytes.convertPrimitiveDataToBytes(
-        (heapVal as HeapValue<Type.Bool>).data
+        (heapVal as HeapValue<HeapType.Bool>).data
       );
-    } else if (heapVal.type === Type.Int) {
+    } else if (heapVal.type === HeapType.Int) {
       data = HeapInBytes.convertPrimitiveDataToBytes(
-        (heapVal as HeapValue<Type.Int>).data
+        (heapVal as HeapValue<HeapType.Int>).data
       );
-    } else if (heapVal.type === Type.String || heapVal.type === Type.Symbol) {
+    } else if (
+      heapVal.type === HeapType.String ||
+      heapVal.type === HeapType.Symbol
+    ) {
       data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data as string);
     } else if (
-      heapVal.type === Type.Lambda ||
-      heapVal.type === Type.FrameAddr ||
-      heapVal.type === Type.Value
+      heapVal.type === HeapType.Lambda ||
+      heapVal.type === HeapType.FrameAddr ||
+      heapVal.type === HeapType.Value
     ) {
       data = HeapInBytes.convertPrimitiveDataToBytes(
         (heapVal as any).data.addr
       );
     }
 
-    if (heapVal.type === Type.String || heapVal.type === Type.Symbol) {
+    if (heapVal.type === HeapType.String || heapVal.type === HeapType.Symbol) {
       // For string, padding end with '\0' will do.
       while (data.length < HEAP_NODE_BYTE_SIZE.data) {
         data.push(0 /* char code for '\0' */);
@@ -241,15 +244,15 @@ export class HeapInBytes {
     }
   }
 
-  static toTagByte(type: Type, gcFlag: GcFlag): number {
+  static toTagByte(type: HeapType, gcFlag: GcFlag): number {
     const t: string = type;
     return (gcFlag === GcFlag.Marked ? t.toLowerCase() : t).charCodeAt(0);
   }
 
-  static fromTagByte(tag: number): { type: Type; gcFlag: GcFlag } {
+  static fromTagByte(tag: number): { type: HeapType; gcFlag: GcFlag } {
     const t: string = String.fromCharCode(tag);
     return {
-      type: t.toUpperCase() as Type,
+      type: t.toUpperCase() as HeapType,
       gcFlag: t === t.toLowerCase() ? GcFlag.Marked : GcFlag.Unmarked,
     };
   }
@@ -261,70 +264,75 @@ export class HeapInBytes {
   ) {
     const { type, gcFlag } = this.fromTagByte(tag);
     switch (type) {
-      case Type.Bool: {
+      case HeapType.Bool: {
         const data = dataBytes[dataBytes.length - 1] === 1;
-        const res: HeapValue<Type.Bool> = { type, gcFlag, data };
+        const res: HeapValue<HeapType.Bool> = { type, gcFlag, data };
         return res;
       }
-      case Type.Int: {
+      case HeapType.Int: {
         let data = dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur, 0);
 
         // Account for use of 2's complement for negative numbers.
         data = data > MAX_INT ? -(data - MAX_INT) : data;
-        const res: HeapValue<Type.Int> = { type, gcFlag, data };
+        const res: HeapValue<HeapType.Int> = { type, gcFlag, data };
         return res;
       }
-      case Type.String: {
+      case HeapType.String: {
         const data = String.fromCharCode(...dataBytes);
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<Type.String> = { type, gcFlag, child, data };
+        const res: HeapValue<HeapType.String> = { type, gcFlag, child, data };
         return res;
       }
-      case Type.Lambda: {
+      case HeapType.Lambda: {
         const data = InstrAddr.fromNum(
           dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<Type.Lambda> = { type, gcFlag, child, data };
+        const res: HeapValue<HeapType.Lambda> = { type, gcFlag, child, data };
         return res;
       }
-      case Type.FrameAddr: {
+      case HeapType.FrameAddr: {
         const data = HeapAddr.fromNum(
           dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<Type.FrameAddr> = { type, gcFlag, child, data };
+        const res: HeapValue<HeapType.FrameAddr> = {
+          type,
+          gcFlag,
+          child,
+          data,
+        };
         return res;
       }
-      case Type.Symbol: {
+      case HeapType.Symbol: {
         const data = String.fromCharCode(...dataBytes);
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<Type.Symbol> = { type, gcFlag, child, data };
+        const res: HeapValue<HeapType.Symbol> = { type, gcFlag, child, data };
         return res;
       }
-      case Type.Value: {
+      case HeapType.Value: {
         const data = HeapAddr.fromNum(
           dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<Type.Value> = { type, gcFlag, child, data };
+        const res: HeapValue<HeapType.Value> = { type, gcFlag, child, data };
         return res;
       }
-      case Type.HeapAddr: {
+      case HeapType.HeapAddr: {
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<Type.HeapAddr> = { type, gcFlag, child };
+        const res: HeapValue<HeapType.HeapAddr> = { type, gcFlag, child };
         return res;
       }
 
