@@ -17,7 +17,6 @@ export class InstrAddr {
 }
 
 export interface Instruction {
-  opCode: OpCode;
   execute: (curState: ExecutionState) => ExecutionState;
 }
 
@@ -32,8 +31,7 @@ export enum OpCode {
   LD,
   ASSIGN,
   LDF,
-  CALL,
-  TAIL_CALL,
+  CALL, // Now call instr doesn't create stack space
   RESET,
   DONE,
 
