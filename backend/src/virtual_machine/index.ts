@@ -7,20 +7,21 @@ import {
 } from "../common/state";
 import { ProgramFile } from "../compiler";
 import { Instruction } from "../instruction/base";
+import { createHeapManager } from "../memory";
 
 // called whenever the machine is first run
 function initialize(entryIndex: number): ExecutionState {
   // TODO: Fix this later!!
-  let mainJobState: JobState = {
+  const mainJobState: JobState = {
     OS: 0,
     PC: entryIndex,
     E: 0,
     RTS: [],
   };
 
-  let startingMachineState: MachineState = {
+  const startingMachineState: MachineState = {
     GLOBAL_ENV: 0,
-    HEAP: [],
+    HEAP: createHeapManager(/* nodeCount = */2 ** 8),
     FREE: 0,
     JOB_QUEUE: new JobQueue(),
     IS_RUNNING: true,

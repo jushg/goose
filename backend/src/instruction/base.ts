@@ -1,5 +1,21 @@
 import { ExecutionState } from "../common/state";
 
+export class InstrAddr {
+  addr: number;
+
+  constructor(addr: number) {
+    this.addr = addr;
+  }
+  
+  static fromNum(addr: number): InstrAddr {
+    return new InstrAddr(addr);
+  }
+
+  toString(): string {
+    return `PC: ${this.addr}`;
+  }
+}
+
 export interface Instruction {
   opCode: OpCode;
   execute: (curState: ExecutionState) => ExecutionState;
