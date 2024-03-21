@@ -210,7 +210,7 @@ describe("Memory Manager", () => {
     const value = node.toHeapValue();
 
     expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", HeapType.FrameAddr);
+    expect(value).toHaveProperty("type", HeapType.Frame);
     expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
     expect(value).toHaveProperty("data", expectedKvAddr);
     expect(value).toHaveProperty("child", enclosingFrameAddr);

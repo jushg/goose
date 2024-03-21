@@ -34,7 +34,7 @@ export enum HeapType {
   Int = "I",
   String = "S",
   Lambda = "L", // Contains a pointer to the closure frame (.child) and PC addr (.data)
-  FrameAddr = "F", // Identifier for a frame on the stack or in a closure.
+  Frame = "F", // Identifier for a frame on the stack or in a closure.
   Symbol = "X", // Identifier for a symbol in a frame. Used in lookup.
   Value = "Y", // Identifier for a value in a frame. Used in lookup.
   HeapAddr = "H", // Transparently access the heap address.
@@ -43,7 +43,7 @@ export enum HeapType {
 export type HeapTypesWithChildren =
   | HeapType.String
   | HeapType.Lambda
-  | HeapType.FrameAddr
+  | HeapType.Frame
   | HeapType.Symbol
   | HeapType.Value
   | HeapType.HeapAddr;
@@ -77,7 +77,7 @@ export type AnyHeapValue =
       data: InstrAddr /** PC addr of lambda */;
     }
   | {
-      type: HeapType.FrameAddr;
+      type: HeapType.Frame;
       gcFlag: GcFlag;
       child: HeapAddr /** location of enclosing frame */;
       data: HeapAddr /** location of list of Symbol-Value pairs */;
@@ -167,7 +167,7 @@ export class HeapInBytes {
       data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data as string);
     } else if (
       heapVal.type === HeapType.Lambda ||
-      heapVal.type === HeapType.FrameAddr ||
+      heapVal.type === HeapType.Frame ||
       heapVal.type === HeapType.Value
     ) {
       data = HeapInBytes.convertPrimitiveDataToBytes(
@@ -295,14 +295,14 @@ export class HeapInBytes {
         const res: HeapValue<HeapType.Lambda> = { type, gcFlag, child, data };
         return res;
       }
-      case HeapType.FrameAddr: {
+      case HeapType.Frame: {
         const data = HeapAddr.fromNum(
           dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
         const child = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<HeapType.FrameAddr> = {
+        const res: HeapValue<HeapType.Frame> = {
           type,
           gcFlag,
           child,

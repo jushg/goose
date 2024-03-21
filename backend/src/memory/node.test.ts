@@ -131,7 +131,7 @@ describe("HeapInBytes", () => {
     const nextAddr = HeapAddr.fromNum(9);
     const dataAddr = HeapAddr.fromNum(10);
     const h = HeapInBytes.fromData({
-      type: HeapType.FrameAddr,
+      type: HeapType.Frame,
       gcFlag: GcFlag.Unmarked,
       data: dataAddr,
       child: nextAddr,

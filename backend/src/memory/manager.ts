@@ -170,7 +170,7 @@ export class MemoryManager implements IAllocator {
     );
 
     const h = HeapInBytes.fromData({
-      type: HeapType.FrameAddr,
+      type: HeapType.Frame,
       gcFlag: GcFlag.Unmarked,
       child: enclosingFrame,
       data: linkedListOfSymbolValues,
