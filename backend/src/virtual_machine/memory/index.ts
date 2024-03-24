@@ -1,92 +1,59 @@
 import { InstrAddr } from "../../instruction/base";
-import { HeapAddr } from "../../memory";
+import { HeapAddr, HeapType } from "../../memory";
 
-export enum GoslingType {
-  Bool = "B",
-  Int = "I",
-  String = "S",
-  Lambda = "L",
-  Frame = "F",
-  Ptr = "P",
-  Symbol = "K",
-  Value = "V",
-  KeyValueList = "X",
-  List = "Y",
-}
+export type AnyGoslingObject =
+  | GoslingBinaryPtrObj
+  | GoslingBoolObj
+  | GoslingIntObj
+  | GoslingStringObj;
 
-export type GoslingObject<T extends GoslingType> = Extract<
+export type GoslingObject<T extends HeapType> = Extract<
   AnyGoslingObject,
   { type: T }
 >;
 
-export type AnyGoslingObject =
-  | {
-      addr: HeapAddr;
-      type: GoslingType.Bool;
-      data: boolean;
-    }
-  | {
-      addr: HeapAddr;
-      type: GoslingType.Int;
-      data: number;
-    }
-  | {
-      addr: HeapAddr;
-      type: GoslingType.String;
-      data: string;
-    }
-  | {
-      addr: HeapAddr;
-      type: GoslingType.Lambda;
-      pcAddr: InstrAddr;
-      closure: GoslingObject<GoslingType.Frame> | null;
-    }
-  | {
-      addr: HeapAddr;
-      type: GoslingType.Frame;
-
-      env: GoslingKeyValueList | null;
-      parentEnv: GoslingObject<GoslingType.Frame> | null;
-    }
-  | {
-      addr: HeapAddr;
-      type: GoslingType.Value;
-
-      obj: AnyGoslingObject | null;
-      next: GoslingObject<GoslingType.Value> | null;
-    }
-  | {
-      addr: HeapAddr;
-      type: GoslingType.Ptr;
-
-      obj: AnyGoslingObject | null;
-    };
-
-export type GoslingList = {
+export type GoslingBoolObj = {
   addr: HeapAddr;
-  type: GoslingType.List;
-
-  arr: GoslingObject<GoslingType.Value>[];
+  type: HeapType.Bool;
+  data: boolean;
+};
+export type GoslingIntObj = {
+  addr: HeapAddr;
+  type: HeapType.Int;
+  data: number;
+};
+export type GoslingStringObj = {
+  addr: HeapAddr;
+  type: HeapType.String;
+  data: string;
+};
+export type GoslingBinaryPtrObj = {
+  addr: HeapAddr;
+  type: HeapType.BinaryPtr;
+  child1: HeapAddr;
+  child2: HeapAddr;
 };
 
-export type GoslingKeyValueList = {
-  addr: HeapAddr;
-  type: GoslingType.KeyValueList;
+export type GoslingEnvsObj = {
+  ptr: HeapAddr;
+  env: {
+    values: Record<string, AnyGoslingObject>;
+    symbolAddresses: Record<string, HeapAddr>;
+  };
+}[];
 
-  arr: {
-    k: string;
-    v: AnyGoslingObject | null;
-    addrs: { k: HeapAddr; v: HeapAddr };
-  }[];
+export type GoslingLambdaObj = {
+  closure: GoslingEnvsObj;
+  pcAddr: InstrAddr;
 };
 
-export function isGoslingType<T extends GoslingType>(
+export function isGoslingType<T extends HeapType>(
   val: T,
   obj: AnyGoslingObject
 ): obj is GoslingObject<T> {
   return obj.type === val;
 }
-export function assertGoslingType<T extends GoslingType>(
+export function assertGoslingType<T extends HeapType>(
   val: T,
   obj: AnyGoslingObject
 ): asserts obj is GoslingObject<T> {
@@ -100,4 +67,8 @@ export type IGoslingMemoryManager = {
   set(addr: HeapAddr, val: Omit<AnyGoslingObject, "addr">): void;
   clear(addr: HeapAddr): void;
   alloc(data: Omit<AnyGoslingObject, "addr">): AnyGoslingObject;
+
+  getList(addr: HeapAddr): { ptr: HeapAddr; val: AnyGoslingObject }[];
+  getLambda(addr: HeapAddr): GoslingLambdaObj;
+  getEnvs(addr: HeapAddr): GoslingEnvsObj;
 };

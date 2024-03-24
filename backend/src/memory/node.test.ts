@@ -1,6 +1,6 @@
 import { HEAP_NODE_BYTE_SIZE } from ".";
 import { InstrAddr } from "../instruction/base";
-import { GcFlag, HeapAddr, HeapInBytes, HeapType } from "./node";
+import { GcFlag, HeapAddr, HeapInBytes, HeapType, HeapValue } from "./node";
 
 describe("HeapInBytes", () => {
   const stringNormalizer = (s: string): string => {
@@ -85,11 +85,13 @@ describe("HeapInBytes", () => {
         next,
       });
       const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
+      const converted = HeapInBytes.fromBytes(
+        bytes
+      ).toHeapValue() as HeapValue<HeapType.String>;
       expect(stringNormalizer(converted.data)).toStrictEqual(
         stringNormalizer(data)
       );
-      expect(converted.child).toStrictEqual(next);
+      expect(converted.next).toStrictEqual(next);
     }
   });
 
@@ -103,8 +105,10 @@ describe("HeapInBytes", () => {
       child2,
     });
     const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-    expect(converted.data).toStrictEqual(child1);
-    expect(converted.child).toStrictEqual(child2);
+    const converted = HeapInBytes.fromBytes(
+      bytes
+    ).toHeapValue() as HeapValue<HeapType.BinaryPtr>;
+    expect(converted.child1).toStrictEqual(child1);
+    expect(converted.child2).toStrictEqual(child2);
   });
 });

@@ -2,6 +2,7 @@ import { InstrAddr } from "../instruction/base";
 import {
   HEAP_NODE_BYTE_INDICES,
   HEAP_NODE_BYTE_SIZE,
+  HEAP_NODE_BYTE_TOTAL_SIZE,
   MAX_INT,
   MIN_INT,
 } from "./";
@@ -83,6 +84,10 @@ export function assertHeapType<T extends HeapType>(
 
 export class HeapInBytes {
   _bytes: number[]; /** Node contents as UINT8 (bytes) */
+
+  static getNull(): HeapInBytes {
+    return HeapInBytes.fromBytes(new Array(HEAP_NODE_BYTE_TOTAL_SIZE).fill(0));
+  }
 
   private constructor(tag: number, child: number[], data: number[]) {
     if (child.length !== HEAP_NODE_BYTE_SIZE.child) {

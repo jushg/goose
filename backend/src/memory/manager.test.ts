@@ -144,8 +144,8 @@ describe("Memory Manager", () => {
         expect(value).toHaveProperty("type", HeapType.String);
         expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
 
-        expect(value).toHaveProperty("child");
-        addr = (value as any).child;
+        expect(value).toHaveProperty("next");
+        addr = (value as any).next;
 
         expect(value).toHaveProperty("data");
         concatenated += (value as any).data;
