@@ -110,41 +110,17 @@ export class MemoryManager implements IAllocator {
     return addr;
   }
 
-  allocValue(addr: HeapAddr, nextSymbol?: HeapAddr): HeapAddr {
-    nextSymbol = nextSymbol ?? HeapAddr.NULL;
+  allocValue(addr: HeapAddr, next?: HeapAddr): HeapAddr {
+    next = next ?? HeapAddr.NULL;
     const h = HeapInBytes.fromData({
       type: HeapType.Value,
       gcFlag: GcFlag.Unmarked,
-      child: nextSymbol,
+      child: next,
       data: addr,
     });
     const newAddr = this.alloc.getNewHeapAddress();
     this.setHeapValue(newAddr, h);
     return newAddr;
-  }
-
-  allocSymbol(identifier: string, valueAddr: HeapAddr): HeapAddr {
-    const chunks = [];
-    const MAX_CHUNK_SIZE_IN_BYTES = HEAP_NODE_BYTE_SIZE.data;
-
-    for (let i = 0; i < identifier.length; i += MAX_CHUNK_SIZE_IN_BYTES) {
-      chunks.push(identifier.slice(i, i + MAX_CHUNK_SIZE_IN_BYTES));
-    }
-
-    const addresses = this.alloc.getNewHeapAddresses(chunks.length);
-    let prevAddr: HeapAddr = valueAddr;
-    for (let i = chunks.length - 1; i >= 0; i--) {
-      const h = HeapInBytes.fromData({
-        type: HeapType.Symbol,
-        gcFlag: GcFlag.Unmarked,
-        data: chunks[i],
-        child: prevAddr,
-      });
-      this.setHeapValue(addresses[i], h);
-      prevAddr = addresses[i];
-    }
-
-    return addresses[0];
   }
 
   allocHeapAddr(data: HeapAddr): HeapAddr {
@@ -158,13 +134,16 @@ export class MemoryManager implements IAllocator {
     return addr;
   }
 
-  allocFrameAddr(
+  allocFrame(
     enclosingFrame: HeapAddr,
     kvPairs: Record<string, HeapAddr>
   ): HeapAddr {
     const linkedListOfSymbolValues = Object.keys(kvPairs).reduce(
       (prev, key) => {
-        return this.allocSymbol(key, this.allocValue(kvPairs[key], prev));
+        const identifierAddr = this.allocString(key);
+        const valueAddr = this.allocValue(kvPairs[key], prev);
+        const keyAddr = this.allocValue(identifierAddr, valueAddr);
+        return keyAddr;
       },
       HeapAddr.NULL
     );

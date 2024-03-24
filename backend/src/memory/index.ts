@@ -61,10 +61,9 @@ export type IAllocator = {
   allocInt(data: number): HeapAddr;
   allocString(data: string): HeapAddr;
   allocLambda(pc: InstrAddr, frame: HeapAddr): HeapAddr;
-  allocValue(addr: HeapAddr, nextSymbol?: HeapAddr): HeapAddr;
-  allocSymbol(identifier: string, valueAddr: HeapAddr): HeapAddr;
+  allocValue(addr: HeapAddr, next?: HeapAddr): HeapAddr;
   allocHeapAddr(data: HeapAddr): HeapAddr;
-  allocFrameAddr(
+  allocFrame(
     enclosingFrame: HeapAddr,
     kvPairs: Record<string, HeapAddr>
   ): HeapAddr;

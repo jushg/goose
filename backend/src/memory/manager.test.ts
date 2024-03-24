@@ -170,23 +170,6 @@ describe("Memory Manager", () => {
     expect(value).toHaveProperty("child", closureAddr);
   });
 
-  test("should be able to alloc and later read a symbol", () => {
-    const ids = ["g_g", "abc", "gf", "a-a"];
-    for (const id of ids) {
-      const valueAddr = HeapAddr.fromNum(9);
-      const addr = manager.allocSymbol(id, valueAddr);
-      const node = manager.getHeapValue(addr);
-      const value = node.toHeapValue();
-
-      expect(value).toBeDefined();
-      expect(value).toHaveProperty("type", HeapType.Symbol);
-      expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
-      expect(value).toHaveProperty("data");
-      expect((value as any).data.replace(/\0/g, "")).toEqual(id);
-      expect(value).toHaveProperty("child", valueAddr);
-    }
-  });
-
   test("should be able to alloc and later read a value", () => {
     const valueAddr = HeapAddr.fromNum(9);
     const nextSymbol = HeapAddr.fromNum(10);
@@ -204,7 +187,7 @@ describe("Memory Manager", () => {
   test("should be able to alloc and later read a frame address with empty env", () => {
     const enclosingFrameAddr = HeapAddr.fromNum(9);
     const expectedKvAddr = HeapAddr.NULL;
-    const addr = manager.allocFrameAddr(enclosingFrameAddr, {});
+    const addr = manager.allocFrame(enclosingFrameAddr, {});
 
     const node = manager.getHeapValue(addr);
     const value = node.toHeapValue();

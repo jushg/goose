@@ -35,7 +35,6 @@ export enum HeapType {
   String = "S",
   Lambda = "L", // Contains a pointer to the closure frame (.child) and PC addr (.data)
   Frame = "F", // Identifier for a frame on the stack or in a closure.
-  Symbol = "X", // Identifier for a symbol in a frame. Used in lookup.
   Value = "Y", // Identifier for a value in a frame. Used in lookup.
   HeapAddr = "H", // Transparently access the heap address.
 }
@@ -44,7 +43,6 @@ export type HeapTypesWithChildren =
   | HeapType.String
   | HeapType.Lambda
   | HeapType.Frame
-  | HeapType.Symbol
   | HeapType.Value
   | HeapType.HeapAddr;
 
@@ -81,12 +79,6 @@ export type AnyHeapValue =
       gcFlag: GcFlag;
       child: HeapAddr /** location of enclosing frame */;
       data: HeapAddr /** location of list of Symbol-Value pairs */;
-    }
-  | {
-      type: HeapType.Symbol;
-      gcFlag: GcFlag;
-      child: HeapAddr;
-      data: string;
     }
   | {
       type: HeapType.Value;
@@ -160,10 +152,7 @@ export class HeapInBytes {
       data = HeapInBytes.convertPrimitiveDataToBytes(
         (heapVal as HeapValue<HeapType.Int>).data
       );
-    } else if (
-      heapVal.type === HeapType.String ||
-      heapVal.type === HeapType.Symbol
-    ) {
+    } else if (heapVal.type === HeapType.String) {
       data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data as string);
     } else if (
       heapVal.type === HeapType.Lambda ||
@@ -175,7 +164,7 @@ export class HeapInBytes {
       );
     }
 
-    if (heapVal.type === HeapType.String || heapVal.type === HeapType.Symbol) {
+    if (heapVal.type === HeapType.String) {
       // For string, padding end with '\0' will do.
       while (data.length < HEAP_NODE_BYTE_SIZE.data) {
         data.push(0 /* char code for '\0' */);
@@ -308,14 +297,6 @@ export class HeapInBytes {
           child,
           data,
         };
-        return res;
-      }
-      case HeapType.Symbol: {
-        const data = String.fromCharCode(...dataBytes);
-        const child = HeapAddr.fromNum(
-          childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const res: HeapValue<HeapType.Symbol> = { type, gcFlag, child, data };
         return res;
       }
       case HeapType.Value: {

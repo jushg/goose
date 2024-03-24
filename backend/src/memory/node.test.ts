@@ -93,25 +93,6 @@ describe("HeapInBytes", () => {
     }
   });
 
-  test("should correctly convert symbol to bytes", () => {
-    const simpleData = ["g_g", "abc", "gf", "a-a"];
-    for (const data of simpleData) {
-      const nextAddr = HeapAddr.fromNum(9);
-      const h = HeapInBytes.fromData({
-        type: HeapType.Symbol,
-        gcFlag: GcFlag.Unmarked,
-        data,
-        child: nextAddr,
-      });
-      const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-      expect(stringNormalizer(converted.data)).toStrictEqual(
-        stringNormalizer(data)
-      );
-      expect(converted.child).toStrictEqual(nextAddr);
-    }
-  });
-
   test("should correctly convert lambda to bytes", () => {
     const nextAddr = HeapAddr.fromNum(9);
     const pcAddr = InstrAddr.fromNum(10);
