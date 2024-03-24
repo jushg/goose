@@ -73,6 +73,10 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
   }
 
   private getHeapNode(addr: HeapAddr): Uint8Array {
+    if (addr.addr >= this.memory.nodeCount || addr.addr <= 0) {
+      throw new Error(`Invalid heap address: ${addr.addr}`);
+    }
+
     return new Uint8Array(
       this.memory.buf,
       addr.addr * HEAP_NODE_BYTE_TOTAL_SIZE,

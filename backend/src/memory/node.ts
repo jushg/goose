@@ -66,6 +66,20 @@ export type AnyHeapValue =
     };
 
 export type HeapValue<T> = Extract<AnyHeapValue, { type: T }>;
+export function isHeapType<T extends HeapType>(
+  type: T,
+  val: AnyHeapValue
+): val is HeapValue<T> {
+  return val.type === type;
+}
+export function assertHeapType<T extends HeapType>(
+  type: T,
+  val: AnyHeapValue
+): asserts val is HeapValue<T> {
+  if (!isHeapType(type, val)) {
+    throw new Error(`Invalid heap type ${val.type} instead of ${type}`);
+  }
+}
 
 export class HeapInBytes {
   _bytes: number[]; /** Node contents as UINT8 (bytes) */
