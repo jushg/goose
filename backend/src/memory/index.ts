@@ -57,16 +57,11 @@ export type IUntypedAllocator = {
 export type IAllocator = {
   getHeapValue(addr: HeapAddr): HeapInBytes;
   setHeapValue(addr: HeapAddr, val: HeapInBytes): void;
+
   allocBool(data: boolean): HeapAddr;
   allocInt(data: number): HeapAddr;
   allocString(data: string): HeapAddr;
-  allocLambda(pc: InstrAddr, frame: HeapAddr): HeapAddr;
-  allocValue(addr: HeapAddr, next?: HeapAddr): HeapAddr;
-  allocHeapAddr(data: HeapAddr): HeapAddr;
-  allocFrame(
-    enclosingFrame: HeapAddr,
-    kvPairs: Record<string, HeapAddr>
-  ): HeapAddr;
+  allocList(objAddr: HeapAddr, next?: HeapAddr): HeapAddr;
 } & IUntypedAllocator;
 
 export function createHeapManager(heapNodeCount: number): IAllocator {

@@ -89,7 +89,7 @@ export class MemoryManager implements IAllocator {
         type: HeapType.String,
         gcFlag: GcFlag.Unmarked,
         data: chunks[i],
-        child: prevAddr,
+        next: prevAddr,
       });
       this.setHeapValue(addresses[i], h);
       prevAddr = addresses[i];
@@ -98,64 +98,16 @@ export class MemoryManager implements IAllocator {
     return addresses[0];
   }
 
-  allocLambda(pc: InstrAddr, frame: HeapAddr): HeapAddr {
-    const h = HeapInBytes.fromData({
-      type: HeapType.Lambda,
-      gcFlag: GcFlag.Unmarked,
-      data: pc,
-      child: frame,
-    });
-    const addr = this.alloc.getNewHeapAddress();
-    this.setHeapValue(addr, h);
-    return addr;
-  }
-
-  allocValue(addr: HeapAddr, next?: HeapAddr): HeapAddr {
+  allocList(objAddr: HeapAddr, next?: HeapAddr): HeapAddr {
     next = next ?? HeapAddr.NULL;
     const h = HeapInBytes.fromData({
-      type: HeapType.Value,
+      type: HeapType.List,
       gcFlag: GcFlag.Unmarked,
-      child: next,
-      data: addr,
+      next,
+      objAddr,
     });
     const newAddr = this.alloc.getNewHeapAddress();
     this.setHeapValue(newAddr, h);
     return newAddr;
-  }
-
-  allocHeapAddr(data: HeapAddr): HeapAddr {
-    const h = HeapInBytes.fromData({
-      type: HeapType.HeapAddr,
-      gcFlag: GcFlag.Unmarked,
-      child: data,
-    });
-    const addr = this.alloc.getNewHeapAddress();
-    this.setHeapValue(addr, h);
-    return addr;
-  }
-
-  allocFrame(
-    enclosingFrame: HeapAddr,
-    kvPairs: Record<string, HeapAddr>
-  ): HeapAddr {
-    const linkedListOfSymbolValues = Object.keys(kvPairs).reduce(
-      (prev, key) => {
-        const identifierAddr = this.allocString(key);
-        const valueAddr = this.allocValue(kvPairs[key], prev);
-        const keyAddr = this.allocValue(identifierAddr, valueAddr);
-        return keyAddr;
-      },
-      HeapAddr.NULL
-    );
-
-    const h = HeapInBytes.fromData({
-      type: HeapType.Frame,
-      gcFlag: GcFlag.Unmarked,
-      child: enclosingFrame,
-      data: linkedListOfSymbolValues,
-    });
-    const addr = this.alloc.getNewHeapAddress();
-    this.setHeapValue(addr, h);
-    return addr;
   }
 }

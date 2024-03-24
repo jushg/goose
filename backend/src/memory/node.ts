@@ -33,18 +33,8 @@ export enum HeapType {
   Bool = "B",
   Int = "I",
   String = "S",
-  Lambda = "L", // Contains a pointer to the closure frame (.child) and PC addr (.data)
-  Frame = "F", // Identifier for a frame on the stack or in a closure.
-  Value = "Y", // Identifier for a value in a frame. Used in lookup.
-  HeapAddr = "H", // Transparently access the heap address.
+  List = "L", // Singly Linked List Node. .next (childBytes) is a ptr to next node, .objAddr (dataBytes) is a ptr to value
 }
-
-export type HeapTypesWithChildren =
-  | HeapType.String
-  | HeapType.Lambda
-  | HeapType.Frame
-  | HeapType.Value
-  | HeapType.HeapAddr;
 
 export enum GcFlag {
   Marked = "*",
@@ -65,31 +55,14 @@ export type AnyHeapValue =
   | {
       type: HeapType.String;
       gcFlag: GcFlag;
-      child: HeapAddr;
+      next: HeapAddr;
       data: string;
     }
   | {
-      type: HeapType.Lambda;
+      type: HeapType.List;
       gcFlag: GcFlag;
-      child: HeapAddr /** location of closure frame */;
-      data: InstrAddr /** PC addr of lambda */;
-    }
-  | {
-      type: HeapType.Frame;
-      gcFlag: GcFlag;
-      child: HeapAddr /** location of enclosing frame */;
-      data: HeapAddr /** location of list of Symbol-Value pairs */;
-    }
-  | {
-      type: HeapType.Value;
-      gcFlag: GcFlag;
-      child: HeapAddr /** location of next symbol in frame if exists */;
-      data: HeapAddr /** location of value for this symbol */;
-    }
-  | {
-      type: HeapType.HeapAddr;
-      gcFlag: GcFlag;
-      child: HeapAddr /** location of address of value being pointed to */;
+      next: HeapAddr /** location of next symbol in frame if exists */;
+      objAddr: HeapAddr /** location of value for this symbol */;
     };
 
 export type HeapValue<T> = Extract<AnyHeapValue, { type: T }>;
@@ -135,8 +108,15 @@ export class HeapInBytes {
     const tag = this.toTagByte(heapVal.type, heapVal.gcFlag);
 
     let child: number[] = [];
-    if (heapVal.type !== HeapType.Bool && heapVal.type !== HeapType.Int) {
-      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child.addr);
+    if (heapVal.type === HeapType.Bool || heapVal.type === HeapType.Int) {
+      // For primitive types, child is empty.
+    } else if (
+      heapVal.type === HeapType.List ||
+      heapVal.type === HeapType.String
+    ) {
+      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.next.addr);
+    } else {
+      const _: never = heapVal;
     }
 
     while (child.length < HEAP_NODE_BYTE_SIZE.child) {
@@ -144,24 +124,14 @@ export class HeapInBytes {
     }
 
     let data: number[] = [];
-    if (heapVal.type === HeapType.Bool) {
-      data = HeapInBytes.convertPrimitiveDataToBytes(
-        (heapVal as HeapValue<HeapType.Bool>).data
-      );
-    } else if (heapVal.type === HeapType.Int) {
-      data = HeapInBytes.convertPrimitiveDataToBytes(
-        (heapVal as HeapValue<HeapType.Int>).data
-      );
-    } else if (heapVal.type === HeapType.String) {
-      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data as string);
-    } else if (
-      heapVal.type === HeapType.Lambda ||
-      heapVal.type === HeapType.Frame ||
-      heapVal.type === HeapType.Value
+    if (
+      heapVal.type === HeapType.Bool ||
+      heapVal.type === HeapType.Int ||
+      heapVal.type === HeapType.String
     ) {
-      data = HeapInBytes.convertPrimitiveDataToBytes(
-        (heapVal as any).data.addr
-      );
+      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data);
+    } else if (heapVal.type === HeapType.List) {
+      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.objAddr.addr);
     }
 
     if (heapVal.type === HeapType.String) {
@@ -169,11 +139,17 @@ export class HeapInBytes {
       while (data.length < HEAP_NODE_BYTE_SIZE.data) {
         data.push(0 /* char code for '\0' */);
       }
-    } else {
+    } else if (
+      heapVal.type === HeapType.List ||
+      heapVal.type === HeapType.Int ||
+      heapVal.type === HeapType.Bool
+    ) {
       while (data.length < HEAP_NODE_BYTE_SIZE.data) {
         // For other types, padding start with 0 will do.
         data.unshift(0);
       }
+    } else {
+      const _: never = heapVal;
     }
 
     return new HeapInBytes(tag, child, data);
@@ -268,52 +244,20 @@ export class HeapInBytes {
       }
       case HeapType.String: {
         const data = String.fromCharCode(...dataBytes);
-        const child = HeapAddr.fromNum(
+        const next = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<HeapType.String> = { type, gcFlag, child, data };
+        const res: HeapValue<HeapType.String> = { type, gcFlag, next, data };
         return res;
       }
-      case HeapType.Lambda: {
-        const data = InstrAddr.fromNum(
+      case HeapType.List: {
+        const objAddr = HeapAddr.fromNum(
           dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const child = HeapAddr.fromNum(
+        const next = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<HeapType.Lambda> = { type, gcFlag, child, data };
-        return res;
-      }
-      case HeapType.Frame: {
-        const data = HeapAddr.fromNum(
-          dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const child = HeapAddr.fromNum(
-          childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const res: HeapValue<HeapType.Frame> = {
-          type,
-          gcFlag,
-          child,
-          data,
-        };
-        return res;
-      }
-      case HeapType.Value: {
-        const data = HeapAddr.fromNum(
-          dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const child = HeapAddr.fromNum(
-          childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const res: HeapValue<HeapType.Value> = { type, gcFlag, child, data };
-        return res;
-      }
-      case HeapType.HeapAddr: {
-        const child = HeapAddr.fromNum(
-          childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const res: HeapValue<HeapType.HeapAddr> = { type, gcFlag, child };
+        const res: HeapValue<HeapType.List> = { type, gcFlag, objAddr, next };
         return res;
       }
 
