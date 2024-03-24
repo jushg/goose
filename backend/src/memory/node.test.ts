@@ -94,17 +94,17 @@ describe("HeapInBytes", () => {
   });
 
   test("should correctly convert list node to bytes", () => {
-    const nextAddr = HeapAddr.fromNum(9);
-    const dataAddr = HeapAddr.fromNum(10);
+    const child1 = HeapAddr.fromNum(9);
+    const child2 = HeapAddr.fromNum(10);
     const h = HeapInBytes.fromData({
-      type: HeapType.List,
+      type: HeapType.BinaryPtr,
       gcFlag: GcFlag.Unmarked,
-      objAddr: dataAddr,
-      next: nextAddr,
+      child1,
+      child2,
     });
     const bytes = h.toBytes();
     const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-    expect(converted.data).toStrictEqual(dataAddr);
-    expect(converted.child).toStrictEqual(nextAddr);
+    expect(converted.data).toStrictEqual(child1);
+    expect(converted.child).toStrictEqual(child2);
   });
 });

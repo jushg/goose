@@ -98,13 +98,13 @@ export class MemoryManager implements IAllocator {
     return addresses[0];
   }
 
-  allocList(objAddr: HeapAddr, next?: HeapAddr): HeapAddr {
-    next = next ?? HeapAddr.NULL;
+  allocBinaryPtr(child1: HeapAddr, child2?: HeapAddr): HeapAddr {
+    child2 = child2 ?? HeapAddr.NULL;
     const h = HeapInBytes.fromData({
-      type: HeapType.List,
+      type: HeapType.BinaryPtr,
       gcFlag: GcFlag.Unmarked,
-      next,
-      objAddr,
+      child1,
+      child2,
     });
     const newAddr = this.alloc.getNewHeapAddress();
     this.setHeapValue(newAddr, h);

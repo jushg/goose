@@ -1,4 +1,3 @@
-import { InstrAddr } from "../instruction/base";
 import { SimpleMemoryAllocator } from "./alloc";
 import { MemoryManager } from "./manager";
 import { HeapAddr, HeapInBytes } from "./node";
@@ -61,7 +60,7 @@ export type IAllocator = {
   allocBool(data: boolean): HeapAddr;
   allocInt(data: number): HeapAddr;
   allocString(data: string): HeapAddr;
-  allocList(objAddr: HeapAddr, next?: HeapAddr): HeapAddr;
+  allocBinaryPtr(child1: HeapAddr, child2?: HeapAddr): HeapAddr;
 } & IUntypedAllocator;
 
 export function createHeapManager(heapNodeCount: number): IAllocator {

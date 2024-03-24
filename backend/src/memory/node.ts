@@ -33,7 +33,7 @@ export enum HeapType {
   Bool = "B",
   Int = "I",
   String = "S",
-  List = "L", // Singly Linked List Node. .next (childBytes) is a ptr to next node, .objAddr (dataBytes) is a ptr to value
+  BinaryPtr = "P", // Ptr with child1 (childBytes) and child2 (dataBytes)
 }
 
 export enum GcFlag {
@@ -59,10 +59,10 @@ export type AnyHeapValue =
       data: string;
     }
   | {
-      type: HeapType.List;
+      type: HeapType.BinaryPtr;
       gcFlag: GcFlag;
-      next: HeapAddr /** location of next symbol in frame if exists */;
-      objAddr: HeapAddr /** location of value for this symbol */;
+      child1: HeapAddr;
+      child2: HeapAddr;
     };
 
 export type HeapValue<T> = Extract<AnyHeapValue, { type: T }>;
@@ -124,10 +124,9 @@ export class HeapInBytes {
     let child: number[] = [];
     if (heapVal.type === HeapType.Bool || heapVal.type === HeapType.Int) {
       // For primitive types, child is empty.
-    } else if (
-      heapVal.type === HeapType.List ||
-      heapVal.type === HeapType.String
-    ) {
+    } else if (heapVal.type === HeapType.BinaryPtr) {
+      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child1.addr);
+    } else if (heapVal.type === HeapType.String) {
       child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.next.addr);
     } else {
       const _: never = heapVal;
@@ -144,8 +143,8 @@ export class HeapInBytes {
       heapVal.type === HeapType.String
     ) {
       data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data);
-    } else if (heapVal.type === HeapType.List) {
-      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.objAddr.addr);
+    } else if (heapVal.type === HeapType.BinaryPtr) {
+      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child2.addr);
     }
 
     if (heapVal.type === HeapType.String) {
@@ -154,7 +153,7 @@ export class HeapInBytes {
         data.push(0 /* char code for '\0' */);
       }
     } else if (
-      heapVal.type === HeapType.List ||
+      heapVal.type === HeapType.BinaryPtr ||
       heapVal.type === HeapType.Int ||
       heapVal.type === HeapType.Bool
     ) {
@@ -264,14 +263,19 @@ export class HeapInBytes {
         const res: HeapValue<HeapType.String> = { type, gcFlag, next, data };
         return res;
       }
-      case HeapType.List: {
-        const objAddr = HeapAddr.fromNum(
-          dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
-        );
-        const next = HeapAddr.fromNum(
+      case HeapType.BinaryPtr: {
+        const child1 = HeapAddr.fromNum(
           childBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
         );
-        const res: HeapValue<HeapType.List> = { type, gcFlag, objAddr, next };
+        const child2 = HeapAddr.fromNum(
+          dataBytes.reduce((acc, cur) => acc * 2 ** 8 + cur)
+        );
+        const res: HeapValue<HeapType.BinaryPtr> = {
+          type,
+          gcFlag,
+          child1,
+          child2,
+        };
         return res;
       }
 
