@@ -7,6 +7,10 @@ export type AnyGoslingObject =
   | GoslingIntObj
   | GoslingStringObj;
 
+export type Literal<T extends AnyGoslingObject> = T extends T
+  ? Omit<T, "addr">
+  : never;
+
 export type GoslingObject<T extends HeapType> = Extract<
   AnyGoslingObject,
   { type: T }
@@ -48,8 +52,6 @@ export type GoslingScopeObj = {
   allocNewFrame(symbols: string[]): GoslingScopeObj;
   getTopScopeAddr(): HeapAddr;
 };
-
-export type Literal<T> = T extends { addr: HeapAddr } ? Omit<T, "addr"> : never;
 
 export type GoslingLambdaObj = {
   closure: GoslingScopeObj;

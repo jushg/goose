@@ -1,13 +1,12 @@
+import { HeapAddr, HeapType } from "../memory";
+import { GoslingMemoryManager } from "./alloc";
 import {
   AnyGoslingObject,
   GoslingScopeObj,
-  IGoslingMemoryManager,
   Literal,
   assertGoslingType,
   isGoslingType,
 } from "./memory";
-import { GoslingMemoryManager } from "./alloc";
-import { HeapAddr, HeapType } from "../memory";
 
 export type GoslingScopeData = {
   ptr: HeapAddr;

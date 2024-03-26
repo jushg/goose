@@ -1,23 +1,15 @@
+import { InstrAddr } from "../instruction/base";
+import { HeapAddr, HeapType, IAllocator } from "../memory";
+import { HeapInBytes, assertHeapType } from "../memory/node";
 import {
   AnyGoslingObject,
-  GoslingBinaryPtrObj,
   GoslingLambdaObj,
   GoslingObject,
   GoslingScopeObj,
   IGoslingMemoryManager,
   Literal,
   assertGoslingType,
-  isGoslingType,
 } from "./memory";
-import { InstrAddr } from "../instruction/base";
-import {
-  HEAP_NODE_BYTE_TOTAL_SIZE,
-  HeapAddr,
-  HeapType,
-  HeapValue,
-  IAllocator,
-} from "../memory";
-import { HeapInBytes, assertHeapType, isHeapType } from "../memory/node";
 import { getScopeObj, readScopeData } from "./scope";
 
 export class GoslingMemoryManager implements IGoslingMemoryManager {
