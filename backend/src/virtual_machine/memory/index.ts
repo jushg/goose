@@ -34,16 +34,17 @@ export type GoslingBinaryPtrObj = {
   child2: HeapAddr;
 };
 
-export type GoslingEnvsObj = {
-  ptr: HeapAddr;
-  env: {
-    values: Record<string, AnyGoslingObject>;
-    symbolAddresses: Record<string, HeapAddr>;
-  };
-}[];
+export type GoslingScopeObj = {
+  lookup(symbol: string): AnyGoslingObject | null;
+  assign(symbol: string, val: Literal<AnyGoslingObject>): void;
+  allocNewFrame(symbols: string[]): GoslingScopeObj;
+  getTopScopeAddr(): HeapAddr;
+};
+
+export type Literal<T> = T extends { addr: HeapAddr } ? Omit<T, "addr"> : never;
 
 export type GoslingLambdaObj = {
-  closure: GoslingEnvsObj;
+  closure: GoslingScopeObj;
   pcAddr: InstrAddr;
 };
 
@@ -64,11 +65,11 @@ export function assertGoslingType<T extends HeapType>(
 
 export type IGoslingMemoryManager = {
   get(addr: HeapAddr): AnyGoslingObject | null;
-  set(addr: HeapAddr, val: Omit<AnyGoslingObject, "addr">): void;
+  set(addr: HeapAddr, val: Literal<AnyGoslingObject>): void;
   clear(addr: HeapAddr): void;
-  alloc(data: Omit<AnyGoslingObject, "addr">): AnyGoslingObject;
+  alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject;
 
   getList(addr: HeapAddr): { ptr: HeapAddr; val: AnyGoslingObject }[];
   getLambda(addr: HeapAddr): GoslingLambdaObj;
-  getEnvs(addr: HeapAddr): GoslingEnvsObj;
+  getEnvs(addr: HeapAddr): GoslingScopeObj;
 };

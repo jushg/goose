@@ -1,10 +1,11 @@
 import {
   AnyGoslingObject,
   GoslingBinaryPtrObj,
-  GoslingEnvsObj,
   GoslingLambdaObj,
   GoslingObject,
+  GoslingScopeObj,
   IGoslingMemoryManager,
+  Literal,
   assertGoslingType,
   isGoslingType,
 } from ".";
@@ -97,11 +98,39 @@ class GoslingMemoryManager implements IGoslingMemoryManager {
     });
   }
 
-  getEnvs(addr: HeapAddr) {
+  setList(addr: HeapAddr, idx: number, val: Literal<AnyGoslingObject>) {
     const list = this.getList(addr);
-    const envs: GoslingEnvsObj = [];
+    if (idx < 0 || idx >= list.length) {
+      throw new Error(`Index ${idx} out of bounds for list at ${addr}`);
+    }
 
-    list.map((v, idx) => {
+    const { ptr } = list[idx];
+    const listIterator = this.get(ptr);
+    if (listIterator === null)
+      throw new Error(`Invalid list iterator at ${ptr}`);
+    assertGoslingType(HeapType.BinaryPtr, listIterator);
+
+    const { child1, child2 } = listIterator;
+    const newItem = this.alloc(val);
+    this.set(ptr, { type: HeapType.BinaryPtr, child1, child2: newItem.addr });
+  }
+
+  allocList(toAppend: HeapAddr[], prevListAddr?: HeapAddr): HeapAddr {
+    prevListAddr = prevListAddr ?? HeapAddr.NULL;
+    for (const valAddr of toAppend) {
+      prevListAddr = this.alloc({
+        type: HeapType.BinaryPtr,
+        child1: prevListAddr,
+        child2: valAddr,
+      }).addr;
+    }
+
+    return prevListAddr;
+  }
+
+  getEnvs(addr: HeapAddr): GoslingScopeObj {
+    const list = this.getList(addr);
+    const envs = list.map((v, idx) => {
       const val = v.val;
       if (val === null || !isGoslingType(HeapType.BinaryPtr, val))
         throw new Error(`Non-ptr in env list at ${addr}:${idx}`);
@@ -109,38 +138,89 @@ class GoslingMemoryManager implements IGoslingMemoryManager {
       const ptr = val.child2;
       try {
         const env = this.getEnv(ptr);
-        envs.push({ ptr, env });
+        return { ptr, env };
       } catch (e) {
         throw new Error(`Invalid env (env list at ${addr}:${idx}): ${e}`);
       }
     });
-    return envs;
+
+    const scope: GoslingScopeObj = {
+      lookup: (symbol: string) => {
+        for (const { env } of envs) {
+          if (symbol in env.values) {
+            return env[symbol].valueObj;
+          }
+        }
+        throw new Error(`Symbol ${symbol} not found in envs at ${addr}`);
+      },
+
+      assign: (symbol: string, val: Literal<AnyGoslingObject>) => {
+        for (const { env, ptr } of envs) {
+          if (symbol in env.values) {
+            const { valueListPtr } = env[symbol];
+            const valueListItem = this.get(valueListPtr)!;
+            assertGoslingType(HeapType.BinaryPtr, valueListItem);
+
+            this.set(valueListItem.addr, {
+              ...valueListItem,
+              child2: this.alloc(val).addr,
+            });
+
+            return;
+          }
+        }
+        throw new Error(`Symbol ${symbol} not found in envs at ${addr}`);
+      },
+
+      allocNewFrame: (symbols: string[]) => {
+        const envKeyValueList = symbols
+          .map((s) => this.alloc({ type: HeapType.String, data: s }))
+          .flatMap((symbolAddr) => [
+            symbolAddr.addr,
+            /* address to unassigned value */ HeapAddr.NULL,
+          ]);
+        const env = this.allocList(envKeyValueList, HeapAddr.NULL);
+        const newFrameAddr = this.allocList([env], addr);
+        return this.getEnvs(newFrameAddr);
+      },
+
+      getTopScopeAddr: () => addr,
+    };
+
+    return scope;
   }
 
-  private getEnv(addr: HeapAddr): GoslingEnvsObj[number]["env"] {
+  private getEnv(addr: HeapAddr) {
     const list = this.getList(addr);
-    const values: Record<string, AnyGoslingObject> = {};
-    const symbolAddresses: Record<string, HeapAddr> = {};
-    if (list.length !== 2) {
+    const env: Record<
+      string,
+      {
+        symbolListPtr: HeapAddr;
+        valueListPtr: HeapAddr;
+        valueObj: AnyGoslingObject;
+      }
+    > = {};
+    if (list.length % 2 !== 0) {
       throw new Error(`Invalid env list at ${addr} of length ${list.length}`);
     }
 
     for (let i = 0; i < list.length; i += 2) {
-      const key = list[i].val;
-      const val = list[i + 1].val;
+      const keyListItem = list[i];
+      const valListItem = list[i + 1];
+      const key = keyListItem.val;
 
       if (key === null)
         throw new Error(`Invalid key at ${i / 2} in env ${addr}`);
       assertGoslingType(HeapType.String, key);
 
-      if (val === null)
-        throw new Error(`Invalid val at ${i / 2} in env ${addr}`);
-
-      values[key.data] = val;
-      symbolAddresses[key.data] = key.addr;
+      env[key.data] = {
+        symbolListPtr: keyListItem.ptr,
+        valueListPtr: valListItem.ptr,
+        valueObj: valListItem.val,
+      };
     }
 
-    return { values, symbolAddresses };
+    return env;
   }
 
   getLambda(addr: HeapAddr): GoslingLambdaObj {
@@ -159,22 +239,21 @@ class GoslingMemoryManager implements IGoslingMemoryManager {
     return { closure, pcAddr: InstrAddr.fromNum(pcAddr) };
   }
 
-  set<T extends HeapType>(
-    addr: HeapAddr,
-    val: Omit<GoslingObject<T>, "addr">
-  ): void {
+  allocLambda(closureAddr: HeapAddr, pcAddr: InstrAddr): HeapAddr {
+    const pcAddrObj = this.alloc({ type: HeapType.Int, data: pcAddr.addr });
+    return this.memory.allocBinaryPtr(closureAddr, pcAddrObj.addr);
+  }
+
+  set(addr: HeapAddr, val: Literal<AnyGoslingObject>): void {
     const allocatedAddr = this.alloc(val).addr;
     this.memory.setHeapValue(addr, this.memory.getHeapValue(allocatedAddr));
   }
 
   clear(addr: HeapAddr): void {
-    const empty = HeapInBytes.fromBytes(
-      new Array(HEAP_NODE_BYTE_TOTAL_SIZE).fill(0)
-    );
-    this.memory.setHeapValue(addr, empty);
+    this.memory.setHeapValue(addr, HeapInBytes.getNull());
   }
 
-  alloc(data: Omit<AnyGoslingObject, "addr">): AnyGoslingObject {
+  alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject {
     switch (data.type) {
       case HeapType.Bool: {
         const d = data as Omit<GoslingObject<HeapType.Bool>, "addr">;
@@ -201,7 +280,7 @@ class GoslingMemoryManager implements IGoslingMemoryManager {
         return { addr, type: HeapType.BinaryPtr, child1, child2 };
       }
       default: {
-        const _: never = data.type;
+        const _: never = data;
         throw new Error(`Invalid data: ${data}`);
       }
     }
