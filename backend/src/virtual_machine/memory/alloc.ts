@@ -116,7 +116,7 @@ class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   allocList(toAppend: HeapAddr[], prevListAddr?: HeapAddr): HeapAddr {
-    prevListAddr = prevListAddr ?? HeapAddr.NULL;
+    prevListAddr = prevListAddr ?? HeapAddr.getNull();
     for (const valAddr of toAppend) {
       prevListAddr = this.alloc({
         type: HeapType.BinaryPtr,
@@ -177,9 +177,9 @@ class GoslingMemoryManager implements IGoslingMemoryManager {
           .map((s) => this.alloc({ type: HeapType.String, data: s }))
           .flatMap((symbolAddr) => [
             symbolAddr.addr,
-            /* address to unassigned value */ HeapAddr.NULL,
+            /* address to unassigned value */ HeapAddr.getNull(),
           ]);
-        const env = this.allocList(envKeyValueList, HeapAddr.NULL);
+        const env = this.allocList(envKeyValueList, HeapAddr.getNull());
         const newFrameAddr = this.allocList([env], addr);
         return this.getEnvs(newFrameAddr);
       },

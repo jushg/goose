@@ -83,7 +83,7 @@ export class MemoryManager implements IAllocator {
     }
 
     const addresses = this.alloc.getNewHeapAddresses(chunks.length);
-    let prevAddr: HeapAddr = HeapAddr.NULL;
+    let prevAddr: HeapAddr = HeapAddr.getNull();
     for (let i = chunks.length - 1; i >= 0; i--) {
       const h = HeapInBytes.fromData({
         type: HeapType.String,
@@ -99,7 +99,7 @@ export class MemoryManager implements IAllocator {
   }
 
   allocBinaryPtr(child1: HeapAddr, child2?: HeapAddr): HeapAddr {
-    child2 = child2 ?? HeapAddr.NULL;
+    child2 = child2 ?? HeapAddr.getNull();
     const h = HeapInBytes.fromData({
       type: HeapType.BinaryPtr,
       gcFlag: GcFlag.Unmarked,

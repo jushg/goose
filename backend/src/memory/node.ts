@@ -10,7 +10,7 @@ import {
 export class HeapAddr {
   addr: number;
 
-  static NULL = HeapAddr.fromNum(0);
+  static getNull = () => HeapAddr.fromNum(0);
 
   static fromHexStr(hex: string): HeapAddr {
     const addr = parseInt(hex, 16);
@@ -22,7 +22,7 @@ export class HeapAddr {
   }
 
   isNull() {
-    return this.addr === HeapAddr.NULL.addr;
+    return this.addr === HeapAddr.getNull().addr;
   }
 
   private constructor(address: number) {
@@ -85,9 +85,8 @@ export function assertHeapType<T extends HeapType>(
 export class HeapInBytes {
   _bytes: number[]; /** Node contents as UINT8 (bytes) */
 
-  static getNull(): HeapInBytes {
-    return HeapInBytes.fromBytes(new Array(HEAP_NODE_BYTE_TOTAL_SIZE).fill(0));
-  }
+  static getNull = () =>
+    HeapInBytes.fromBytes(new Array(HEAP_NODE_BYTE_TOTAL_SIZE).fill(0));
 
   private constructor(tag: number, child: number[], data: number[]) {
     if (child.length !== HEAP_NODE_BYTE_SIZE.child) {
