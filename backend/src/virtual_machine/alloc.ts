@@ -8,16 +8,16 @@ import {
   Literal,
   assertGoslingType,
   isGoslingType,
-} from ".";
-import { InstrAddr } from "../../instruction/base";
+} from "./memory";
+import { InstrAddr } from "../instruction/base";
 import {
   HEAP_NODE_BYTE_TOTAL_SIZE,
   HeapAddr,
   HeapType,
   HeapValue,
   IAllocator,
-} from "../../memory";
-import { HeapInBytes, assertHeapType, isHeapType } from "../../memory/node";
+} from "../memory";
+import { HeapInBytes, assertHeapType, isHeapType } from "../memory/node";
 import { getScopeObj, readScopeData } from "./scope";
 
 export class GoslingMemoryManager implements IGoslingMemoryManager {

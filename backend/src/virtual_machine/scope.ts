@@ -5,9 +5,9 @@ import {
   Literal,
   assertGoslingType,
   isGoslingType,
-} from ".";
-import { GoslingMemoryManager } from "../memory/alloc";
-import { HeapAddr, HeapType } from "../../memory";
+} from "./memory";
+import { GoslingMemoryManager } from "./alloc";
+import { HeapAddr, HeapType } from "../memory";
 
 export type GoslingScopeData = {
   ptr: HeapAddr;

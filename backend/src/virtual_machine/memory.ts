@@ -1,5 +1,5 @@
-import { InstrAddr } from "../../instruction/base";
-import { HeapAddr, HeapType } from "../../memory";
+import { InstrAddr } from "../instruction/base";
+import { HeapAddr, HeapType } from "../memory";
 
 export type AnyGoslingObject =
   | GoslingBinaryPtrObj
