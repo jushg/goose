@@ -34,11 +34,27 @@ export type GoslingBinaryPtrObj = {
   child2: HeapAddr;
 };
 
+export type GoslingOperandStackObj = {
+  push(val: Literal<AnyGoslingObject>): void;
+  pop(): Literal<AnyGoslingObject>;
+  peek(): Literal<AnyGoslingObject>;
+  getTopAddr(): HeapAddr;
+};
+
 export type GoslingScopeObj = {
   lookup(symbol: string): AnyGoslingObject | null;
   assign(symbol: string, val: Literal<AnyGoslingObject>): void;
+  getEnclosingScopeAddr(): GoslingScopeObj;
   allocNewFrame(symbols: string[]): GoslingScopeObj;
   getTopScopeAddr(): HeapAddr;
+};
+
+export type ThreadControlObject = {
+  getId(): string;
+  getOS(): GoslingOperandStackObj;
+  getRTS(): GoslingScopeObj;
+  getPC(): InstrAddr;
+  setPC(): InstrAddr;
 };
 
 export type Literal<T> = T extends { addr: HeapAddr } ? Omit<T, "addr"> : never;
@@ -69,7 +85,7 @@ export type IGoslingMemoryManager = {
   clear(addr: HeapAddr): void;
   alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject;
 
-  getList(addr: HeapAddr): { ptr: HeapAddr; val: AnyGoslingObject }[];
   getLambda(addr: HeapAddr): GoslingLambdaObj;
+  allocLambda(closureAddr: HeapAddr, pcAddr: InstrAddr): HeapAddr;
   getEnvs(addr: HeapAddr): GoslingScopeObj;
 };
