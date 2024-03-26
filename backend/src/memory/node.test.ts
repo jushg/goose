@@ -1,5 +1,4 @@
 import { HEAP_NODE_BYTE_SIZE } from ".";
-import { InstrAddr } from "../instruction/base";
 import { GcFlag, HeapAddr, HeapInBytes, HeapType, HeapValue } from "./node";
 
 describe("HeapInBytes", () => {
