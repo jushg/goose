@@ -1,62 +1,71 @@
 import { HeapAddr, HeapType } from "../memory";
 import { GoslingMemoryManager } from "./alloc";
-import {
-  AnyGoslingObject,
-  GoslingScopeObj,
-  Literal,
-  assertGoslingType,
-  isGoslingType,
-} from "./memory";
+import { AnyGoslingObject, GoslingBinaryPtrObj, Literal } from "./memory";
+import { assertGoslingType, isGoslingType } from ".";
+
+export type GoslingScopeObj = {
+  lookup(symbol: string): AnyGoslingObject | null;
+  assign(symbol: string, val: Literal<AnyGoslingObject>): void;
+  getEnclosingScope(): GoslingScopeObj;
+  allocNewFrame(
+    symbolAndValues: Record<string, Literal<AnyGoslingObject>>
+  ): GoslingScopeObj;
+  getTopScopeAddr(): HeapAddr;
+};
 
 export type GoslingScopeData = {
-  ptr: HeapAddr;
-  env: Record<
-    string,
-    {
-      symbolListPtr: HeapAddr;
-      valueListPtr: HeapAddr;
-      valueObj: AnyGoslingObject;
-    }
-  >;
-}[];
+  addr: HeapAddr;
+  envs: {
+    envsListPtr: HeapAddr;
+    env: Record<
+      string,
+      {
+        symbolListPtr: HeapAddr;
+        valueListPtr: HeapAddr;
+        valueObj: AnyGoslingObject;
+      }
+    >;
+  }[];
+};
 
 export function readScopeData(
   addr: HeapAddr,
   memory: GoslingMemoryManager
 ): GoslingScopeData {
   const envs = memory.getList(addr).map((v, idx) => {
-    const val = v.val;
-    if (val === null || !isGoslingType(HeapType.BinaryPtr, val))
-      throw new Error(`Non-ptr in env list at ${addr}:${idx}`);
+    const envPtr = v.val;
+    if (envPtr === null || !isGoslingType(HeapType.BinaryPtr, envPtr))
+      throw new Error(`Non-ptr in env list at ${addr}:${idx}=${envPtr?.addr}`);
 
-    const ptr = val.child2;
     try {
-      const env = getEnv(ptr, memory);
-      return { ptr, env };
+      const env = getEnv(envPtr.addr, memory);
+      return { envsListPtr: v.ptr, env };
     } catch (e) {
       throw new Error(`Invalid env (env list at ${addr}:${idx}): ${e}`);
     }
   });
 
-  return envs;
+  return { addr, envs };
 }
 
 export function getScopeObj(
-  envs: GoslingScopeData,
+  scopeData: GoslingScopeData,
   memory: GoslingMemoryManager
 ): GoslingScopeObj {
+  const { envs, addr } = scopeData;
+  const start = addr;
   return {
     lookup: (symbol: string) => {
       for (const { env } of envs) {
-        if (symbol in env.values) {
+        if (symbol in env) {
           return env[symbol].valueObj;
         }
       }
-      throw new Error(`Symbol ${symbol} not found in envs at ${envs[0].ptr}`);
+      throw new Error(`Symbol ${symbol} not found in envs at ${start}`);
     },
 
     assign: (symbol: string, val: Literal<AnyGoslingObject>) => {
-      for (const { env, ptr } of envs) {
+      for (const { env } of envs) {
         if (symbol in env.values) {
           const { valueListPtr } = env[symbol];
           const valueListItem = memory.get(valueListPtr)!;
@@ -70,30 +79,37 @@ export function getScopeObj(
           return;
         }
       }
-      throw new Error(`Symbol ${symbol} not found in envs at ${envs[0].ptr}`);
+      throw new Error(`Symbol ${symbol} not found in envs at ${start}`);
     },
 
-    allocNewFrame: (symbols: string[]) => {
-      const envKeyValueList = symbols
-        .map((s) => memory.alloc({ type: HeapType.String, data: s }))
-        .flatMap((symbolAddr) => [
-          symbolAddr.addr,
-          /* address to unassigned value */ HeapAddr.getNull(),
-        ]);
-      const env = memory.allocList(envKeyValueList, HeapAddr.getNull());
-      const newFrameAddr = memory.allocList([env], envs[0].ptr);
+    allocNewFrame: (
+      symbolAndValues: Record<string, Literal<AnyGoslingObject>>
+    ) => {
+      if (Object.keys(symbolAndValues).length === 0) {
+        return memory.getEnvs(start);
+      }
+
+      const envKeyValueList = Object.keys(symbolAndValues).flatMap((s) => {
+        const symbolStr = memory.alloc({ type: HeapType.String, data: s });
+        const value = memory.alloc(symbolAndValues[s]);
+        return [symbolStr.addr, value.addr];
+      });
+
+      const env = memory.allocList(envKeyValueList);
+      const newFrameAddr = memory.allocList([env], start);
+
       return memory.getEnvs(newFrameAddr);
     },
 
-    getTopScopeAddr: () => envs[0].ptr,
+    getTopScopeAddr: () => start,
 
-    getEnclosingScopeAddr: () => {
+    getEnclosingScope: () => {
       if (envs.length < 2)
         throw new Error(
-          `Trying to exit scope from ${envs[0].ptr} (envs of len ${envs.length})`
+          `Trying to exit scope from ${start} (envs of len ${envs.length})`
         );
 
-      return memory.getEnvs(envs[1].ptr);
+      return memory.getEnvs((memory.get(start) as GoslingBinaryPtrObj).child1);
     },
   };
 }

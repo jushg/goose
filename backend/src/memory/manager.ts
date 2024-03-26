@@ -11,7 +11,7 @@ export class MemoryManager implements IAllocator {
 
   printHeap(): string[] {
     const res = [];
-    for (let i = 0; i < this.alloc.getNodeCount(); i++) {
+    for (let i = 1; i < this.alloc.getNodeCount(); i++) {
       const addr = i.toString(16).padStart(HEAP_NODE_BYTE_SIZE.child, "0");
       const node = this.getHeapValue(HeapAddr.fromNum(i));
       res.push(`${addr} - ${node.toString()}`);

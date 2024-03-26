@@ -1,5 +1,6 @@
 import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType } from "../memory";
+import { GoslingScopeObj } from "./scope";
 
 export type AnyGoslingObject =
   | GoslingBinaryPtrObj
@@ -38,40 +39,10 @@ export type GoslingBinaryPtrObj = {
   child2: HeapAddr;
 };
 
-export type GoslingOperandStackObj = {
-  push(val: Literal<AnyGoslingObject>): void;
-  pop(): Literal<AnyGoslingObject>;
-  peek(): Literal<AnyGoslingObject>;
-  getTopAddr(): HeapAddr;
-};
-
-export type GoslingScopeObj = {
-  lookup(symbol: string): AnyGoslingObject | null;
-  assign(symbol: string, val: Literal<AnyGoslingObject>): void;
-  getEnclosingScopeAddr(): GoslingScopeObj;
-  allocNewFrame(symbols: string[]): GoslingScopeObj;
-  getTopScopeAddr(): HeapAddr;
-};
-
 export type GoslingLambdaObj = {
   closure: GoslingScopeObj;
   pcAddr: InstrAddr;
 };
-
-export function isGoslingType<T extends HeapType>(
-  val: T,
-  obj: AnyGoslingObject
-): obj is GoslingObject<T> {
-  return obj.type === val;
-}
-export function assertGoslingType<T extends HeapType>(
-  val: T,
-  obj: AnyGoslingObject
-): asserts obj is GoslingObject<T> {
-  if (!isGoslingType(val, obj)) {
-    throw new Error(`Expected GoslingObj type ${val}, got ${obj.type}`);
-  }
-}
 
 export type IGoslingMemoryManager = {
   get(addr: HeapAddr): AnyGoslingObject | null;

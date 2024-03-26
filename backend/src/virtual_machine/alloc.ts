@@ -5,11 +5,11 @@ import {
   AnyGoslingObject,
   GoslingLambdaObj,
   GoslingObject,
-  GoslingScopeObj,
   IGoslingMemoryManager,
   Literal,
-  assertGoslingType,
 } from "./memory";
+import { assertGoslingType } from ".";
+import { GoslingScopeObj } from "./scope";
 import { getScopeObj, readScopeData } from "./scope";
 
 export class GoslingMemoryManager implements IGoslingMemoryManager {
@@ -79,7 +79,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       assertGoslingType(HeapType.BinaryPtr, ptr);
       arr.push(ptr.child2);
 
-      if (ptr.child1 !== null) break;
+      if (ptr.child1 === null) break;
       curr = ptr.child1;
     }
 
@@ -110,7 +110,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
 
   allocList(toAppend: HeapAddr[], prevListAddr?: HeapAddr): HeapAddr {
     prevListAddr = prevListAddr ?? HeapAddr.getNull();
-    for (const valAddr of toAppend) {
+    for (const valAddr of toAppend.reverse()) {
       prevListAddr = this.alloc({
         type: HeapType.BinaryPtr,
         child1: prevListAddr,

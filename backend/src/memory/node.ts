@@ -28,6 +28,10 @@ export class HeapAddr {
   private constructor(address: number) {
     this.addr = address;
   }
+
+  toString(): string {
+    return `0x${this.addr.toString(16)}`;
+  }
 }
 
 export enum HeapType {
@@ -292,6 +296,9 @@ export class HeapInBytes {
     const { type, gcFlag } = HeapInBytes.fromTagByte(
       this._bytes[HEAP_NODE_BYTE_INDICES.tag]
     );
+    const tagStr =
+      this._bytes[HEAP_NODE_BYTE_INDICES.tag] === 0 ? "__" : `${type}${gcFlag}`;
+
     const child = this._bytes.slice(
       HEAP_NODE_BYTE_INDICES.child,
       HEAP_NODE_BYTE_INDICES.child + HEAP_NODE_BYTE_SIZE.child
@@ -304,6 +311,6 @@ export class HeapInBytes {
       HEAP_NODE_BYTE_INDICES.data + HEAP_NODE_BYTE_SIZE.data
     );
     const dataAsHex = data.map((x) => x.toString(16).padStart(2, "0")).join("");
-    return `${type}${gcFlag}: ${childAsHex} ${dataAsHex}`;
+    return `${tagStr}: ${childAsHex} ${dataAsHex}`;
   }
 }

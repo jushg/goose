@@ -1,15 +1,10 @@
-import {
-  AnyGoslingObject,
-  GoslingLambdaObj,
-  GoslingOperandStackObj,
-  GoslingScopeObj,
-  Literal,
-  assertGoslingType,
-} from "./memory";
+import { AnyGoslingObject, GoslingLambdaObj, Literal } from "./memory";
+import { assertGoslingType } from ".";
+import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../instruction/base";
 import { GoslingMemoryManager } from "./alloc";
-import { HeapType } from "../memory";
+import { HeapAddr, HeapType } from "../memory";
 
 export type ThreadControlObject = {
   getId(): string;
@@ -57,3 +52,9 @@ export function createThreadControlObject(
     setPC: (newPC: InstrAddr) => (pc = newPC),
   };
 }
+export type GoslingOperandStackObj = {
+  push(val: Literal<AnyGoslingObject>): void;
+  pop(): Literal<AnyGoslingObject>;
+  peek(): Literal<AnyGoslingObject>;
+  getTopAddr(): HeapAddr;
+};
