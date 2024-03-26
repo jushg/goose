@@ -49,14 +49,6 @@ export type GoslingScopeObj = {
   getTopScopeAddr(): HeapAddr;
 };
 
-export type ThreadControlObject = {
-  getId(): string;
-  getOS(): GoslingOperandStackObj;
-  getRTS(): GoslingScopeObj;
-  getPC(): InstrAddr;
-  setPC(): InstrAddr;
-};
-
 export type Literal<T> = T extends { addr: HeapAddr } ? Omit<T, "addr"> : never;
 
 export type GoslingLambdaObj = {
