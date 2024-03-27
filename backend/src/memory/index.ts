@@ -33,13 +33,13 @@ export function validateHeap(heap: IHeap) {
   }
 
   // Addressable area must exclude NULL (0) address.
-  if (heap.nodeCount > 2 ** 8 * HEAP_NODE_BYTE_SIZE.child - 1 - 1) {
+  if (heap.nodeCount > 2 ** (8 * HEAP_NODE_BYTE_SIZE.child) - 1 - 1) {
     // Addressable area defined by pointer size.
     // Unaligned pointers are not supported, a pointer directly
     // points to the start of a heap node.
     throw new Error(
       "Invalid heap. Addressable area exceeded." +
-        ` ${heap.nodeCount} > ${2 ** 8 * HEAP_NODE_BYTE_SIZE.child - 1 - 1}`
+        ` ${heap.nodeCount} > ${2 ** (8 * HEAP_NODE_BYTE_SIZE.child) - 1 - 1}`
     );
   }
 }

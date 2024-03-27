@@ -1,8 +1,8 @@
+import { assertGoslingType } from ".";
 import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType, IAllocator, createHeapManager } from "../memory";
 import { GoslingMemoryManager } from "./alloc";
-import { AnyGoslingObject } from "./memory";
-import { assertGoslingType, isGoslingType } from ".";
+import { AnyGoslingObject, GoslingBinaryPtrObj, GoslingIntObj } from "./memory";
 
 describe("GoslingMemoryManager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
@@ -18,7 +18,7 @@ describe("GoslingMemoryManager", () => {
 
   let spy: Record<string, jest.SpyInstance>;
   let allocator: IAllocator;
-  const nodeCount = 100;
+  const nodeCount = 1000;
   let memoryManager: GoslingMemoryManager;
 
   beforeEach(() => {
@@ -285,8 +285,16 @@ describe("GoslingMemoryManager", () => {
       let scopeObj = memoryManager.getEnvs(HeapAddr.getNull());
       expect(scopeObj.getTopScopeAddr().isNull()).toBeTruthy();
 
-      scopeObj = scopeObj.allocNewFrame({}); // No impact.
-      expect(scopeObj.getTopScopeAddr().isNull()).toBeTruthy();
+      const callee1PC = InstrAddr.fromNum(124);
+      const callee1RTS = HeapAddr.fromNum(53);
+      scopeObj = scopeObj.allocNewFrame(callee1PC, callee1RTS, {});
+      expect(scopeObj.getTopScopeAddr().isNull()).toBeFalsy();
+      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
+        callee1PC.addr
+      );
+      expect(
+        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
+      ).toBe(callee1RTS.addr);
 
       const f1 = {
         foo: { type: HeapType.Int, data: 1 },
@@ -300,7 +308,15 @@ describe("GoslingMemoryManager", () => {
           data: "sldkfjsdlkfjsdlfkjsdlkfjsld\ndfnsldkfjhlgkjslkdgjklsdgjsklgjdklkfjdsklj",
         },
       } as const;
-      scopeObj = scopeObj.allocNewFrame(f1);
+      const callee2PC = InstrAddr.fromNum(128);
+      const callee2RTS = HeapAddr.fromNum(57);
+      scopeObj = scopeObj.allocNewFrame(callee2PC, callee2RTS, f1);
+      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
+        callee2PC.addr
+      );
+      expect(
+        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
+      ).toBe(callee2RTS.addr);
       const f1Addr = scopeObj.getTopScopeAddr();
       {
         const x = scopeObj.lookup("foo")!;
@@ -331,7 +347,16 @@ describe("GoslingMemoryManager", () => {
           data: "sldkfjsdlkfjsdlfkjsdlkfjsld\ndfnsldkfjhlgkjslkdgjklsdgjsklgjdklkfjdsklj",
         },
       } as const;
-      scopeObj = scopeObj.allocNewFrame(f2);
+
+      const callee3PC = InstrAddr.fromNum(135);
+      const callee3RTS = HeapAddr.fromNum(64);
+      scopeObj = scopeObj.allocNewFrame(callee3PC, callee3RTS, f2);
+      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
+        callee3PC.addr
+      );
+      expect(
+        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
+      ).toBe(callee3RTS.addr);
 
       const f2Addr = scopeObj.getTopScopeAddr();
       expect(f2Addr.addr).not.toBe(f1Addr.addr);
@@ -360,6 +385,12 @@ describe("GoslingMemoryManager", () => {
 
       scopeObj = scopeObj.getEnclosingScope();
       expect(scopeObj.getTopScopeAddr().addr).toBe(f1Addr.addr);
+      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
+        callee2PC.addr
+      );
+      expect(
+        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
+      ).toBe(callee2RTS.addr);
     });
   });
 });

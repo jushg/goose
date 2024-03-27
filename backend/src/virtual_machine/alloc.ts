@@ -1,3 +1,4 @@
+import { assertGoslingType } from ".";
 import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType, IAllocator } from "../memory";
 import { HeapInBytes, assertHeapType } from "../memory/node";
@@ -8,9 +9,7 @@ import {
   IGoslingMemoryManager,
   Literal,
 } from "./memory";
-import { assertGoslingType } from ".";
-import { GoslingScopeObj } from "./scope";
-import { getScopeObj, readScopeData } from "./scope";
+import { GoslingScopeObj, getScopeObj, readScopeData } from "./scope";
 
 export class GoslingMemoryManager implements IGoslingMemoryManager {
   memory: IAllocator;

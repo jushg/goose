@@ -1,13 +1,16 @@
+import { assertGoslingType, isGoslingType } from ".";
+import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType } from "../memory";
 import { GoslingMemoryManager } from "./alloc";
 import { AnyGoslingObject, GoslingBinaryPtrObj, Literal } from "./memory";
-import { assertGoslingType, isGoslingType } from ".";
 
 export type GoslingScopeObj = {
   lookup(symbol: string): AnyGoslingObject | null;
   assign(symbol: string, val: Literal<AnyGoslingObject>): void;
   getEnclosingScope(): GoslingScopeObj;
   allocNewFrame(
+    __callerPC: InstrAddr,
+    __callerRTS: HeapAddr,
     symbolAndValues: Record<string, Literal<AnyGoslingObject>>
   ): GoslingScopeObj;
   getTopScopeAddr(): HeapAddr;
@@ -83,11 +86,24 @@ export function getScopeObj(
     },
 
     allocNewFrame: (
+      __callerPC: InstrAddr,
+      __callerRTS: HeapAddr,
       symbolAndValues: Record<string, Literal<AnyGoslingObject>>
     ) => {
-      if (Object.keys(symbolAndValues).length === 0) {
-        return memory.getEnvs(start);
+      if ("__callerPC" in symbolAndValues || "__callerRts" in symbolAndValues) {
+        throw new Error(
+          `Cannot reassign __callerPC or __callerRTS with ${symbolAndValues}`
+        );
       }
+      symbolAndValues["__callerPC"] = {
+        type: HeapType.Int,
+        data: __callerPC.addr,
+      };
+      symbolAndValues["__callerRTS"] = {
+        type: HeapType.BinaryPtr,
+        child1: __callerRTS,
+        child2: HeapAddr.getNull(),
+      };
 
       const envKeyValueList = Object.keys(symbolAndValues).flatMap((s) => {
         const symbolStr = memory.alloc({ type: HeapType.String, data: s });
