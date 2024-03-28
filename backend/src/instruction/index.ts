@@ -1,4 +1,4 @@
-export { Instruction, OpCode } from "./base";
+export { Instruction } from "./base";
 import { ExecutionState } from "../common/state";
 import { Instruction } from "./base";
 
@@ -95,15 +95,11 @@ export class ExitScopeInstruction implements Instruction {
 
 
 export class LdInstruction implements Instruction {
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
+  symbol: string
 
-      curState.jobState.PC++
-      return curState
-    }
-}
-
-export class LdfInstruction implements Instruction {
+  constructor(symbol: string) {
+    this.symbol = symbol
+  }
     execute(curState: ExecutionState): ExecutionState {
       // TODO: Add details
 
@@ -113,6 +109,11 @@ export class LdfInstruction implements Instruction {
 }
 
 export class CallInstruction implements Instruction {
+    numParam: number
+
+    constructor(numParam: number) {
+      this.numParam = numParam
+    }
     execute(curState: ExecutionState): ExecutionState {
       // TODO: Add details
 
