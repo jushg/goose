@@ -68,7 +68,7 @@ export function runProgram(prog: ProgramFile) {
   const startTime = Date.now();
   const maxTimeDuration = 0; // TODO: Add
 
-  let curState = initialize(prog.entryIndex);
+  let curState = initialize(0);
   let instructions = prog.instructions;
 
   while (curState.machineState.IS_RUNNING) {

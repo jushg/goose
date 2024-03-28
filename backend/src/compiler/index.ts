@@ -2,6 +2,7 @@ import { Instruction } from "../instruction";
 import { StmtObj } from "../parser";
 import { ProgramFile } from "./model";
 import { compileStmt } from "./stmt_obj";
+export {ProgramFile} from './model'
 
 // Dummy function, just for testing.
 export function compileSmt(s: StmtObj, pf: ProgramFile) {

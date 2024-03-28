@@ -9,6 +9,13 @@ export class DoneInstruction implements Instruction {
     }
   }
 
+export class DeclareInstruction implements Instruction {
+  execute(curState: ExecutionState): ExecutionState {
+
+    return curState
+  }
+}
+
 export class NopInstruction implements Instruction {
     execute(curState: ExecutionState): ExecutionState {
         curState.jobState.PC++
@@ -85,6 +92,20 @@ export class EnterScopeInstruction implements Instruction {
 }
 
 export class ExitScopeInstruction implements Instruction {
+    execute(curState: ExecutionState): ExecutionState {
+      // TODO: Add details
+
+      curState.jobState.PC++
+      return curState
+    }
+}
+
+export class LdcInstruction implements Instruction {
+  value: any // Fix this
+
+  constructor(value: any) {
+    this.value = value
+  }
     execute(curState: ExecutionState): ExecutionState {
       // TODO: Add details
 

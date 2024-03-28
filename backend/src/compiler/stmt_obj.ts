@@ -1,5 +1,5 @@
-import { AssignInstruction, EnterScopeInstruction, GotoInstruction, JofInstruction } from "../instruction";
-import { AssignmentStmtObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, DeferStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj } from "../parser";
+import { AssignInstruction, EnterScopeInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction } from "../instruction";
+import { AssignmentStmtObj, BlockObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, DeferStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, makeDecStmt } from "../parser";
 import { compileExprObj } from "./expr_obj";
 import { ProgramFile } from "./model";
 
@@ -37,8 +37,13 @@ const smtMap: { [key: string]: (s: StmtObj, pf: ProgramFile) => void} = {
   "ASSIGN": (s,pf) => {
     const stmt = s as AssignmentStmtObj
     addLabelIfExist(pf.instructions.length, stmt.label, pf)
+
+
     
     compileExprObj(stmt.rhs, pf)
+
+
+
 
     compileExprObj(stmt.lhs, pf)
 
@@ -77,11 +82,25 @@ const smtMap: { [key: string]: (s: StmtObj, pf: ProgramFile) => void} = {
       }
     }
     pf.instructions[gotoPc] = new GotoInstruction(pf.instructions.length)
+    pf.instructions.push(new ExitScopeInstruction())
   },
 
   "SWITCH": (s,pf) => {
     const stmt = s as SwitchStmtObj
     addLabelIfExist(pf.instructions.length, stmt.label, pf)
+
+    pf.instructions.push(new EnterScopeInstruction())
+    if(stmt.pre !== undefined){
+      compileExprObj(stmt.pre,pf)
+    }
+
+    compileExprObj(stmt.cond,pf)
+
+    // TODO: Add JofInstruction and figure this out
+
+
+
+    pf.instructions.push(new ExitScopeInstruction())
   },
 
   "SELECT": (s,pf) => {
@@ -119,7 +138,8 @@ const smtMap: { [key: string]: (s: StmtObj, pf: ProgramFile) => void} = {
     if (predGotoPc !== -1) {
       pf.instructions[predGotoPc] = new GotoInstruction(pf.instructions.length)
     }
-    
+
+    pf.instructions.push(new ExitScopeInstruction())
   },
 
   "BREAK": (s,pf) => {
@@ -148,7 +168,17 @@ const smtMap: { [key: string]: (s: StmtObj, pf: ProgramFile) => void} = {
 
   "RETURN": (s,pf) => {
     const stmt = s as ReturnStmtObj
+  },
+
+  "BLOCK": (s,pf) => {
+    const stmt = s as BlockObj
+    pf.instructions.push(new EnterScopeInstruction())
+    stmt.stmts.forEach((blockStmt) => {
+      compileStmt(blockStmt,pf)
+    })
+    pf.instructions.push(new ExitScopeInstruction())
   }
+  
   // Add more functions as needed
 };
 

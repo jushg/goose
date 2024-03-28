@@ -1,6 +1,6 @@
 import { AnyLiteralObj, BinaryExprObj, CallObj, ExprObj, IdentObj, IndexObj, MakeCallObj, NewCallObj, SelectorObj, StmtObj, UnaryExprObj } from "../parser";
 import { ProgramFile } from "./model";
-import { CallInstruction, LdInstruction } from "../instruction";
+import { CallInstruction, LdInstruction, LdcInstruction } from "../instruction";
 
 
 export function compileExprObj(obj: ExprObj, pf: ProgramFile) {
@@ -25,7 +25,6 @@ const smtMap: { [key: string]: (s: ExprObj, pf: ProgramFile) => void} = {
 
   "LITERAL": (s,pf) => {
     const obj = s as AnyLiteralObj
-   
   },
 
 

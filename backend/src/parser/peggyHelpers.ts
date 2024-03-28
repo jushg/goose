@@ -279,7 +279,8 @@ export type DecStmtObj = {
   expr: ExprObj;
   label?: IdentObj;
 };
-function makeDecStmt(expr: ExprObj): DecStmtObj {
+
+export function makeDecStmt(expr: ExprObj): DecStmtObj {
   return { tag: "STMT", stmtType: "DEC", expr };
 }
 
@@ -477,8 +478,4 @@ export type StmtObj =
   | DeferStmtObj
   | GoStmtObj
   | ReturnStmtObj
-  | VarDeclObj
-  | ConstDeclObj
-  | FuncDeclObj;
-
-export type ProgramObj = (ContStmtObj | VarDeclObj | FuncDeclObj)[];
+  | BlockObj
