@@ -1,10 +1,9 @@
-import { AnyGoslingObject, GoslingLambdaObj, Literal } from "./memory";
-import { assertGoslingType } from ".";
+import { AnyGoslingObject, GoslingLambdaObj, Literal } from ".";
 import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../instruction/base";
-import { GoslingMemoryManager } from "./alloc";
-import { HeapAddr, HeapType } from "../memory";
+import { HeapAddr } from "../memory";
+import { GoslingMemoryManager } from "./memory";
 
 export type ThreadControlObject = {
   getId(): string;

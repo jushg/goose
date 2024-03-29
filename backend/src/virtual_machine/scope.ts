@@ -1,12 +1,12 @@
-import { assertGoslingType, isGoslingType } from ".";
-import { HeapAddr, HeapType } from "../memory";
-import { GoslingMemoryManager } from "./alloc";
 import {
   AnyGoslingObject,
-  GoslingBinaryPtrObj,
   GoslingListObj,
   Literal,
-} from "./memory";
+  assertGoslingType,
+  isGoslingType,
+} from ".";
+import { HeapAddr, HeapType } from "../memory";
+import { GoslingMemoryManager } from "./memory";
 
 export type GoslingScopeObj = {
   lookup(symbol: string): AnyGoslingObject | null;

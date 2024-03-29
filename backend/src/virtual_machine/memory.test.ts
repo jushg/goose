@@ -1,9 +1,12 @@
-import { assertGoslingType } from ".";
+import {
+  AnyGoslingObject,
+  GoslingBinaryPtrObj,
+  GoslingIntObj,
+  assertGoslingType,
+} from ".";
 import { InstrAddr } from "../instruction/base";
-import { HeapAddr, HeapType, IAllocator, createHeapManager } from "../memory";
-import { GoslingMemoryManager } from "./alloc";
-import { AnyGoslingObject, GoslingBinaryPtrObj, GoslingIntObj } from "./memory";
-import { readScopeData } from "./scope";
+import { Allocator, HeapAddr, HeapType, createHeapManager } from "../memory";
+import { GoslingMemoryManager } from "./memory";
 
 describe("GoslingMemoryManager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
@@ -18,7 +21,7 @@ describe("GoslingMemoryManager", () => {
   };
 
   let spy: Record<string, jest.SpyInstance>;
-  let allocator: IAllocator;
+  let allocator: Allocator;
   const nodeCount = 1000;
   let memoryManager: GoslingMemoryManager;
 

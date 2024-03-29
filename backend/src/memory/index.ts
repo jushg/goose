@@ -1,6 +1,6 @@
-import { SimpleMemoryAllocator } from "./alloc";
-import { MemoryManager } from "./manager";
-import { HeapAddr, HeapInBytes } from "./node";
+import { Allocator } from "./alloc";
+import { HeapAddr } from "./node";
+import { SimpleMemoryAllocator } from "./untypedAlloc";
 
 export const HEAP_NODE_BYTE_SIZE = {
   tag: 1,
@@ -53,19 +53,9 @@ export type IUntypedAllocator = {
   getNodeCount(): number;
 };
 
-export type IAllocator = {
-  getHeapValue(addr: HeapAddr): HeapInBytes;
-  setHeapValue(addr: HeapAddr, val: HeapInBytes): void;
-
-  allocBool(data: boolean): HeapAddr;
-  allocInt(data: number): HeapAddr;
-  allocString(data: string): HeapAddr;
-  allocBinaryPtr(child1: HeapAddr, child2?: HeapAddr): HeapAddr;
-} & IUntypedAllocator;
-
-export function createHeapManager(heapNodeCount: number): IAllocator {
+export function createHeapManager(heapNodeCount: number): Allocator {
   const size = heapNodeCount * HEAP_NODE_BYTE_TOTAL_SIZE;
-  return new MemoryManager(
+  return new Allocator(
     new SimpleMemoryAllocator({
       nodeCount: heapNodeCount,
       buf: new ArrayBuffer(size),
@@ -73,6 +63,7 @@ export function createHeapManager(heapNodeCount: number): IAllocator {
   );
 }
 
+export { Allocator } from "./alloc";
 export {
   AnyHeapValue,
   HeapAddr,

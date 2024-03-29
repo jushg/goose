@@ -1,4 +1,4 @@
-import { IAllocator } from "../memory";
+import { Allocator } from "../memory";
 
 export type ExecutionState = {
   machineState: MachineState;
@@ -20,7 +20,7 @@ export type MachineState = {
   // GLOBAL_ENV is the env that contains all the primitive functions
   GLOBAL_ENV: number;
   // HEAP is array containing all dynamically allocated data structures
-  HEAP: IAllocator;
+  HEAP: Allocator;
   // next free slot in heap
   FREE: number;
   // job queue

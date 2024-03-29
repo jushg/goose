@@ -1,8 +1,7 @@
 import { HEAP_NODE_BYTE_SIZE, HEAP_NODE_BYTE_TOTAL_SIZE } from ".";
-import { InstrAddr } from "../instruction/base";
-import { SimpleMemoryAllocator } from "./alloc";
-import { MemoryManager } from "./manager";
-import { GcFlag, HeapAddr, HeapType } from "./node";
+import { Allocator } from "./alloc";
+import { GcFlag, HeapType } from "./node";
+import { SimpleMemoryAllocator } from "./untypedAlloc";
 
 describe("Memory Manager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
@@ -18,7 +17,7 @@ describe("Memory Manager", () => {
 
   let memAlloc: SimpleMemoryAllocator;
   let spy: Record<string, jest.SpyInstance>;
-  let manager: MemoryManager;
+  let manager: Allocator;
   const nodeCount = 100;
 
   beforeEach(() => {
@@ -34,7 +33,7 @@ describe("Memory Manager", () => {
       "printHeap",
       "getNodeCount",
     ]);
-    manager = new MemoryManager(memAlloc);
+    manager = new Allocator(memAlloc);
   });
 
   test("should create a new memory manager", () => {
