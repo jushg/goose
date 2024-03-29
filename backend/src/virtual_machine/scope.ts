@@ -1,18 +1,19 @@
-import { assertGoslingType, isGoslingType } from ".";
-import { HeapAddr, HeapType } from "../memory";
-import { GoslingMemoryManager } from "./alloc";
 import {
   AnyGoslingObject,
-  GoslingBinaryPtrObj,
   GoslingListObj,
   Literal,
-} from "./memory";
+  assertGoslingType,
+  isGoslingType,
+} from ".";
+import { HeapAddr, HeapType } from "../memory";
+import { GoslingMemoryManager } from "./memory";
 
 export type GoslingScopeObj = {
   lookup(symbol: string): AnyGoslingObject | null;
   assign(symbol: string, val: Literal<AnyGoslingObject>): void;
   getTopScopeAddr(): HeapAddr;
   getScopeData(): GoslingScopeData;
+  toString(): string;
 };
 
 export type GoslingScopeData = (GoslingListObj[number] & {
@@ -51,9 +52,12 @@ export function getScopeObj(
 ): GoslingScopeObj {
   const envs = scopeData;
   const start = envs.at(0)?.nodeAddr || HeapAddr.getNull();
+  const toString = () => `[ ${envs.map(scopeToString)} ]`;
 
   return {
+    toString,
     getScopeData: () => envs,
+    getTopScopeAddr: () => start,
 
     lookup: (symbol: string) => {
       for (const envNode of envs) {
@@ -63,7 +67,7 @@ export function getScopeObj(
         }
       }
       throw new Error(
-        `Symbol ${symbol} not found in envs at ${start}: ${envs.map((e) => Object.keys(e.env))}`
+        `Symbol ${symbol} not found in envs at ${start}: ${toString()}`
       );
     },
 
@@ -84,11 +88,9 @@ export function getScopeObj(
         }
       }
       throw new Error(
-        `Symbol ${symbol} not found in envs at ${start}: ${envs.map((e) => Object.keys(e.env))}`
+        `Symbol ${symbol} not found in envs at ${start}: ${toString()}`
       );
     },
-
-    getTopScopeAddr: () => start,
   };
 }
 
@@ -125,4 +127,17 @@ function getEnv(addr: HeapAddr, memory: GoslingMemoryManager) {
   }
 
   return env;
+}
+
+export function scopeToString({ env }: GoslingScopeData[number]): string {
+  return (
+    "{\n" +
+    Object.keys(env)
+      .map(
+        (symbol) =>
+          `\t${symbol}:\n\t\t&sym=${env[symbol].symbolListPtr} \n\t\t&val=${env[symbol].valueListPtr} \n\t\tval=${JSON.stringify(env[symbol].valueObj)}`
+      )
+      .join("\n") +
+    "\n}"
+  );
 }
