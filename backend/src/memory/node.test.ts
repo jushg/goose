@@ -1,6 +1,5 @@
 import { HEAP_NODE_BYTE_SIZE } from ".";
-import { InstrAddr } from "../instruction/base";
-import { GcFlag, HeapAddr, HeapInBytes, HeapType } from "./node";
+import { GcFlag, HeapAddr, HeapInBytes, HeapType, HeapValue } from "./node";
 
 describe("HeapInBytes", () => {
   const stringNormalizer = (s: string): string => {
@@ -77,96 +76,38 @@ describe("HeapInBytes", () => {
   test("should correctly convert string to bytes", () => {
     const simpleData = ["", "abc", "g\nf", "a a"];
     for (const data of simpleData) {
-      const nextAddr = HeapAddr.fromNum(6);
+      const next = HeapAddr.fromNum(6);
       const h = HeapInBytes.fromData({
         type: HeapType.String,
         gcFlag: GcFlag.Unmarked,
         data,
-        child: nextAddr,
+        next,
       });
       const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
+      const converted = HeapInBytes.fromBytes(
+        bytes
+      ).toHeapValue() as HeapValue<HeapType.String>;
       expect(stringNormalizer(converted.data)).toStrictEqual(
         stringNormalizer(data)
       );
-      expect(converted.child).toStrictEqual(nextAddr);
+      expect(converted.next).toStrictEqual(next);
     }
   });
 
-  test("should correctly convert symbol to bytes", () => {
-    const simpleData = ["g_g", "abc", "gf", "a-a"];
-    for (const data of simpleData) {
-      const nextAddr = HeapAddr.fromNum(9);
-      const h = HeapInBytes.fromData({
-        type: HeapType.Symbol,
-        gcFlag: GcFlag.Unmarked,
-        data,
-        child: nextAddr,
-      });
-      const bytes = h.toBytes();
-      const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-      expect(stringNormalizer(converted.data)).toStrictEqual(
-        stringNormalizer(data)
-      );
-      expect(converted.child).toStrictEqual(nextAddr);
-    }
-  });
-
-  test("should correctly convert lambda to bytes", () => {
-    const nextAddr = HeapAddr.fromNum(9);
-    const pcAddr = InstrAddr.fromNum(10);
+  test("should correctly convert list node to bytes", () => {
+    const child1 = HeapAddr.fromNum(9);
+    const child2 = HeapAddr.fromNum(10);
     const h = HeapInBytes.fromData({
-      type: HeapType.Lambda,
+      type: HeapType.BinaryPtr,
       gcFlag: GcFlag.Unmarked,
-      data: pcAddr,
-      child: nextAddr,
+      child1,
+      child2,
     });
     const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-    expect(converted.data).toStrictEqual(pcAddr);
-    expect(converted.child).toStrictEqual(nextAddr);
-  });
-
-  test("should correctly convert frameAddr to bytes", () => {
-    const nextAddr = HeapAddr.fromNum(9);
-    const dataAddr = HeapAddr.fromNum(10);
-    const h = HeapInBytes.fromData({
-      type: HeapType.Frame,
-      gcFlag: GcFlag.Unmarked,
-      data: dataAddr,
-      child: nextAddr,
-    });
-    const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-    expect(converted.data).toStrictEqual(dataAddr);
-    expect(converted.child).toStrictEqual(nextAddr);
-  });
-
-  test("should correctly convert value to bytes", () => {
-    const nextAddr = HeapAddr.fromNum(9);
-    const dataAddr = HeapAddr.fromNum(10);
-    const h = HeapInBytes.fromData({
-      type: HeapType.Value,
-      gcFlag: GcFlag.Unmarked,
-      data: dataAddr,
-      child: nextAddr,
-    });
-    const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-    expect(converted.data).toStrictEqual(dataAddr);
-    expect(converted.child).toStrictEqual(nextAddr);
-  });
-
-  test("should correctly convert heapAddr to bytes", () => {
-    const nextAddr = HeapAddr.fromNum(9);
-    const h = HeapInBytes.fromData({
-      type: HeapType.HeapAddr,
-      gcFlag: GcFlag.Unmarked,
-      child: nextAddr,
-    });
-    const bytes = h.toBytes();
-    const converted = HeapInBytes.fromBytes(bytes).toHeapValue() as any;
-    expect(converted.child).toStrictEqual(nextAddr);
-    expect(converted.data).toBeUndefined();
+    const converted = HeapInBytes.fromBytes(
+      bytes
+    ).toHeapValue() as HeapValue<HeapType.BinaryPtr>;
+    expect(converted.child1).toStrictEqual(child1);
+    expect(converted.child2).toStrictEqual(child2);
   });
 });

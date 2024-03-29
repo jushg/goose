@@ -7,7 +7,8 @@ import {
 } from "../common/state";
 import { ProgramFile } from "../compiler";
 import { Instruction } from "../instruction/base";
-import { createHeapManager } from "../memory";
+import { HeapType, createHeapManager } from "../memory";
+import { AnyGoslingObject, GoslingObject } from "./memory";
 
 // called whenever the machine is first run
 function initialize(entryIndex: number): ExecutionState {
@@ -21,7 +22,7 @@ function initialize(entryIndex: number): ExecutionState {
 
   const startingMachineState: MachineState = {
     GLOBAL_ENV: 0,
-    HEAP: createHeapManager(/* nodeCount = */2 ** 8),
+    HEAP: createHeapManager(/* nodeCount = */ 2 ** 8),
     FREE: 0,
     JOB_QUEUE: new JobQueue(),
     IS_RUNNING: true,
@@ -83,4 +84,18 @@ export function runProgram(prog: ProgramFile) {
   // Clear up memory
   // Handle panic?
   // Handle recover?
+}
+export function isGoslingType<T extends HeapType>(
+  val: T,
+  obj: AnyGoslingObject
+): obj is GoslingObject<T> {
+  return obj.type === val;
+}
+export function assertGoslingType<T extends HeapType>(
+  val: T,
+  obj: AnyGoslingObject
+): asserts obj is GoslingObject<T> {
+  if (!isGoslingType(val, obj)) {
+    throw new Error(`Expected GoslingObj type ${val}, got ${obj.type}`);
+  }
 }

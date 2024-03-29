@@ -48,7 +48,7 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
 
   printHeap(): string[] {
     const res = [];
-    for (let i = 0; i < this.FREE_PTR; i++) {
+    for (let i = 1; i < this.FREE_PTR; i++) {
       const node = this.getHeapNode(HeapAddr.fromNum(i));
       res.push(
         `H: ${i.toString(16).padStart(HEAP_NODE_BYTE_SIZE.child, "0")} ${Array.from(
@@ -73,6 +73,10 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
   }
 
   private getHeapNode(addr: HeapAddr): Uint8Array {
+    if (addr.addr >= this.memory.nodeCount || addr.addr <= 0) {
+      throw new Error(`Invalid heap address: ${addr.addr}`);
+    }
+
     return new Uint8Array(
       this.memory.buf,
       addr.addr * HEAP_NODE_BYTE_TOTAL_SIZE,

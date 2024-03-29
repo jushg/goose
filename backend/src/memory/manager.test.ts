@@ -144,8 +144,8 @@ describe("Memory Manager", () => {
         expect(value).toHaveProperty("type", HeapType.String);
         expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
 
-        expect(value).toHaveProperty("child");
-        addr = (value as any).child;
+        expect(value).toHaveProperty("next");
+        addr = (value as any).next;
 
         expect(value).toHaveProperty("data");
         concatenated += (value as any).data;
@@ -153,82 +153,5 @@ describe("Memory Manager", () => {
 
       expect(concatenated.replace(/\0/g, "")).toEqual(val);
     }
-  });
-
-  test("should be able to alloc and later read lambda", () => {
-    const pcAddr = InstrAddr.fromNum(91);
-    const closureAddr = HeapAddr.fromNum(96);
-
-    const addr = manager.allocLambda(pcAddr, closureAddr);
-    const node = manager.getHeapValue(addr);
-    const value = node.toHeapValue();
-
-    expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", HeapType.Lambda);
-    expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
-    expect(value).toHaveProperty("data", pcAddr);
-    expect(value).toHaveProperty("child", closureAddr);
-  });
-
-  test("should be able to alloc and later read a symbol", () => {
-    const ids = ["g_g", "abc", "gf", "a-a"];
-    for (const id of ids) {
-      const valueAddr = HeapAddr.fromNum(9);
-      const addr = manager.allocSymbol(id, valueAddr);
-      const node = manager.getHeapValue(addr);
-      const value = node.toHeapValue();
-
-      expect(value).toBeDefined();
-      expect(value).toHaveProperty("type", HeapType.Symbol);
-      expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
-      expect(value).toHaveProperty("data");
-      expect((value as any).data.replace(/\0/g, "")).toEqual(id);
-      expect(value).toHaveProperty("child", valueAddr);
-    }
-  });
-
-  test("should be able to alloc and later read a value", () => {
-    const valueAddr = HeapAddr.fromNum(9);
-    const nextSymbol = HeapAddr.fromNum(10);
-    const addr = manager.allocValue(valueAddr, nextSymbol);
-    const node = manager.getHeapValue(addr);
-    const value = node.toHeapValue();
-
-    expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", HeapType.Value);
-    expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
-    expect(value).toHaveProperty("data", valueAddr);
-    expect(value).toHaveProperty("child", nextSymbol);
-  });
-
-  test("should be able to alloc and later read a frame address with empty env", () => {
-    const enclosingFrameAddr = HeapAddr.fromNum(9);
-    const expectedKvAddr = HeapAddr.NULL;
-    const addr = manager.allocFrameAddr(enclosingFrameAddr, {});
-
-    const node = manager.getHeapValue(addr);
-    const value = node.toHeapValue();
-
-    expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", HeapType.Frame);
-    expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
-    expect(value).toHaveProperty("data", expectedKvAddr);
-    expect(value).toHaveProperty("child", enclosingFrameAddr);
-  });
-
-  test("should be able to alloc and later read a frame address with non-empty env", () => {
-    // TODO: implement this test (or perhaps just implement a higher order manager, and test that.)
-  });
-
-  test("should be able to alloc and later read a heap address", () => {
-    const dataAddr = HeapAddr.fromNum(9);
-    const addr = manager.allocHeapAddr(dataAddr);
-    const node = manager.getHeapValue(addr);
-    const value = node.toHeapValue();
-
-    expect(value).toBeDefined();
-    expect(value).toHaveProperty("type", HeapType.HeapAddr);
-    expect(value).toHaveProperty("gcFlag", GcFlag.Unmarked);
-    expect(value).toHaveProperty("child", dataAddr);
   });
 });
