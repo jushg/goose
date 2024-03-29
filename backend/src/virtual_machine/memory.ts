@@ -110,15 +110,20 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   allocList(toAppend: HeapAddr[], prevList?: GoslingListObj): GoslingListObj {
-    let prevListAddr: HeapAddr =
-      prevList?.at(-1)?.nodeAddr ?? HeapAddr.getNull();
+    prevList = prevList ?? [];
+    let prevListAddr: HeapAddr = prevList.at(0)?.nodeAddr ?? HeapAddr.getNull();
 
     for (const valAddr of toAppend.reverse()) {
-      prevListAddr = this.alloc({
+      const newNode = this.alloc({
         type: HeapType.BinaryPtr,
         child1: prevListAddr,
         child2: valAddr,
-      }).addr;
+      });
+      prevList = [
+        { nodeAddr: newNode.addr, node: newNode, value: this.get(valAddr) },
+        ...prevList!,
+      ];
+      prevListAddr = prevList[0].nodeAddr;
     }
 
     return this.getList(prevListAddr);
@@ -266,9 +271,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       };
     }
 
-    const enclosingScopeData = [...prev.getScopeData()];
-    enclosingScopeData.pop();
-
+    const enclosingScopeData = [...prev.getScopeData()].slice(1);
     return {
       callerPC: null,
       enclosing: getScopeObj(enclosingScopeData, this),
