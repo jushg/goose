@@ -44,6 +44,12 @@ export type GoslingLambdaObj = {
   pcAddr: InstrAddr;
 };
 
+export type GoslingListObj = {
+  nodeAddr: HeapAddr;
+  node: AnyGoslingObject;
+  value: AnyGoslingObject | null;
+}[];
+
 export type IGoslingMemoryManager = {
   get(addr: HeapAddr): AnyGoslingObject | null;
   set(addr: HeapAddr, val: Literal<AnyGoslingObject>): void;

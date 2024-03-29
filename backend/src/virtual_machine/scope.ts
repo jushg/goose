@@ -1,75 +1,76 @@
 import { assertGoslingType, isGoslingType } from ".";
-import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType } from "../memory";
 import { GoslingMemoryManager } from "./alloc";
-import { AnyGoslingObject, GoslingBinaryPtrObj, Literal } from "./memory";
+import {
+  AnyGoslingObject,
+  GoslingBinaryPtrObj,
+  GoslingListObj,
+  Literal,
+} from "./memory";
 
 export type GoslingScopeObj = {
   lookup(symbol: string): AnyGoslingObject | null;
   assign(symbol: string, val: Literal<AnyGoslingObject>): void;
-  getEnclosingScope(): GoslingScopeObj;
-  allocNewFrame(
-    __callerPC: InstrAddr,
-    __callerRTS: HeapAddr,
-    symbolAndValues: Record<string, Literal<AnyGoslingObject>>
-  ): GoslingScopeObj;
   getTopScopeAddr(): HeapAddr;
+  getScopeData(): GoslingScopeData;
 };
 
-export type GoslingScopeData = {
-  addr: HeapAddr;
-  envs: {
-    envsListPtr: HeapAddr;
-    env: Record<
-      string,
-      {
-        symbolListPtr: HeapAddr;
-        valueListPtr: HeapAddr;
-        valueObj: AnyGoslingObject;
-      }
-    >;
-  }[];
-};
+export type GoslingScopeData = (GoslingListObj[number] & {
+  env: Record<
+    string,
+    {
+      symbolListPtr: HeapAddr;
+      valueListPtr: HeapAddr;
+      valueObj: AnyGoslingObject;
+    }
+  >;
+})[];
 
 export function readScopeData(
   addr: HeapAddr,
   memory: GoslingMemoryManager
 ): GoslingScopeData {
-  const envs = memory.getList(addr).map((v, idx) => {
-    const envPtr = v.val;
-    if (envPtr === null || !isGoslingType(HeapType.BinaryPtr, envPtr))
-      throw new Error(`Non-ptr in env list at ${addr}:${idx}=${envPtr?.addr}`);
+  const envs = memory.getList(addr).map(({ nodeAddr, value, node }, idx) => {
+    if (value === null || !isGoslingType(HeapType.BinaryPtr, value))
+      throw new Error(`Non-ptr in env list at ${addr}:${idx}=${value?.addr}`);
 
     try {
-      const env = getEnv(envPtr.addr, memory);
-      return { envsListPtr: v.ptr, env };
+      const env = getEnv(value.addr, memory);
+      return { nodeAddr, node, value, env };
     } catch (e) {
       throw new Error(`Invalid env (env list at ${addr}:${idx}): ${e}`);
     }
   });
 
-  return { addr, envs };
+  return envs;
 }
 
 export function getScopeObj(
   scopeData: GoslingScopeData,
   memory: GoslingMemoryManager
 ): GoslingScopeObj {
-  const { envs, addr } = scopeData;
-  const start = addr;
+  const envs = scopeData;
+  const start = envs.at(0)?.nodeAddr || HeapAddr.getNull();
+
   return {
+    getScopeData: () => envs,
+
     lookup: (symbol: string) => {
-      for (const { env } of envs) {
+      for (const envNode of envs) {
+        const { env } = envNode;
         if (symbol in env) {
           return env[symbol].valueObj;
         }
       }
-      throw new Error(`Symbol ${symbol} not found in envs at ${start}`);
+      throw new Error(
+        `Symbol ${symbol} not found in envs at ${start}: ${envs.map((e) => Object.keys(e.env))}`
+      );
     },
 
     assign: (symbol: string, val: Literal<AnyGoslingObject>) => {
-      for (const { env } of envs) {
-        if (symbol in env.values) {
+      for (const envNode of envs) {
+        const { env } = envNode;
+        if (symbol in env) {
           const { valueListPtr } = env[symbol];
           const valueListItem = memory.get(valueListPtr)!;
           assertGoslingType(HeapType.BinaryPtr, valueListItem);
@@ -82,51 +83,12 @@ export function getScopeObj(
           return;
         }
       }
-      throw new Error(`Symbol ${symbol} not found in envs at ${start}`);
-    },
-
-    allocNewFrame: (
-      __callerPC: InstrAddr,
-      __callerRTS: HeapAddr,
-      symbolAndValues: Record<string, Literal<AnyGoslingObject>>
-    ) => {
-      if ("__callerPC" in symbolAndValues || "__callerRts" in symbolAndValues) {
-        throw new Error(
-          `Cannot reassign __callerPC or __callerRTS with ${symbolAndValues}`
-        );
-      }
-      symbolAndValues["__callerPC"] = {
-        type: HeapType.Int,
-        data: __callerPC.addr,
-      };
-      symbolAndValues["__callerRTS"] = {
-        type: HeapType.BinaryPtr,
-        child1: __callerRTS,
-        child2: HeapAddr.getNull(),
-      };
-
-      const envKeyValueList = Object.keys(symbolAndValues).flatMap((s) => {
-        const symbolStr = memory.alloc({ type: HeapType.String, data: s });
-        const value = memory.alloc(symbolAndValues[s]);
-        return [symbolStr.addr, value.addr];
-      });
-
-      const env = memory.allocList(envKeyValueList);
-      const newFrameAddr = memory.allocList([env], start);
-
-      return memory.getEnvs(newFrameAddr);
+      throw new Error(
+        `Symbol ${symbol} not found in envs at ${start}: ${envs.map((e) => Object.keys(e.env))}`
+      );
     },
 
     getTopScopeAddr: () => start,
-
-    getEnclosingScope: () => {
-      if (envs.length < 2)
-        throw new Error(
-          `Trying to exit scope from ${start} (envs of len ${envs.length})`
-        );
-
-      return memory.getEnvs((memory.get(start) as GoslingBinaryPtrObj).child1);
-    },
   };
 }
 
@@ -147,15 +109,18 @@ function getEnv(addr: HeapAddr, memory: GoslingMemoryManager) {
   for (let i = 0; i < list.length; i += 2) {
     const keyListItem = list[i];
     const valListItem = list[i + 1];
-    const key = keyListItem.val;
+    const key = keyListItem.value;
 
     if (key === null) throw new Error(`Invalid key at ${i / 2} in env ${addr}`);
     assertGoslingType(HeapType.String, key);
 
+    if (valListItem.value === null)
+      throw new Error(`Invalid value at ${i / 2} in env ${addr}`);
+
     env[key.data] = {
-      symbolListPtr: keyListItem.ptr,
-      valueListPtr: valListItem.ptr,
-      valueObj: valListItem.val,
+      symbolListPtr: keyListItem.nodeAddr,
+      valueListPtr: valListItem.nodeAddr,
+      valueObj: valListItem.value,
     };
   }
 

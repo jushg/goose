@@ -1,10 +1,11 @@
-import { assertGoslingType } from ".";
+import { assertGoslingType, isGoslingType } from ".";
 import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType, IAllocator } from "../memory";
 import { HeapInBytes, assertHeapType } from "../memory/node";
 import {
   AnyGoslingObject,
   GoslingLambdaObj,
+  GoslingListObj,
   GoslingObject,
   IGoslingMemoryManager,
   Literal,
@@ -66,49 +67,51 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     }
   }
 
-  getList(addr: HeapAddr) {
+  getList(addr: HeapAddr): GoslingListObj {
     if (addr.isNull()) return [];
 
-    const arr: HeapAddr[] = [];
+    const arr: GoslingListObj = [];
     let curr: HeapAddr = addr;
     while (!curr.isNull()) {
       const ptr = this.get(curr);
       if (ptr === null) break;
 
       assertGoslingType(HeapType.BinaryPtr, ptr);
-      arr.push(ptr.child2);
+      arr.push({ nodeAddr: curr, node: ptr, value: this.get(ptr.child2) });
 
       if (ptr.child1 === null) break;
       curr = ptr.child1;
     }
 
-    return arr.map((valAddr, idx) => {
-      const val = this.get(valAddr);
-      if (val === null)
-        throw new Error(`Invalid object at ${idx} from list at ${addr}`);
-      return { ptr: valAddr, val };
-    });
+    return arr;
   }
 
-  setList(addr: HeapAddr, idx: number, val: Literal<AnyGoslingObject>) {
-    const list = this.getList(addr);
+  setList(list: GoslingListObj, idx: number, val: Literal<AnyGoslingObject>) {
     if (idx < 0 || idx >= list.length) {
-      throw new Error(`Index ${idx} out of bounds for list at ${addr}`);
+      throw new Error(`Index ${idx} out of bounds for list at ${list}`);
     }
 
-    const { ptr } = list[idx];
-    const listIterator = this.get(ptr);
-    if (listIterator === null)
-      throw new Error(`Invalid list iterator at ${ptr}`);
-    assertGoslingType(HeapType.BinaryPtr, listIterator);
+    const { nodeAddr } = list[idx];
+    const node = this.get(nodeAddr);
+    if (node === null || !isGoslingType(HeapType.BinaryPtr, node))
+      throw new Error(`Invalid list iterator at ${nodeAddr}: ${node}`);
 
-    const { child1, child2 } = listIterator;
+    const { child1 } = node;
     const newItem = this.alloc(val);
-    this.set(ptr, { type: HeapType.BinaryPtr, child1, child2: newItem.addr });
+
+    this.set(nodeAddr, {
+      type: HeapType.BinaryPtr,
+      child1,
+      child2: newItem.addr,
+    });
+    list[idx].node = { ...node, child2: newItem.addr };
+    list[idx].value = newItem;
   }
 
-  allocList(toAppend: HeapAddr[], prevListAddr?: HeapAddr): HeapAddr {
-    prevListAddr = prevListAddr ?? HeapAddr.getNull();
+  allocList(toAppend: HeapAddr[], prevList?: GoslingListObj): GoslingListObj {
+    let prevListAddr: HeapAddr =
+      prevList?.at(-1)?.nodeAddr ?? HeapAddr.getNull();
+
     for (const valAddr of toAppend.reverse()) {
       prevListAddr = this.alloc({
         type: HeapType.BinaryPtr,
@@ -117,7 +120,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       }).addr;
     }
 
-    return prevListAddr;
+    return this.getList(prevListAddr);
   }
 
   getEnvs(addr: HeapAddr): GoslingScopeObj {
@@ -194,5 +197,82 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       const bytes = this.memory.getHeapValueInBytes(addr);
       throw new Error(`Invalid heap value at ${addr}: [ ${bytes} ]`);
     }
+  }
+
+  allocNewFrame(
+    prev: GoslingScopeObj,
+    symbolAndValues: Record<string, Literal<AnyGoslingObject>>
+  ): GoslingScopeObj {
+    const envKeyValueList = Object.keys(symbolAndValues).flatMap((s) => {
+      const symbolStr = this.alloc({ type: HeapType.String, data: s });
+      const value = this.alloc(symbolAndValues[s]);
+      return [symbolStr.addr, value.addr];
+    });
+
+    const envAddr =
+      this.allocList(envKeyValueList).at(0)?.nodeAddr || HeapAddr.getNull();
+    const newFrameAddr = this.allocList([envAddr], prev.getScopeData());
+
+    return this.getEnvs(newFrameAddr.at(0)?.nodeAddr || HeapAddr.getNull());
+  }
+
+  allocNewJumpFrame(
+    callerPC: InstrAddr,
+    prev: GoslingScopeObj,
+    newFrame: HeapAddr
+  ): GoslingScopeObj {
+    const __callerPC = { type: HeapType.Int, data: callerPC.addr } as const;
+    const __callerRTS = {
+      type: HeapType.BinaryPtr,
+      child1: prev.getTopScopeAddr(),
+      child2: HeapAddr.getNull(),
+    } as const;
+    const symbolAndValues: Record<string, Literal<AnyGoslingObject>> = {
+      __callerPC,
+      __callerRTS,
+    };
+
+    const closure = this.getEnvs(newFrame);
+    return this.allocNewFrame(closure, symbolAndValues);
+  }
+
+  getEnclosingFrame(prev: GoslingScopeObj): {
+    callerPC: InstrAddr | null;
+    enclosing: GoslingScopeObj;
+  } {
+    const envs = prev.getScopeData();
+    if (envs.length < 2)
+      throw new Error(
+        `Trying to exit scope from ${envs.at(0)?.nodeAddr} (envs of len ${envs.length})`
+      );
+
+    const frameToExit = envs[0].env;
+    if ("__callerPC" in frameToExit && "__callerRTS" in frameToExit) {
+      const callerPC = frameToExit.__callerPC.valueObj;
+      const callerRTS = frameToExit.__callerRTS.valueObj;
+
+      if (
+        callerPC === null ||
+        callerRTS === null ||
+        !isGoslingType(HeapType.Int, callerPC) ||
+        !isGoslingType(HeapType.BinaryPtr, callerRTS)
+      )
+        throw new Error(
+          `Invalid frame to exit at ${envs.at(0)?.nodeAddr} (callerPC=${callerPC}, callerRTS=${callerRTS})`
+        );
+
+      return {
+        callerPC: InstrAddr.fromNum(callerPC.data),
+        enclosing: this.getEnvs(callerRTS.child1),
+      };
+    }
+
+    const enclosingScopeData = [...prev.getScopeData()];
+    enclosingScopeData.pop();
+
+    return {
+      callerPC: null,
+      enclosing: getScopeObj(enclosingScopeData, this),
+    };
   }
 }

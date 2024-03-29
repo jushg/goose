@@ -18,34 +18,39 @@ export function createThreadControlObject(
   callee: GoslingLambdaObj,
   args: Literal<AnyGoslingObject>[],
   memory: GoslingMemoryManager,
-  id?: string
+  _id?: string
 ): ThreadControlObject {
-  let _id = (id || "_") + Math.random().toString(36).substring(7);
+  const id = (_id || "_") + Math.random().toString(36).substring(7);
   let pc = callee.pcAddr;
-  let osAddr = memory.allocList(args.map((arg) => memory.alloc(arg).addr));
   let rts = callee.closure;
 
+  let _os = memory.allocList(args.map((arg) => memory.alloc(arg).addr));
   const os: GoslingOperandStackObj = {
     push: (val: Literal<AnyGoslingObject>) => {
-      osAddr = memory.alloc(val).addr;
+      const valueObj = memory.alloc(val);
+      _os = memory.allocList([valueObj.addr], _os);
     },
     pop: () => {
-      const val = memory.get(osAddr);
-      if (val === null) throw new Error("Operand stack is empty");
-      assertGoslingType(HeapType.BinaryPtr, val);
-      osAddr = val.child1;
+      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      if (_os.length === 0) throw new Error("Operand stack is empty");
+
+      const val = _os.at(0)!.value;
+      if (val === null) throw new Error("Operand stack .top is null");
+      _os = _os.slice(1);
       return val;
     },
     peek: () => {
-      const val = memory.get(osAddr);
-      if (val === null) throw new Error("Operand stack is empty");
+      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      if (_os.length === 0) throw new Error("Operand stack is empty");
+
+      const val = _os[0].value;
+      if (val === null) throw new Error("Operand stack .top is null");
       return val;
     },
-    getTopAddr: () => osAddr,
   };
 
   return {
-    getId: () => _id,
+    getId: () => id,
     getOS: () => os,
     getRTS: () => rts,
     getPC: () => pc,
@@ -56,5 +61,4 @@ export type GoslingOperandStackObj = {
   push(val: Literal<AnyGoslingObject>): void;
   pop(): Literal<AnyGoslingObject>;
   peek(): Literal<AnyGoslingObject>;
-  getTopAddr(): HeapAddr;
 };

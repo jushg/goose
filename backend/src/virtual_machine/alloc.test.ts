@@ -3,6 +3,7 @@ import { InstrAddr } from "../instruction/base";
 import { HeapAddr, HeapType, IAllocator, createHeapManager } from "../memory";
 import { GoslingMemoryManager } from "./alloc";
 import { AnyGoslingObject, GoslingBinaryPtrObj, GoslingIntObj } from "./memory";
+import { readScopeData } from "./scope";
 
 describe("GoslingMemoryManager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
@@ -285,16 +286,15 @@ describe("GoslingMemoryManager", () => {
       let scopeObj = memoryManager.getEnvs(HeapAddr.getNull());
       expect(scopeObj.getTopScopeAddr().isNull()).toBeTruthy();
 
-      const callee1PC = InstrAddr.fromNum(124);
-      const callee1RTS = HeapAddr.fromNum(53);
-      scopeObj = scopeObj.allocNewFrame(callee1PC, callee1RTS, {});
+      scopeObj = memoryManager.allocNewFrame(scopeObj, {
+        g: { type: HeapType.Int, data: 1 },
+      });
       expect(scopeObj.getTopScopeAddr().isNull()).toBeFalsy();
-      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
-        callee1PC.addr
-      );
-      expect(
-        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
-      ).toBe(callee1RTS.addr);
+      {
+        const x = scopeObj.lookup("g")!;
+        assertGoslingType(HeapType.Int, x);
+        expect(x.data).toBe(1);
+      }
 
       const f1 = {
         foo: { type: HeapType.Int, data: 1 },
@@ -308,16 +308,19 @@ describe("GoslingMemoryManager", () => {
           data: "sldkfjsdlkfjsdlfkjsdlkfjsld\ndfnsldkfjhlgkjslkdgjklsdgjsklgjdklkfjdsklj",
         },
       } as const;
-      const callee2PC = InstrAddr.fromNum(128);
-      const callee2RTS = HeapAddr.fromNum(57);
-      scopeObj = scopeObj.allocNewFrame(callee2PC, callee2RTS, f1);
+
+      const caller1PC = InstrAddr.fromNum(100);
+      const caller1RTS = scopeObj.getTopScopeAddr();
+      const f1Addr = memoryManager
+        .allocNewFrame(scopeObj, f1)
+        .getTopScopeAddr();
+      scopeObj = memoryManager.allocNewJumpFrame(caller1PC, scopeObj, f1Addr);
       expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
-        callee2PC.addr
+        caller1PC.addr
       );
       expect(
         (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
-      ).toBe(callee2RTS.addr);
-      const f1Addr = scopeObj.getTopScopeAddr();
+      ).toBe(caller1RTS.addr);
       {
         const x = scopeObj.lookup("foo")!;
         assertGoslingType(HeapType.Int, x);
@@ -335,6 +338,18 @@ describe("GoslingMemoryManager", () => {
         expect(x.data).toBe(f1.baz.data);
       }
 
+      // Dry Run exit scope
+      {
+        const { callerPC, enclosing } =
+          memoryManager.getEnclosingFrame(scopeObj);
+        expect(callerPC?.addr).toBe(caller1PC.addr);
+        expect(enclosing.getTopScopeAddr().addr).toBe(caller1RTS.addr);
+        // scopeObj = enclosing;
+
+        // Note, usually here we would reset scopeObj = enclosing, but we want to stay in the call for
+        // f2, which will be a nested scope inside f1.
+      }
+
       const f2 = {
         foo: { type: HeapType.String, data: "alskdfjl asldkf  sdfklj" },
         bar: {
@@ -348,16 +363,8 @@ describe("GoslingMemoryManager", () => {
         },
       } as const;
 
-      const callee3PC = InstrAddr.fromNum(135);
-      const callee3RTS = HeapAddr.fromNum(64);
-      scopeObj = scopeObj.allocNewFrame(callee3PC, callee3RTS, f2);
-      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
-        callee3PC.addr
-      );
-      expect(
-        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
-      ).toBe(callee3RTS.addr);
-
+      const preF2Addr = scopeObj.getTopScopeAddr();
+      scopeObj = memoryManager.allocNewFrame(scopeObj, f2);
       const f2Addr = scopeObj.getTopScopeAddr();
       expect(f2Addr.addr).not.toBe(f1Addr.addr);
 
@@ -383,14 +390,58 @@ describe("GoslingMemoryManager", () => {
         expect(x.data).toBe(f2.bay.data);
       }
 
-      scopeObj = scopeObj.getEnclosingScope();
-      expect(scopeObj.getTopScopeAddr().addr).toBe(f1Addr.addr);
+      // Exit scope back to callee f1
+      {
+        const { callerPC, enclosing } =
+          memoryManager.getEnclosingFrame(scopeObj);
+        expect(callerPC).toBeNull();
+        expect(enclosing.getTopScopeAddr().addr).toBe(preF2Addr.addr);
+
+        scopeObj = enclosing;
+      }
+
+      const caller2PC = InstrAddr.fromNum(128);
+      const caller2RTS = scopeObj.getTopScopeAddr();
+      scopeObj = memoryManager.allocNewJumpFrame(caller2PC, scopeObj, f1Addr);
       expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
-        callee2PC.addr
+        caller2PC.addr
       );
       expect(
         (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
-      ).toBe(callee2RTS.addr);
+      ).toBe(caller2RTS.addr);
+
+      {
+        const x = scopeObj.lookup("foo")!;
+        assertGoslingType(HeapType.Int, x);
+        expect(x.data).toBe(f1.foo.data);
+      }
+      {
+        const x = scopeObj.lookup("bar")!;
+        assertGoslingType(HeapType.BinaryPtr, x);
+        expect(x.child1.addr).toBe(f1.bar.child1.addr);
+        expect(x.child2.addr).toBe(f1.bar.child2.addr);
+      }
+      {
+        const x = scopeObj.lookup("baz")!;
+        assertGoslingType(HeapType.String, x);
+        expect(x.data).toBe(f1.baz.data);
+      }
+
+      // Exit scope back to one level above
+      {
+        const { callerPC, enclosing } =
+          memoryManager.getEnclosingFrame(scopeObj);
+        expect(callerPC?.addr).toBe(caller2PC.addr);
+        scopeObj = enclosing;
+      }
+
+      // Exit scope back to one level above
+      {
+        const { callerPC, enclosing } =
+          memoryManager.getEnclosingFrame(scopeObj);
+        expect(callerPC?.addr).toBe(caller1PC.addr);
+        scopeObj = enclosing;
+      }
     });
   });
 });
