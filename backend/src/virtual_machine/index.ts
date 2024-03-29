@@ -153,7 +153,7 @@ export type IGoslingMemoryManager = {
   clear(addr: HeapAddr): void;
   alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject;
 
-  getLambda(addr: HeapAddr): GoslingLambdaObj;
+  getLambda(lambdaPtr: GoslingBinaryPtrObj): GoslingLambdaObj;
   allocLambda(closureAddr: HeapAddr, pcAddr: InstrAddr): HeapAddr;
   getEnvs(addr: HeapAddr): GoslingScopeObj;
 };

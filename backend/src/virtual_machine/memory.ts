@@ -1,5 +1,6 @@
 import {
   AnyGoslingObject,
+  GoslingBinaryPtrObj,
   GoslingLambdaObj,
   GoslingListObj,
   GoslingObject,
@@ -133,15 +134,16 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return getScopeObj(readScopeData(addr, this), this);
   }
 
-  getLambda(addr: HeapAddr): GoslingLambdaObj {
-    const val = this.get(addr);
-    if (val === null) throw new Error(`Invalid lambda at ${addr}`);
-    assertGoslingType(HeapType.BinaryPtr, val);
+  getLambda(lambdaPtr: GoslingBinaryPtrObj): GoslingLambdaObj {
+    assertGoslingType(HeapType.BinaryPtr, lambdaPtr);
 
-    const closureAddr = val.child1;
-    const pcAddrObj = this.get(val.child2);
+    const closureAddr = lambdaPtr.child1;
+    const pcAddrObj = this.get(lambdaPtr.child2);
 
-    if (pcAddrObj === null) throw new Error(`Invalid pcAddr at lambda ${addr}`);
+    if (pcAddrObj === null)
+      throw new Error(
+        `Invalid pcAddrObj for lambda ${JSON.stringify(lambdaPtr)}`
+      );
     assertGoslingType(HeapType.Int, pcAddrObj);
 
     const closure = this.getEnvs(closureAddr);
@@ -164,28 +166,30 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject {
+    if ("addr" in data) delete data.addr;
+
     switch (data.type) {
       case HeapType.Bool: {
         const d = data as Literal<GoslingObject<HeapType.Bool>>;
         const addr = this.memory.allocBool(d.data);
-        return { addr, ...d };
+        return { ...d, addr };
       }
       case HeapType.Int: {
         const d = data as Literal<GoslingObject<HeapType.Int>>;
         const addr = this.memory.allocInt(d.data);
-        return { addr, ...d };
+        return { ...d, addr };
       }
       case HeapType.String: {
         const d = data as Literal<GoslingObject<HeapType.String>>;
         const addr = this.memory.allocString(d.data);
-        return { addr, ...d };
+        return { ...d, addr };
       }
       case HeapType.BinaryPtr: {
         const { child1, child2 } = data as Literal<
           GoslingObject<HeapType.BinaryPtr>
         >;
         const addr = this.memory.allocBinaryPtr(child1, child2);
-        return { addr, type: HeapType.BinaryPtr, child1, child2 };
+        return { type: HeapType.BinaryPtr, child1, child2, addr };
       }
       default: {
         const _: never = data;
