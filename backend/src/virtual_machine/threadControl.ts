@@ -46,19 +46,15 @@ export function createThreadControlObject(
       _os = memory.allocList([valueObj.addr], _os);
     },
     pop: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
-      if (_os.length === 0) throw new Error("Operand stack is empty");
-
-      const val = _os.at(0)!.value;
-      if (val === null) throw new Error("Operand stack .top is null");
-      _os = _os.slice(1);
+      const val = os.peek();
+      _os.pop();
       return val;
     },
     peek: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
       if (_os.length === 0) throw new Error("Operand stack is empty");
 
-      const val = _os[0].value;
+      const val = _os.at(-1)!.value;
       if (val === null) throw new Error("Operand stack .top is null");
       return val;
     },
