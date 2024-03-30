@@ -137,7 +137,10 @@ export function scopeToString({ env }: GoslingScopeData[number]): string {
     Object.keys(env)
       .map(
         (symbol) =>
-          `\t${symbol}:\n\t\t&sym=${env[symbol].symbolListPtr} \n\t\t&val=${env[symbol].valueListPtr} \n\t\tval=${JSON.stringify(env[symbol].valueObj)}`
+          `  ${symbol}:\n` +
+          `    &sym=${env[symbol].symbolListPtr}\n` +
+          `    &val=${env[symbol].valueListPtr}\n` +
+          `    val=${JSON.stringify(env[symbol].valueObj)}`
       )
       .join("\n") +
     "\n}"

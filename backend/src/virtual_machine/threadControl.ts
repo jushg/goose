@@ -42,6 +42,7 @@ export function createThreadControlObject(
 
   const os: GoslingOperandStackObj = {
     push: (val: Literal<AnyGoslingObject>) => {
+      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
       const valueObj = memory.alloc(val);
       _os = memory.allocList([valueObj.addr], _os);
     },
@@ -57,6 +58,20 @@ export function createThreadControlObject(
       const val = _os.at(-1)!.value;
       if (val === null) throw new Error("Operand stack .top is null");
       return val;
+    },
+    length: () => {
+      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
+      return _os.length;
+    },
+    toString: () => {
+      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
+      return (
+        `OS(${_os.length}): [\n` +
+        `${_os
+          .map((n) => JSON.stringify(n.value, undefined, "  "))
+          .join(",\n")}` +
+        `\n]`
+      );
     },
   };
 
@@ -84,4 +99,6 @@ export type GoslingOperandStackObj = {
   push(val: Literal<AnyGoslingObject>): void;
   pop(): Literal<AnyGoslingObject>;
   peek(): Literal<AnyGoslingObject>;
+  toString(): string;
+  length(): number;
 };
