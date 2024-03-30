@@ -1,4 +1,4 @@
-import { AssignInstruction, EnterScopeInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction } from "../instruction";
+import { AssignInstruction, DeclareInstruction, EnterScopeInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction } from "../instruction";
 import { AssignmentStmtObj, BlockObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, DeferStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, makeDecStmt } from "../parser";
 import { compileExprObj } from "./expr_obj";
 import { ProgramFile } from "./model";
@@ -32,21 +32,19 @@ const smtMap: { [key: string]: (s: StmtObj, pf: ProgramFile) => void} = {
   "DEC": (s,pf) => {
     const stmt = s as DecStmtObj
     addLabelIfExist(pf.instructions.length, stmt.label, pf)
+    pf.instructions.push(new DeclareInstruction())
+    compileExprObj(stmt.expr, pf)
   },
 
   "ASSIGN": (s,pf) => {
     const stmt = s as AssignmentStmtObj
     addLabelIfExist(pf.instructions.length, stmt.label, pf)
-
-
-    
-    compileExprObj(stmt.rhs, pf)
-
-
-
+    if( stmt.op === ":="){
+      compileStmt(makeDecStmt(stmt.lhs) as StmtObj, pf)
+    }
 
     compileExprObj(stmt.lhs, pf)
-
+    compileExprObj(stmt.rhs, pf)
     pf.instructions.push(new AssignInstruction())
   },
 

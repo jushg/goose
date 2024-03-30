@@ -20,7 +20,6 @@ const smtMap: { [key: string]: (s: ExprObj, pf: ProgramFile) => void} = {
   "IDENT": (s,pf) => {
     const obj = s as IdentObj
     pf.instructions.push(new LdInstruction(obj.val))
-
   },
 
   "LITERAL": (s,pf) => {
