@@ -199,10 +199,10 @@ TopLevelDecl    "top-level declaration"         = Declaration
 
 // # Constant declarations ==================
 
-ConstDecl       "constant declaration"          = "const" WS ident:IDENT identType:(Type?) EQUAL expr:Expression
+ConstDecl       "constant declaration"          = "const" WS ident:IDENT WS? identType:(Type?) WS? EQUAL WS? expr:Expression
   { return makeConstDecl(ident, identType, expr) }
 
-VarDecl         "variable declaration"          = "var" WS ident:IDENT identType:Type expr:(EQUAL expr:Expression)?
+VarDecl         "variable declaration"          = "var" WS ident:IDENT WS identType:Type expr:(WS? EQUAL WS? expr:Expression)?
   { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); }
 
 // # Function declarations ==================
