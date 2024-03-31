@@ -9,8 +9,6 @@ export function compileExprObj(obj: AnyTagObj, pf: ProgramFile) {
 }
 
 const smtMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
-  
-  
   "CALL": (s,pf) => {
     assertTagObj<CallObj>(s)
     s.args.map(arg => compileExprObj(arg, pf))

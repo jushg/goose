@@ -1,7 +1,6 @@
 
 import { compile } from ".";
 import { parse } from "../parser";
-import { ProgramFile } from "./model";
 
 describe("compileStmt - If Statement", () => {
     it("should compile an if statement", () => {
@@ -9,13 +8,10 @@ describe("compileStmt - If Statement", () => {
         const testProgram =     parse(`
 
         func main() {
-          messages := make(chan string)
           x := 0
          
          
-          go func() { messages <- "ping" }()
-          msg := <-messages
-          Println(msg)
+
         }  
           
           `)

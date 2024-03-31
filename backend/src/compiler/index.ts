@@ -38,9 +38,10 @@ function compile(parsedObj: StmtObj): ProgramFile {
     instructions: new Array<Instruction>,
     labelMap: {},
     gotoLabelMap: {},
-    compileEnv: {}
+    topLevelDecl: new Array<number>
   }
   parsedObjs.forEach((parsedObj) => {
+    pf.topLevelDecl.push(pf.instructions.length)
     compileDecl(parsedObj,pf)
   })
   
