@@ -17,10 +17,8 @@ export type ThreadControlObject = {
   addFrame(decl: Record<string, Literal<AnyGoslingObject>>): void;
   execFn(obj: GoslingLambdaObj): void;
 
-  // Note that this will set PC to the caller's PC if applicable.
-  // This means whether it exits a fn call or is a normal scope, you must
-  // increment PC by 1 after this.
   exitFrame(): void;
+  exitFnCall(): void;
 };
 
 let _id = 0;
@@ -90,6 +88,12 @@ export function createThreadControlObject(
     exitFrame: () => {
       const { callerPC, enclosing } = memory.getEnclosingFrame(rts);
       if (callerPC !== null) t.setPC(callerPC);
+      rts = enclosing;
+    },
+    exitFnCall: () => {
+      const { callerPC, enclosing } = memory.getEnclosingFrame(rts);
+      if (callerPC === null) return t.exitFnCall();
+      t.setPC(callerPC);
       rts = enclosing;
     },
   };
