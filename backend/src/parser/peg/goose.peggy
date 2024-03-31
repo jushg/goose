@@ -173,7 +173,7 @@ ChannelOutType     "chan-out type"                  = ARROW WS? "chan" WS inner:
 ChannelInType     "chan-in type"                  = "chan" WS? ARROW WS? inner:Type
 	{ return makeChanInType(inner) }  
 
-FunctionType      "function type"                 = "func" WS? inputT:FnParamListType WS? returnT:(Type?)
+FunctionType      "function type"                 = "func" WS? inputT:FnParamListType WS? returnT:(Type?) WS?
   { return makeFunctionType(inputT, returnT) }
 
 FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ',' WS? Type)* WS? RPAREN
@@ -207,7 +207,7 @@ VarDecl         "variable declaration"          = "var" WS ident:IDENT WS identT
 
 // # Function declarations ==================
 
-FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputT:FnParamListType WS? returnT:(Type?) body:Block
+FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputT:FnParamListType WS? returnT:(Type?) WS? body:Block
   { return makeFuncDecl(ident, inputT, returnT, body) }
 
 // # Expressions ============================
@@ -228,12 +228,12 @@ BoolLit        "bool literal"            =v:("true" / "false")
   { return makeBoolLiteral(v === "true") }
 
 IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
-  { return makeIntLiteralObj(Number(a + b.filter(bb !== "_").map(i => i[1]).join(''))) }
+  { return makeIntLiteralObj(Number(a + b.filter(bb => bb !== "_").map(i => i[1]).join(''))) }
 
 StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
   { return makeStrLiteralObj(content.join('')) }
 
-FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) body:Block
+FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) WS? body:Block
   { return makeFuncLiteral(inputT, returnT, body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
