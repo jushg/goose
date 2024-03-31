@@ -1,7 +1,7 @@
 import { Instruction } from "../instruction";
-import { StmtObj } from "../parser";
+import { compileDecl} from "./decl_obj";
 import { ProgramFile } from "./model";
-import { compileStmt } from "./stmt_obj";
+import { AnyTagObj } from "./utils";
 export {ProgramFile} from './model'
 
 // Dummy function, just for testing.
@@ -36,8 +36,13 @@ export function compileSmt(s: StmtObj, pf: ProgramFile) {
 function compile(parsedObj: StmtObj): ProgramFile {
   let pf: ProgramFile = {
     instructions: new Array<Instruction>,
-    labelMap: {}
+    labelMap: {},
+    gotoLabelMap: {},
+    compileEnv: {}
   }
-  compileStmt(parsedObj, pf)
+  parsedObjs.forEach((parsedObj) => {
+    compileDecl(parsedObj,pf)
+  })
+  
   return pf
 }

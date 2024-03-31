@@ -1,68 +1,66 @@
-import { AnyLiteralObj, BinaryExprObj, CallObj, ExprObj, IdentObj, IndexObj, MakeCallObj, NewCallObj, SelectorObj, StmtObj, UnaryExprObj } from "../parser";
+import { AnyLiteralObj, BinaryExprObj, CallObj, ExprObj, IdentObj, IndexObj, MakeCallObj, NewCallObj, SelectorObj, StmtObj, UnaryExprObj, makeIdent } from "../parser";
 import { ProgramFile } from "./model";
 import { CallInstruction, LdInstruction, LdcInstruction } from "../instruction";
+import { AnyTagObj, assertTagObj } from "./utils";
 
 
-export function compileExprObj(obj: ExprObj, pf: ProgramFile) {
+export function compileExprObj(obj: AnyTagObj, pf: ProgramFile) {
   smtMap[obj.tag](obj, pf)
 }
 
-const smtMap: { [key: string]: (s: ExprObj, pf: ProgramFile) => void} = {
+const smtMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
   
   
   "CALL": (s,pf) => {
-    const obj = s as CallObj
-    obj.args.map(arg => compileExprObj(arg, pf))
-    compileExprObj(obj.func, pf)
-    pf.instructions.push(new CallInstruction(obj.args.length))
+    assertTagObj<CallObj>(s)
+    s.args.map(arg => compileExprObj(arg, pf))
+    compileExprObj(s.func, pf)
+    pf.instructions.push(new CallInstruction(s.args.length))
   },
 
   "IDENT": (s,pf) => {
-    const obj = s as IdentObj
-    pf.instructions.push(new LdInstruction(obj.val))
+    assertTagObj<IdentObj>(s)
+    pf.instructions.push(new LdInstruction(s.val))
   },
 
   "LITERAL": (s,pf) => {
-    const obj = s as AnyLiteralObj
+    assertTagObj<AnyLiteralObj>(s)
   },
 
 
   "SELECTOR": (s,pf) => {
-    const obj = s as SelectorObj
+    assertTagObj <SelectorObj>(s)
    
   },
 
 
   "INDEX": (s,pf) => {
-    const obj = s as IndexObj
    
   },
 
 
   "UNARY_EXPR": (s,pf) => {
-    const obj = s as UnaryExprObj
-    compileExprObj(obj.expr, pf)
-    pf.instructions.push(new LdInstruction(obj.op))
+    assertTagObj<UnaryExprObj>(s)
+    compileExprObj(s.expr, pf)
+    pf.instructions.push(new LdInstruction(s.op))
     pf.instructions.push(new CallInstruction(1))
   },
 
 
   "BINARY_EXPR": (s,pf) => {
-    const obj = s as BinaryExprObj
+    assertTagObj<BinaryExprObj>(s)
     //Check this ordering
-    compileExprObj(obj.lhs, pf)
-    compileExprObj(obj.rhs, pf)
-    pf.instructions.push(new LdInstruction(obj.op))
+    compileExprObj(s.lhs, pf)
+    compileExprObj(s.rhs, pf)
+    pf.instructions.push(new LdInstruction(s.op))
     pf.instructions.push(new CallInstruction(2))
   },
 
   "MAKE": (s,pf) => {
-    const obj = s as MakeCallObj
    
   },
 
   "New": (s,pf) => {
-    const obj = s as NewCallObj
    
   }
 }

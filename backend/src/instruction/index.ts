@@ -10,8 +10,17 @@ export class DoneInstruction implements Instruction {
 }
 
 export class DeclareInstruction implements Instruction {
+  symbol: string
+  type: any
+  isConst: boolean
+  constructor(symbol: string, type: any, isConst: boolean = false) {
+    this.symbol = symbol
+    this.type = type,
+    this.isConst = isConst
+  }
   execute(curState: ExecutionState): ExecutionState {
     // Assign memory location to variable
+    // Assign default value
     return curState
   }
 }
@@ -92,12 +101,12 @@ export class EnterScopeInstruction implements Instruction {
 }
 
 export class ExitScopeInstruction implements Instruction {
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
+  execute(curState: ExecutionState): ExecutionState {
+    // TODO: Add details
 
-      curState.jobState.PC++
-      return curState
-    }
+    curState.jobState.PC++
+    return curState
+  }
 }
 
 export class LdcInstruction implements Instruction {
@@ -106,12 +115,13 @@ export class LdcInstruction implements Instruction {
   constructor(value: any) {
     this.value = value
   }
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
 
-      curState.jobState.PC++
-      return curState
-    }
+  execute(curState: ExecutionState): ExecutionState {
+    // TODO: Add details
+
+    curState.jobState.PC++
+    return curState
+  }
 }
 
 
@@ -130,46 +140,52 @@ export class LdInstruction implements Instruction {
 }
 
 export class CallInstruction implements Instruction {
-    numParam: number
+  numParam: number
 
-    constructor(numParam: number) {
-      this.numParam = numParam
-    }
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
+  constructor(numParam: number) {
+    this.numParam = numParam
+  }
+  execute(curState: ExecutionState): ExecutionState {
+    // TODO: Add details
 
-      // For call, we expect enter scope to be call first, we don't create new stack frame
+    // For call, we expect enter scope to be call first, we don't create new stack frame
 
-      curState.jobState.PC++
-      return curState
-    }
+    curState.jobState.PC++
+    return curState
+  }
 }
 
 export class TestAndSetInstruction implements Instruction {
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
+  execute(curState: ExecutionState): ExecutionState {
+    // TODO: Add details
 
-      curState.jobState.PC++
-      return curState
-    }
+    curState.jobState.PC++
+    return curState
+  }
 }
 
 export class GoroutineInstruction implements Instruction {
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
+  execute(curState: ExecutionState): ExecutionState {
+    // TODO: Add details
 
-      curState.jobState.PC++
-      return curState
-    }
+    curState.jobState.PC++
+    return curState
+  }
 }
 
 export class ClearInstruction implements Instruction {
-    execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details, I kinda forgot what this does
+  execute(curState: ExecutionState): ExecutionState {
+    // TODO: Add details, I kinda forgot what this does
 
-      curState.jobState.PC++
-      return curState
-    }
+    curState.jobState.PC++
+    return curState
+  }
+}
+
+export class ExitFunctionInstruction implements Instruction {
+  execute(curState: ExecutionState): ExecutionState {
+    return curState
+  }
 }
 
 

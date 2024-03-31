@@ -72,7 +72,7 @@ function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj | null>(
 }
 
 export type IdentObj = { tag: "IDENT"; val: string };
-function makeIdent(val: string): IdentObj {
+export function makeIdent(val: string): IdentObj {
   return { tag: "IDENT", val };
 }
 
@@ -218,7 +218,7 @@ export type UnaryExprObj = {
   op: string;
   expr: ExprObj;
 };
-function makeUnaryExpr(expr: ExprObj, op: string) {
+export function makeUnaryExpr(expr: ExprObj, op: string) {
   return { tag: "UNARY_EXPR", expr, op };
 }
 
@@ -292,7 +292,7 @@ export type AssignmentStmtObj = {
   op: "=" | ":=";
   label?: IdentObj;
 };
-function makeAssignmentStmt(
+export function makeAssignmentStmt(
   lhs: ExprObj,
   op: "=" | ":=",
   rhs: ExprObj
@@ -478,4 +478,3 @@ export type StmtObj =
   | DeferStmtObj
   | GoStmtObj
   | ReturnStmtObj
-  | BlockObj
