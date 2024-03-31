@@ -32,7 +32,8 @@ export function readScopeData(
   memory: GoslingMemoryManager
 ): GoslingScopeData {
   const envs = memory.getList(addr).map(({ nodeAddr, value, node }, idx) => {
-    if (value === null || !isGoslingType(HeapType.BinaryPtr, value))
+    if (value === null) return { nodeAddr, node, value, env: {} };
+    if (!isGoslingType(HeapType.BinaryPtr, value))
       throw new Error(`Non-ptr in env list at ${addr}:${idx}=${value?.addr}`);
 
     try {
@@ -50,17 +51,17 @@ export function getScopeObj(
   scopeData: GoslingScopeData,
   memory: GoslingMemoryManager
 ): GoslingScopeObj {
-  const envs = scopeData;
-  const start = envs.at(0)?.nodeAddr || HeapAddr.getNull();
-  const toString = () => `[ ${envs.map(scopeToString)} ]`;
+  const start = scopeData.at(0)?.nodeAddr || HeapAddr.getNull();
+  const getScopeData = () => readScopeData(start, memory);
+  const toString = () => `[ ${getScopeData().map(scopeToString)} ]`;
 
   return {
     toString,
-    getScopeData: () => envs,
+    getScopeData,
     getTopScopeAddr: () => start,
 
     lookup: (symbol: string) => {
-      for (const envNode of envs) {
+      for (const envNode of getScopeData()) {
         const { env } = envNode;
         if (symbol in env) {
           return env[symbol].valueObj;
@@ -72,16 +73,17 @@ export function getScopeObj(
     },
 
     assign: (symbol: string, val: Literal<AnyGoslingObject>) => {
-      for (const envNode of envs) {
+      for (const envNode of getScopeData()) {
         const { env } = envNode;
         if (symbol in env) {
           const { valueListPtr } = env[symbol];
           const valueListItem = memory.get(valueListPtr)!;
           assertGoslingType(HeapType.BinaryPtr, valueListItem);
 
+          env[symbol].valueObj = memory.alloc(val);
           memory.set(valueListItem.addr, {
             ...valueListItem,
-            child2: memory.alloc(val).addr,
+            child2: env[symbol].valueObj.addr,
           });
 
           return;
@@ -135,7 +137,10 @@ export function scopeToString({ env }: GoslingScopeData[number]): string {
     Object.keys(env)
       .map(
         (symbol) =>
-          `\t${symbol}:\n\t\t&sym=${env[symbol].symbolListPtr} \n\t\t&val=${env[symbol].valueListPtr} \n\t\tval=${JSON.stringify(env[symbol].valueObj)}`
+          `  ${symbol}:\n` +
+          `    &sym=${env[symbol].symbolListPtr}\n` +
+          `    &val=${env[symbol].valueListPtr}\n` +
+          `    val=${JSON.stringify(env[symbol].valueObj)}`
       )
       .join("\n") +
     "\n}"
