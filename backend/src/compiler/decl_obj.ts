@@ -1,4 +1,4 @@
-import { DeclareInstruction } from "../instruction";
+import { DeclareInstruction, ExitFunctionInstruction } from "../instruction";
 import { ConstDeclObj, FuncDeclObj, StmtObj, VarDeclObj, makeAssignmentStmt, makeIdent } from "../parser";
 import { ProgramFile } from "./model";
 import { compileBlock, compileStmt } from "./stmt_obj";
@@ -16,6 +16,8 @@ const fnMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
         pf.instructions.push(new DeclareInstruction(s.ident, null))    
         let declIns = pf.instructions.length
         compileBlock(s.body, pf)
+        pf.instructions.push(new ExitFunctionInstruction())
+        //TODO: add decl Int to closure
     },
 
     "VAR_DECL": (s,pf) => {
