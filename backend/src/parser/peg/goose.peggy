@@ -211,7 +211,7 @@ FnParamSubList        "function parameters"   = a:IDENT WS? bs:(',' WS? IDENT WS
   { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] }
 
 FnParamList           "function parameters"   = LPAREN WS? a:FnParamSubList WS? b:(',' WS? FnParamSubList WS? )* WS? RPAREN
-  { return [a, ...(b.map(bb => bb[2]))] }
+  { return [a, ...(b.map(bb => bb[2]))].flat() }
                                                   / WS? LPAREN WS? RPAREN
   { return []; }
 
@@ -447,7 +447,7 @@ SwitchStmt      "expression of 'switch' statement"  = "switch" WS pre:PreClause?
 CaseClause      "expression of 'case' clause"       = a:ExprSwitchCase WS? COLON WS? LBRACE BD? b:(UnlabeledStatement BD?)* RBRACE
   { return makeCaseClause(a, b.map(bb => bb[0])) }
   													/ a:ExprSwitchCase WS? COLON WS? b:(UnlabeledStatement)
-  { return makeCaseClause(a, b) }
+  { return makeCaseClause(a, [b]) }
 ExprSwitchCase  "expression of switch's 'case'"     = "case" WS a:Expression { return a; }
                                                     / "default"           { return "DEFAULT"; }
 
@@ -474,7 +474,7 @@ SelectStmt      "'select' statement"            = "select" WS? LBRACE BD? WS? ca
 CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? LBRACE BD? b:(UnlabeledStatement BD?)* RBRACE
   { return makeSelectCase(caseCl, b.map(bb => bb[0])) }
   												/ caseCl:CommCase WS? COLON WS? b:UnlabeledStatement
-  { return makeSelectCase(caseCl, b) }
+  { return makeSelectCase(caseCl, [b]) }
 CommCase        "communication 'case'"          = "case" WS "<-" WS? a:IDENT   
   { return { recvCh: a }; }
   												/ "case" WS a:IDENT WS? "<-" WS? b:Expression   

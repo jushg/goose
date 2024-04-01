@@ -42,13 +42,13 @@ function makeBlock(stmts) {
     return { tag: "BLOCK", stmts };
 }
 function makeConstDecl(ident, type, val) {
-    return { tag: "CONST_DECL", ident, type, val };
+    return { tag: "STMT", stmtType: "CONST_DECL", ident, type, val };
 }
 function makeVarDecl(ident, type, val) {
-    return { tag: "VAR_DECL", ident, type, val };
+    return { tag: "STMT", stmtType: "VAR_DECL", ident, type, val };
 }
 function makeFuncDecl(ident, input, returnT, body) {
-    return { tag: "FUNC_DECL", ident, input, returnT, body };
+    return { tag: "STMT", stmtType: "FUNC_DECL", ident, input, returnT, body };
 }
 function makeBoolLiteral(val) {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
@@ -104,7 +104,13 @@ function makeIfStmt(pre, cond, body, elseBody) {
     return { tag: "STMT", stmtType: "IF", pre, cond, body, elseBody };
 }
 function makeSwitchStmt(pre, cond, cases) {
-    return { tag: "STMT", stmtType: "SWITCH", pre, cond, cases };
+    return {
+        tag: "STMT",
+        stmtType: "SWITCH",
+        pre,
+        cond: cond ?? makeBoolLiteral(true),
+        cases,
+    };
 }
 function makeCaseClause(caseExpr, body) {
     return { tag: "CASE_CLAUSE", case: caseExpr, body };
@@ -127,8 +133,8 @@ function makeFallthroughStmt() {
 function makeDeferStmt(stmt) {
     return { tag: "STMT", stmtType: "DEFER", stmt };
 }
-function makeGoStmt(stmt) {
-    return { tag: "STMT", stmtType: "GO", stmt };
+function makeGoStmt(expr) {
+    return { tag: "STMT", stmtType: "GO", expr };
 }
 function makeSelectStmt(cases) {
     return { tag: "STMT", stmtType: "SELECT", cases };
@@ -635,7 +641,7 @@ function peg$parse(input, options) {
   var peg$f40 = function(ident, identType, expr) { return makeConstDecl(ident, identType, expr) };
   var peg$f41 = function(ident, identType, expr) { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); };
   var peg$f42 = function(a, bs, type) { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] };
-  var peg$f43 = function(a, b) { return [a, ...(b.map(bb => bb[2]))] };
+  var peg$f43 = function(a, b) { return [a, ...(b.map(bb => bb[2]))].flat() };
   var peg$f44 = function() { return []; };
   var peg$f45 = function(ident, inputParam, returnT, body) { return makeFuncDecl(ident, inputParam, returnT, body) };
   var peg$f46 = function(v) { return v; };
@@ -704,7 +710,7 @@ function peg$parse(input, options) {
   var peg$f81 = function(block) { return block };
   var peg$f82 = function(pre, expr, cases) { return makeSwitchStmt(pre, expr, cases.map(cc => cc[0])) };
   var peg$f83 = function(a, b) { return makeCaseClause(a, b.map(bb => bb[0])) };
-  var peg$f84 = function(a, b) { return makeCaseClause(a, b) };
+  var peg$f84 = function(a, b) { return makeCaseClause(a, [b]) };
   var peg$f85 = function(a) { return a; };
   var peg$f86 = function() { return "DEFAULT"; };
   var peg$f87 = function(clause, body) { return makeForStmt(clause.pre, clause.cond, clause.post, body) };
@@ -714,7 +720,7 @@ function peg$parse(input, options) {
   var peg$f91 = function(expr) { return makeGoStmt(expr) };
   var peg$f92 = function(cases) { return makeSelectStmt(cases.map(cc => cc[0])) };
   var peg$f93 = function(caseCl, b) { return makeSelectCase(caseCl, b.map(bb => bb[0])) };
-  var peg$f94 = function(caseCl, b) { return makeSelectCase(caseCl, b) };
+  var peg$f94 = function(caseCl, b) { return makeSelectCase(caseCl, [b]) };
   var peg$f95 = function(a) { return { recvCh: a }; };
   var peg$f96 = function(a, b) { return { sendCh: a, val: b }; };
   var peg$f97 = function(a, op, b) { return { recvCh: b, to: a, op }; };

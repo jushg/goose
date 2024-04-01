@@ -37,13 +37,13 @@ function makeBlock(stmts) {
     return { tag: "BLOCK", stmts };
 }
 function makeConstDecl(ident, type, val) {
-    return { tag: "CONST_DECL", ident, type, val };
+    return { tag: "STMT", stmtType: "CONST_DECL", ident, type, val };
 }
 function makeVarDecl(ident, type, val) {
-    return { tag: "VAR_DECL", ident, type, val };
+    return { tag: "STMT", stmtType: "VAR_DECL", ident, type, val };
 }
 function makeFuncDecl(ident, input, returnT, body) {
-    return { tag: "FUNC_DECL", ident, input, returnT, body };
+    return { tag: "STMT", stmtType: "FUNC_DECL", ident, input, returnT, body };
 }
 function makeBoolLiteral(val) {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
@@ -99,7 +99,13 @@ function makeIfStmt(pre, cond, body, elseBody) {
     return { tag: "STMT", stmtType: "IF", pre, cond, body, elseBody };
 }
 function makeSwitchStmt(pre, cond, cases) {
-    return { tag: "STMT", stmtType: "SWITCH", pre, cond, cases };
+    return {
+        tag: "STMT",
+        stmtType: "SWITCH",
+        pre,
+        cond: cond ?? makeBoolLiteral(true),
+        cases,
+    };
 }
 function makeCaseClause(caseExpr, body) {
     return { tag: "CASE_CLAUSE", case: caseExpr, body };
@@ -122,8 +128,8 @@ function makeFallthroughStmt() {
 function makeDeferStmt(stmt) {
     return { tag: "STMT", stmtType: "DEFER", stmt };
 }
-function makeGoStmt(stmt) {
-    return { tag: "STMT", stmtType: "GO", stmt };
+function makeGoStmt(expr) {
+    return { tag: "STMT", stmtType: "GO", expr };
 }
 function makeSelectStmt(cases) {
     return { tag: "STMT", stmtType: "SELECT", cases };
@@ -352,7 +358,7 @@ FnParamSubList        "function parameters"   = a:IDENT WS? bs:(',' WS? IDENT WS
   { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] }
 
 FnParamList           "function parameters"   = LPAREN WS? a:FnParamSubList WS? b:(',' WS? FnParamSubList WS? )* WS? RPAREN
-  { return [a, ...(b.map(bb => bb[2]))] }
+  { return [a, ...(b.map(bb => bb[2]))].flat() }
                                                   / WS? LPAREN WS? RPAREN
   { return []; }
 
@@ -588,7 +594,7 @@ SwitchStmt      "expression of 'switch' statement"  = "switch" WS pre:PreClause?
 CaseClause      "expression of 'case' clause"       = a:ExprSwitchCase WS? COLON WS? LBRACE BD? b:(UnlabeledStatement BD?)* RBRACE
   { return makeCaseClause(a, b.map(bb => bb[0])) }
   													/ a:ExprSwitchCase WS? COLON WS? b:(UnlabeledStatement)
-  { return makeCaseClause(a, b) }
+  { return makeCaseClause(a, [b]) }
 ExprSwitchCase  "expression of switch's 'case'"     = "case" WS a:Expression { return a; }
                                                     / "default"           { return "DEFAULT"; }
 
@@ -615,7 +621,7 @@ SelectStmt      "'select' statement"            = "select" WS? LBRACE BD? WS? ca
 CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? LBRACE BD? b:(UnlabeledStatement BD?)* RBRACE
   { return makeSelectCase(caseCl, b.map(bb => bb[0])) }
   												/ caseCl:CommCase WS? COLON WS? b:UnlabeledStatement
-  { return makeSelectCase(caseCl, b) }
+  { return makeSelectCase(caseCl, [b]) }
 CommCase        "communication 'case'"          = "case" WS "<-" WS? a:IDENT   
   { return { recvCh: a }; }
   												/ "case" WS a:IDENT WS? "<-" WS? b:Expression   
