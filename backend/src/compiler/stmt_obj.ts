@@ -1,35 +1,23 @@
 import { AssignInstruction, EnterScopeInstruction, ExitFunctionInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction, LdInstruction, ResetInstruction } from "../instruction";
 import { AssignmentStmtObj, BlockObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, DeferStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, makeDecStmt, makeUnaryExpr } from "../parser";
-import { compileExprObj } from "./expr_obj";
+import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
-import { AnyStmtObj, AnyTagObj, addLabelIfExist, assertTagObj } from "./utils";
+import { AnyStmtObj, AnyTagObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
 
 
-export function compileBlock(s: AnyTagObj, pf: ProgramFile) {
-  assertTagObj<BlockObj>(s)
-  pf.instructions.push(new EnterScopeInstruction())
-  s.stmts.forEach((stmt) => {
-    compileStmt(stmt, pf)
-  })
-  pf.instructions.push(new ExitScopeInstruction())
-}
 
 
-export function compileStmt(s: AnyStmtObj, pf: ProgramFile) {
-  smtMap[s.stmtType](s,pf)
-}
-
-const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
+export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
   "EXPR": (s,pf) => {
     assertTagObj<ExpressionStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
-    compileExprObj(s.expr, pf)
+    compileTagObj(s.expr, pf)
   },
   "SEND": (s,pf) => {
     assertTagObj<ChanStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
-    compileExprObj(s.lhs, pf)
-    compileExprObj(s.rhs, pf)
+    compileTagObj(s.lhs, pf)
+    compileTagObj(s.rhs, pf)
     // TODO: Add SendInstruction
 
   },
@@ -39,24 +27,24 @@ const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
     addLabelIfExist(pf.instructions.length, s.label, pf)
     let unaryExprObj = makeUnaryExpr(s.expr, "++")
     assertTagObj<ExprObj>(unaryExprObj)
-    compileExprObj(unaryExprObj, pf)
+    compileTagObj(unaryExprObj, pf)
   },
 
   "DEC": (s,pf) => {
     assertTagObj<DecStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
-    compileExprObj(makeUnaryExpr(s.expr, "--") as ExprObj, pf)
+    compileTagObj(makeUnaryExpr(s.expr, "--") as ExprObj, pf)
   },
 
   "ASSIGN": (s,pf) => {
     assertTagObj<AssignmentStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
     if( s.op === ":="){
-      compileStmt(makeDecStmt(s.lhs) as StmtObj, pf)
+      compileTagObj(makeDecStmt(s.lhs) as StmtObj, pf)
     }
 
-    compileExprObj(s.lhs, pf)
-    compileExprObj(s.rhs, pf)
+    compileTagObj(s.lhs, pf)
+    compileTagObj(s.rhs, pf)
     pf.instructions.push(new AssignInstruction())
   },
 
@@ -67,15 +55,15 @@ const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
 
     pf.instructions.push(new EnterScopeInstruction())
     if(s.pre !== undefined){
-      compileExprObj(s.pre,pf)
+      compileTagObj(s.pre,pf)
     }
-    compileExprObj(s.cond,pf)
+    compileTagObj(s.cond,pf)
     pf.instructions.push(new JofInstruction(0))
 
     let jofPc = pf.instructions.length - 1
 
     s.body.stmts.forEach((bodyStmt) => {
-      compileStmt(bodyStmt,pf)
+      compileTagObj(bodyStmt,pf)
     }) 
 
     pf.instructions.push(new GotoInstruction(0))
@@ -83,11 +71,12 @@ const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
     pf.instructions[jofPc] = new JofInstruction(pf.instructions.length)
     
     if(s.elseBody !== undefined){
-      if (s.elseBody.tag === "STMT") {
-        compileStmt(s.elseBody,pf)
+      console.log(s.elseBody)
+      if (isStmtObj(s.elseBody)) {
+        compileTagObj(s.elseBody,pf)
       } else {
         s.elseBody.stmts.forEach((elseBodyStmt) => {
-          compileStmt(elseBodyStmt,pf)
+          compileTagObj(elseBodyStmt,pf)
         })
       }
     }
@@ -101,10 +90,10 @@ const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
 
     pf.instructions.push(new EnterScopeInstruction())
     if(s.pre !== undefined){
-      compileExprObj(s.pre,pf)
+      compileTagObj(s.pre,pf)
     }
 
-    compileExprObj(s.cond,pf)
+    compileTagObj(s.cond,pf)
 
     // TODO: Add JofInstruction and figure this out
 
@@ -123,24 +112,24 @@ const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
     addLabelIfExist(pf.instructions.length, s.label, pf)
     pf.instructions.push(new EnterScopeInstruction())
     if(s.pre !== undefined){
-      compileStmt(s.pre,pf)
+      compileTagObj(s.pre,pf)
     }
 
     let startPc = pf.instructions.length
 
     if(s.cond !== undefined){
-      compileExprObj(s.cond,pf)
+      compileTagObj(s.cond,pf)
       pf.instructions.push(new JofInstruction(pf.instructions.length + 1))
       pf.instructions.push(new GotoInstruction(0))
       predGotoPc = pf.instructions.length - 1
     }
 
     s.body.stmts.forEach((bodyStmt) => {
-      compileStmt(bodyStmt,pf)
+      compileTagObj(bodyStmt,pf)
     }) 
 
     if (s.post !== undefined) {
-      compileStmt(s.post,pf)
+      compileTagObj(s.post,pf)
     }
 
     pf.instructions.push(new GotoInstruction(startPc))
@@ -172,7 +161,7 @@ const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
 
   "RETURN": (s,pf) => {
     assertTagObj<ReturnStmtObj>(s)
-    compileExprObj(s.expr,pf)
+    compileTagObj(s.expr,pf)
     pf.instructions.push(new ExitFunctionInstruction())
   },
 

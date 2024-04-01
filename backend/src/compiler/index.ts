@@ -1,5 +1,5 @@
 import { Instruction } from "../instruction";
-import { compileDecl} from "./decl_obj";
+import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
 import { AnyTagObj } from "./utils";
 export {ProgramFile} from './model'
@@ -42,7 +42,7 @@ function compile(parsedObj: StmtObj): ProgramFile {
   }
   parsedObjs.forEach((parsedObj) => {
     pf.topLevelDecl.push(pf.instructions.length)
-    compileDecl(parsedObj,pf)
+    compileTagObj(parsedObj,pf)
   })
   
   return pf

@@ -40,13 +40,13 @@ describe("compileStmt - If stmt", () => {
          expect(pf.topLevelDecl[0]).toEqual(0)
       }),
   
-      it("should compile if functions without else if", ()=> {
+      it("should compile if functions with else if", ()=> {
         const testProgram =     parse(`
   
           func main() {
               if x:= 3; x < 5 {
 
-              } else if y: = 5; y < 3 {
+              } else if y := 5; y < 3 {
 
               } else {
 
@@ -72,7 +72,7 @@ describe("compileStmt - For stmt", () => {
 
         func main() {
             for {
-
+                x:= 3
             }
         }  
   
@@ -87,11 +87,12 @@ describe("compileStmt - For stmt", () => {
     it("should compile for functions with cond and pre", ()=> {
         const testProgram =     parse(`
   
-          func main() {
-             for x := 5; x < 10 {
-                x++
-             }
-          }  
+        func main() {
+            sum := 0
+            for i := 0; i < 10; i++ {
+                sum += i
+            }
+        }
     
             `)
   

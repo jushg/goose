@@ -1,21 +1,19 @@
 import { DeclareInstruction, ExitFunctionInstruction } from "../instruction";
 import { ConstDeclObj, FuncDeclObj, StmtObj, VarDeclObj, makeAssignmentStmt, makeIdent } from "../parser";
+import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
-import { compileBlock, compileStmt } from "./stmt_obj";
 import { AnyTagObj, assertTagObj } from "./utils";
 
 
 
-export function compileDecl(s: AnyTagObj, pf: ProgramFile) {
-    fnMap[s.tag](s,pf)
-}
 
-const fnMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
+
+export const declMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
     "FUNC_DECL": (s,pf) => {
         assertTagObj<FuncDeclObj>(s)
         pf.instructions.push(new DeclareInstruction(s.ident, null))    
         let declIns = pf.instructions.length
-        compileBlock(s.body, pf)
+        compileTagObj(s.body, pf)
         pf.instructions.push(new ExitFunctionInstruction())
         //TODO: add decl Int to closure
     },
@@ -25,7 +23,7 @@ const fnMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
         pf.instructions.push(new DeclareInstruction(s.ident, s.type))
         if(s.val !== null){
             let assignStmt = makeAssignmentStmt(makeIdent(s.ident),"=", s.val)
-            compileStmt(assignStmt, pf)
+            compileTagObj(assignStmt, pf)
         }
     },
 
@@ -33,7 +31,7 @@ const fnMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
         assertTagObj<ConstDeclObj>(s)
         pf.instructions.push(new DeclareInstruction(s.ident, s.type, true))
         let assignStmt = makeAssignmentStmt(makeIdent(s.ident),"=", s.val)
-        compileStmt(assignStmt, pf)
+        compileTagObj(assignStmt, pf)
     }
 }
 
