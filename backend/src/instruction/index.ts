@@ -32,6 +32,13 @@ export class NopInstruction implements Instruction {
   }
 }
 
+export class MarkInstruction implements Instruction {
+  execute(curState: ExecutionState): ExecutionState {
+      curState.jobState.PC++
+      return curState
+  }
+}
+
 export class GotoInstruction implements Instruction {
   newPC: number
 

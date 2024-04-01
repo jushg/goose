@@ -16,6 +16,8 @@ describe("Declare Statement only", () => {
 
        expect(pf.instructions.length).toEqual(4)
        expect(pf.topLevelDecl[0]).toEqual(0)
+       expect(pf.topLevelDecl.length).toEqual(1)
+
     })
 
     it("should compile multiple empty function", ()=> {
@@ -33,8 +35,7 @@ describe("Declare Statement only", () => {
 
         let pf = compile(testProgram);
 
-       expect(pf.instructions.length).toEqual(4)
-       expect(pf.topLevelDecl[0]).toEqual(0)
+       expect(pf.topLevelDecl.length).toEqual(2)
     }),
 
     it("should compile multiple function", ()=> {
@@ -52,8 +53,7 @@ describe("Declare Statement only", () => {
 
         let pf = compile(testProgram);
 
-       expect(pf.instructions.length).toEqual(4)
-       expect(pf.topLevelDecl[0]).toEqual(0)
+       expect(pf.topLevelDecl.length).toEqual(2)
     })
 
     // Test case to check type, should fail

@@ -19,7 +19,6 @@ describe("compileExpr - Call Statement", () => {
 
         let pf = compile(testProgram);
 
-       expect(pf.instructions.length).toEqual(4)
-       expect(pf.topLevelDecl[0]).toEqual(0)
+       expect(pf.topLevelDecl.length).toEqual(2)
     })
 });

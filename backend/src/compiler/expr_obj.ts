@@ -4,7 +4,6 @@ import { CallInstruction, LdInstruction, LdcInstruction } from "../instruction";
 import { AnyTagObj, assertTagObj } from "./utils";
 import { compileTagObj } from "./compileFn";
 
-
 export const exprMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
   "CALL": (s,pf) => {
     assertTagObj<CallObj>(s)

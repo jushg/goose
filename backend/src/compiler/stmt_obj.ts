@@ -1,10 +1,8 @@
-import { AssignInstruction, EnterScopeInstruction, ExitFunctionInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction, LdInstruction, ResetInstruction } from "../instruction";
-import { AssignmentStmtObj, BlockObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, DeferStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, makeDecStmt, makeUnaryExpr } from "../parser";
+import { AssignInstruction, EnterScopeInstruction, ExitFunctionInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction, LdInstruction, MarkInstruction, ResetInstruction } from "../instruction";
+import { AssignmentStmtObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, makeDecStmt, makeUnaryExpr } from "../parser";
 import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
-import { AnyStmtObj, AnyTagObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
-
-
+import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
 
 
 export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} = {
@@ -26,14 +24,14 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
     assertTagObj<IncStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
     let unaryExprObj = makeUnaryExpr(s.expr, "++")
-    assertTagObj<ExprObj>(unaryExprObj)
     compileTagObj(unaryExprObj, pf)
   },
 
   "DEC": (s,pf) => {
     assertTagObj<DecStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
-    compileTagObj(makeUnaryExpr(s.expr, "--") as ExprObj, pf)
+    let unaryExprObj = makeUnaryExpr(s.expr, "--")
+    compileTagObj(unaryExprObj, pf)
   },
 
   "ASSIGN": (s,pf) => {
@@ -54,7 +52,7 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
     addLabelIfExist(pf.instructions.length, s.label, pf)
 
     pf.instructions.push(new EnterScopeInstruction())
-    if(s.pre !== undefined){
+    if(s.pre !== null){
       compileTagObj(s.pre,pf)
     }
     compileTagObj(s.cond,pf)
@@ -70,8 +68,7 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
     let gotoPc = pf.instructions.length - 1
     pf.instructions[jofPc] = new JofInstruction(pf.instructions.length)
     
-    if(s.elseBody !== undefined){
-      console.log(s.elseBody)
+    if(s.elseBody !== null){
       if (isStmtObj(s.elseBody)) {
         compileTagObj(s.elseBody,pf)
       } else {
@@ -89,7 +86,9 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
     addLabelIfExist(pf.instructions.length, s.label, pf)
 
     pf.instructions.push(new EnterScopeInstruction())
-    if(s.pre !== undefined){
+    pf.instructions.push(new MarkInstruction())
+
+    if(s.pre !== null){
       compileTagObj(s.pre,pf)
     }
 
@@ -111,13 +110,14 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
 
     addLabelIfExist(pf.instructions.length, s.label, pf)
     pf.instructions.push(new EnterScopeInstruction())
-    if(s.pre !== undefined){
+    pf.instructions.push(new MarkInstruction())
+    if(s.pre !== null){
       compileTagObj(s.pre,pf)
     }
 
     let startPc = pf.instructions.length
 
-    if(s.cond !== undefined){
+    if(s.cond !== null){
       compileTagObj(s.cond,pf)
       pf.instructions.push(new JofInstruction(pf.instructions.length + 1))
       pf.instructions.push(new GotoInstruction(0))
@@ -128,7 +128,7 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
       compileTagObj(bodyStmt,pf)
     }) 
 
-    if (s.post !== undefined) {
+    if (s.post !== null) {
       compileTagObj(s.post,pf)
     }
 
@@ -141,19 +141,25 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
   },
 
   "BREAK": (s,pf) => {
-
+    assertTagObj<BreakStmtObj>(s)
+    pf.instructions.push(new ResetInstruction())
+    // How to break after reset
   },
 
   "CONTINUE": (s,pf) => {
-
+    assertTagObj<ContStmtObj>(s)
+    pf.instructions.push(new ResetInstruction())
   },
 
   "GOTO": (s,pf) => {
+
   },
 
   "FALLTHROUGH": (s,pf) => {
+
   },
   "DEFER": (s,pf) => {
+
   },
 
   "GO": (s,pf) => {

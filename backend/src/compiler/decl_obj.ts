@@ -1,12 +1,8 @@
 import { DeclareInstruction, ExitFunctionInstruction } from "../instruction";
-import { ConstDeclObj, FuncDeclObj, StmtObj, VarDeclObj, makeAssignmentStmt, makeIdent } from "../parser";
+import { ConstDeclObj, FuncDeclObj, VarDeclObj, makeAssignmentStmt, makeIdent } from "../parser";
 import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
 import { AnyTagObj, assertTagObj } from "./utils";
-
-
-
-
 
 export const declMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
     "FUNC_DECL": (s,pf) => {

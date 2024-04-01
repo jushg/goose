@@ -640,16 +640,19 @@ function peg$parse(input, options) {
   var peg$f39 = function(v) { return v.map(vv => vv[0]) };
   var peg$f40 = function(ident, identType, expr) { return makeConstDecl(ident, identType, expr) };
   var peg$f41 = function(ident, identType, expr) { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); };
-  var peg$f42 = function(ident, inputT, returnT, body) { return makeFuncDecl(ident, inputT, returnT, body) };
-  var peg$f43 = function(v) { return v; };
-  var peg$f44 = function(v) { return v; };
-  var peg$f45 = function(v) { return v; };
-  var peg$f46 = function() { return makeNilLiteralObj() };
-  var peg$f47 = function(v) { return makeBoolLiteral(v === "true") };
-  var peg$f48 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb=> bb !== "_").map(i => i[1]).join(''))) };
-  var peg$f49 = function(content) { return makeStrLiteralObj(content.join('')) };
-  var peg$f50 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT, body ) };
-  var peg$f51 = function(fn, arg1, rest) {
+  var peg$f42 = function(a, bs, type) { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] };
+  var peg$f43 = function(a, b) { return [a, ...(b.map(bb => bb[2]))] };
+  var peg$f44 = function() { return []; };
+  var peg$f45 = function(ident, inputParam, returnT, body) { return makeFuncDecl(ident, inputParam, returnT, body) };
+  var peg$f46 = function(v) { return v; };
+  var peg$f47 = function(v) { return v; };
+  var peg$f48 = function(v) { return v; };
+  var peg$f49 = function() { return makeNilLiteralObj() };
+  var peg$f50 = function(v) { return makeBoolLiteral(v === "true") };
+  var peg$f51 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb=> bb !== "_").map(i => i[1]).join(''))) };
+  var peg$f52 = function(content) { return makeStrLiteralObj(content.join('')) };
+  var peg$f53 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT, body ) };
+  var peg$f54 = function(fn, arg1, rest) {
     const args = [arg1, ...(rest.map(r => r[2]))]
     return { tag: fn === "make" ? "MAKE" : "NEW", args }
   };

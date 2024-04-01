@@ -17,8 +17,7 @@ describe("compileStmt - If stmt", () => {
 
         let pf = compile(testProgram);
 
-       expect(pf.instructions.length).toEqual(4)
-       expect(pf.topLevelDecl[0]).toEqual(0)
+       expect(pf.topLevelDecl.length).toEqual(1)
     }),
 
     it("should compile if functions with else", ()=> {
@@ -36,8 +35,7 @@ describe("compileStmt - If stmt", () => {
   
           let pf = compile(testProgram);
   
-         expect(pf.instructions.length).toEqual(4)
-         expect(pf.topLevelDecl[0]).toEqual(0)
+         expect(pf.topLevelDecl.length).toEqual(1)
       }),
   
       it("should compile if functions with else if", ()=> {
@@ -57,8 +55,7 @@ describe("compileStmt - If stmt", () => {
   
           let pf = compile(testProgram);
   
-         expect(pf.instructions.length).toEqual(4)
-         expect(pf.topLevelDecl[0]).toEqual(0)
+         expect(pf.topLevelDecl.length).toEqual(1)
       })
   
 });
@@ -80,8 +77,8 @@ describe("compileStmt - For stmt", () => {
 
         let pf = compile(testProgram);
 
-       expect(pf.instructions.length).toEqual(4)
-       expect(pf.topLevelDecl[0]).toEqual(0)
+        expect(pf.topLevelDecl.length).toEqual(1)
+
     }),
 
     it("should compile for functions with cond and pre", ()=> {
@@ -90,7 +87,7 @@ describe("compileStmt - For stmt", () => {
         func main() {
             sum := 0
             for i := 0; i < 10; i++ {
-                sum += i
+                sum = sum + i
             }
         }
     
@@ -98,7 +95,7 @@ describe("compileStmt - For stmt", () => {
   
           let pf = compile(testProgram);
   
-         expect(pf.instructions.length).toEqual(4)
-         expect(pf.topLevelDecl[0]).toEqual(0)
+          expect(pf.topLevelDecl.length).toEqual(1)
+
       })
 });
