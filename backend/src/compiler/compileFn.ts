@@ -7,15 +7,13 @@ import { smtMap } from "./stmt_obj";
 import { AnyStmtObj, AnyTagObj, isBlockObj, isStmtObj } from "./utils";
 
 
-
-
 export function compileTagObj(s: AnyTagObj, pf: ProgramFile) {
-    if(s.tag ==="FUNC_DECL" || s.tag === "VAR_DECL" || s.tag === "CONST_DECL") {
-        compileDeclObj(s,pf)
-    } else if (isStmtObj(s)) {
+    if (isStmtObj(s)) {
         compileStmtObj(s,pf)
     } else if (isBlockObj(s)) {
         compileBlockObj(s,pf)
+    } else if(s.tag ==="FUNC_DECL" || s.tag === "VAR_DECL" || s.tag === "CONST_DECL") {
+        compileDeclObj(s,pf)
     } else {
         compileExprObj(s,pf)
     }

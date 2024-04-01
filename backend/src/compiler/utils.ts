@@ -16,7 +16,6 @@ export function isStmtObj(val: AnyTagObj): val is AnyStmtObj {
     return val.tag ==="STMT"
 }
 
-
 export function isBlockObj(val: AnyTagObj): val is BlockObj {
     return val.tag ==="BLOCK"
 }

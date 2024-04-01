@@ -1,10 +1,8 @@
 import { AnyLiteralObj, BinaryExprObj, CallObj, IdentObj,SelectorObj, UnaryExprObj } from "../parser";
 import { ProgramFile } from "./model";
-import { CallInstruction, LdInstruction } from "../instruction";
+import { CallInstruction, LdInstruction, LdcInstruction } from "../instruction";
 import { AnyTagObj, assertTagObj } from "./utils";
 import { compileTagObj } from "./compileFn";
-
-
 
 
 export const exprMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
@@ -22,6 +20,10 @@ export const exprMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} 
 
   "LITERAL": (s,pf) => {
     assertTagObj<AnyLiteralObj>(s)
+    let newIns: LdcInstruction = new LdcInstruction(null)
+    // TODO: add typechecking logic and correct value
+
+    pf.instructions.push(newIns)
   },
 
 
