@@ -207,8 +207,16 @@ VarDecl         "variable declaration"          = "var" WS ident:IDENT WS identT
 
 // # Function declarations ==================
 
-FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputT:FnParamListType WS? returnT:(Type?) WS? body:Block
-  { return makeFuncDecl(ident, inputT, returnT, body) }
+FnParamSubList        "function parameters"   = a:IDENT WS? bs:(',' WS? IDENT WS?)* type:Type
+  { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] }
+
+FnParamList           "function parameters"   = LPAREN WS? a:FnParamSubList WS? b:(',' WS? FnParamSubList WS? )* WS? RPAREN
+  { return [a, ...(b.map(bb => bb[2]))] }
+                                                  / WS? LPAREN WS? RPAREN
+  { return []; }
+
+FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inputParam:FnParamList WS? returnT:(Type?) WS? body:Block
+  { return makeFuncDecl(ident, inputParam, returnT, body) }
 
 // # Expressions ============================
 
@@ -396,7 +404,7 @@ SimpleStatement "simple statement"              = Declaration
 
 // # Labeled statements ===================
 
-LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? Statement
+LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? stmt:Statement
   { stmt.label = label; return stmt; }
 
 // # Expression statements ================
@@ -441,10 +449,10 @@ ExprSwitchCase  "expression of switch's 'case'"     = "case" a:Expression { retu
 
 // # 'for' statements ======================
 
-ForStmt         "'for' statement"               = "for" WS? clause:ForClause WS? block:Block
+ForStmt         "'for' statement"               = "for" WS? clause:ForClause WS? body:Block
   { return makeForStmt(clause.pre, clause.cond, clause.post, body) }
-                                                / "for" WS? block:Block
-  { return makeForStmt(null, null, null, block)}
+                                                / "for" WS? body:Block
+  { return makeForStmt(null, null, null, body)}
 
 ForClause       "'for' clause"                  = pre:SimpleStatement? BD cond:Expression? BD post:SimpleStatement?
   { return { tag: "FOR_CLAUSE", pre, cond, post } }

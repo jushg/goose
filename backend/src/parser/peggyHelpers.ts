@@ -112,17 +112,17 @@ function makeVarDecl(
 export type FuncDeclObj = {
   tag: "FUNC_DECL";
   ident: string;
-  inputT: AnyTypeObj[];
+  input: { ident: IdentObj; type: AnyTypeObj }[];
   returnT: AnyTypeObj | null;
   body: BlockObj;
 };
 function makeFuncDecl(
   ident: string,
-  inputT: AnyTypeObj[],
+  input: { ident: IdentObj; type: AnyTypeObj }[],
   returnT: AnyTypeObj | null,
   body: BlockObj
 ): FuncDeclObj {
-  return { tag: "FUNC_DECL", ident, inputT, returnT, body };
+  return { tag: "FUNC_DECL", ident, input, returnT, body };
 }
 
 export type BoolLiteralObj = {
@@ -300,17 +300,17 @@ function makeAssignmentStmt(
 export type IfStmtObj = {
   tag: "STMT";
   stmtType: "IF";
-  pre?: ExprObj;
+  pre: ExprObj | null;
   cond: ExprObj;
   body: BlockObj;
-  elseBody?: BlockObj | IfStmtObj;
+  elseBody: BlockObj | IfStmtObj | null;
   label?: string;
 };
 function makeIfStmt(
-  pre: ExprObj | undefined,
+  pre: ExprObj | null,
   cond: ExprObj,
   body: BlockObj,
-  elseBody: BlockObj | IfStmtObj | undefined
+  elseBody: BlockObj | IfStmtObj | null
 ): IfStmtObj {
   return { tag: "STMT", stmtType: "IF", pre, cond, body, elseBody };
 }
@@ -318,13 +318,13 @@ function makeIfStmt(
 export type SwitchStmtObj = {
   tag: "STMT";
   stmtType: "SWITCH";
-  pre?: ExprObj;
+  pre: ExprObj | null;
   cond: ExprObj;
   cases: CaseClauseObj[];
   label?: string;
 };
 function makeSwitchStmt(
-  pre: ExprObj | undefined,
+  pre: ExprObj | null,
   cond: ExprObj,
   cases: CaseClauseObj[]
 ): SwitchStmtObj {
@@ -346,16 +346,16 @@ function makeCaseClause(
 export type ForStmtObj = {
   tag: "STMT";
   stmtType: "FOR";
-  pre?: StmtObj;
-  cond?: ExprObj;
-  post?: StmtObj;
+  pre: StmtObj | null;
+  cond: ExprObj | null;
+  post: StmtObj | null;
   body: BlockObj;
   label?: string;
 };
 function makeForStmt(
-  pre: StmtObj | undefined,
-  cond: ExprObj | undefined,
-  post: StmtObj | undefined,
+  pre: StmtObj | null,
+  cond: ExprObj | null,
+  post: StmtObj | null,
   body: BlockObj
 ): ForStmtObj {
   return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
@@ -364,18 +364,18 @@ function makeForStmt(
 export type BreakStmtObj = {
   tag: "STMT";
   stmtType: "BREAK";
-  breakLabel?: string;
+  breakLabel: string | null;
 };
-function makeBreakStmt(breakLabel?: string): BreakStmtObj {
+function makeBreakStmt(breakLabel: string | null): BreakStmtObj {
   return { tag: "STMT", stmtType: "BREAK", breakLabel };
 }
 
 export type ContStmtObj = {
   tag: "STMT";
   stmtType: "CONTINUE";
-  contLabel?: string;
+  contLabel: string | null;
 };
-function makeContStmt(contLabel?: string): ContStmtObj {
+function makeContStmt(contLabel: string | null): ContStmtObj {
   return { tag: "STMT", stmtType: "CONTINUE", contLabel };
 }
 
