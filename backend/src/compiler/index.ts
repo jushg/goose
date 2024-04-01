@@ -2,7 +2,7 @@ import { Instruction } from "../instruction";
 import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
 import { AnyTagObj } from "./utils";
-export {ProgramFile} from './model'
+export { ProgramFile} from './model'
 
 // Dummy function, just for testing.
 export function compileSmt(s: StmtObj, pf: ProgramFile) {

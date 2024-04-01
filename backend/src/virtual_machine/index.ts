@@ -2,28 +2,23 @@ import { STANDARD_TIME_SLICE } from "../common/constant";
 import {
   ExecutionState,
   JobQueue,
-  JobState,
   MachineState,
 } from "../common/state";
 import { ProgramFile } from "../compiler";
 import { InstrAddr, Instruction } from "../instruction/base";
 import { HeapAddr, HeapType, createHeapManager } from "../memory";
+import { GoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
+import { createThreadControlObject } from "./threadControl";
 
 // called whenever the machine is first run
-function initialize(entryIndex: number): ExecutionState {
+function initialize(): ExecutionState {
   // TODO: Fix this later!!
-  const mainJobState: JobState = {
-    OS: 0,
-    PC: entryIndex,
-    E: 0,
-    RTS: [],
-  };
+  let memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
+  let mainJobState = createThreadControlObject(memory);
 
   const startingMachineState: MachineState = {
-    GLOBAL_ENV: 0,
     HEAP: createHeapManager(/* nodeCount = */ 2 ** 8),
-    FREE: 0,
     JOB_QUEUE: new JobQueue(),
     IS_RUNNING: true,
     TIME_SLICE: STANDARD_TIME_SLICE,
@@ -59,7 +54,7 @@ function executeStep(
     }
   }
 
-  let nextPCIndx = curState.jobState.PC;
+  let nextPCIndx = curState.jobState.getPC().addr;
   curState.machineState.TIME_SLICE--;
   return instructions[nextPCIndx].execute(curState);
 }
@@ -68,7 +63,7 @@ export function runProgram(prog: ProgramFile) {
   const startTime = Date.now();
   const maxTimeDuration = 0; // TODO: Add
 
-  let curState = initialize(0);
+  let curState = initialize();
   let instructions = prog.instructions;
 
   while (curState.machineState.IS_RUNNING) {

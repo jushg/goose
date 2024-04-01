@@ -1,28 +1,14 @@
 import { Allocator } from "../memory";
+import { ThreadControlObject } from "../virtual_machine/threadControl";
 
 export type ExecutionState = {
   machineState: MachineState;
-  jobState: JobState;
-};
-
-export type JobState = {
-  // OS: any[],
-  // The OS index inside the HEAP
-  OS: number;
-  // Current PC index of the Job
-  PC: number;
-  // Index in HEAP of the job ENV
-  E: number;
-  RTS: any[];
+  jobState: ThreadControlObject;
 };
 
 export type MachineState = {
-  // GLOBAL_ENV is the env that contains all the primitive functions
-  GLOBAL_ENV: number;
   // HEAP is array containing all dynamically allocated data structures
   HEAP: Allocator;
-  // next free slot in heap
-  FREE: number;
   // job queue
   JOB_QUEUE: JobQueue;
   //global finish flag -> end program if set
@@ -32,21 +18,21 @@ export type MachineState = {
 };
 
 export class JobQueue {
-  private items: JobState[];
+  private items: ThreadControlObject[];
 
   constructor() {
     this.items = [];
   }
 
-  enqueue(item: JobState): void {
+  enqueue(item: ThreadControlObject): void {
     this.items.push(item);
   }
 
-  dequeue(): JobState | undefined {
+  dequeue(): ThreadControlObject | undefined {
     return this.items.shift();
   }
 
-  peek(): JobState | undefined {
+  peek(): ThreadControlObject | undefined {
     return this.items[0];
   }
 

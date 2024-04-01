@@ -1,6 +1,7 @@
 export { Instruction } from "./base";
 import { ExecutionState } from "../common/state";
-import { Instruction } from "./base";
+import { HeapType } from "../memory";
+import { InstrAddr, Instruction } from "./base";
 
 export class DoneInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
@@ -21,33 +22,36 @@ export class DeclareInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // Assign memory location to variable
     // Assign default value
+    const placeHolder = { type: HeapType.Int, data: 1 } as const;
+    curState.jobState.getRTS().assign(this.symbol, placeHolder);
+    curState.jobState.incrPC()
     return curState
   }
 }
 
 export class NopInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
-      curState.jobState.PC++
+      curState.jobState.incrPC()
       return curState
   }
 }
 
 export class MarkInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
-      curState.jobState.PC++
+      curState.jobState.incrPC()
       return curState
   }
 }
 
 export class GotoInstruction implements Instruction {
-  newPC: number
+  newPC: InstrAddr
 
   constructor(newPC: number) {
-    this.newPC = newPC
+    this.newPC = new InstrAddr(newPC)
   }
 
   execute(curState: ExecutionState): ExecutionState {
-    curState.jobState.PC = this.newPC
+    curState.jobState.setPC(this.newPC)
     return curState
   }
 }
@@ -57,7 +61,8 @@ export class GotoInstruction implements Instruction {
 export class PopInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
       // Current state -> pop -> use pop OS in heap function
-      curState.jobState.PC++
+
+      curState.jobState.incrPC()
       return curState;
   }
 }
@@ -73,26 +78,30 @@ export class AssignInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // TODO: Add details
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
 
 export class JofInstruction implements Instruction {
-  newPC: number
+  newPC: InstrAddr
 
   constructor(newPC: number) {
-      this.newPC = newPC
+      this.newPC = new InstrAddr(newPC)
   }
 
   execute(curState: ExecutionState): ExecutionState {
-    // TODO: pop from OS
-    let res = false
-    if(!res) {
-      curState.jobState.PC = this.newPC
-    } else {
-      curState.jobState.PC++
+    // TODO: fix this code
+    let litBoolean = curState.jobState.getOS().pop()
+    if(litBoolean.type == HeapType.Bool) {
+      let res = litBoolean.data
+      if(!res) {
+        curState.jobState.setPC(this.newPC)
+      } else {
+        curState.jobState.incrPC()
+      }
     }
+   
     return curState
   }
 }
@@ -101,17 +110,17 @@ export class JofInstruction implements Instruction {
 export class EnterScopeInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // TODO: Add details
+    curState.jobState.addFrame({})
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
 
 export class ExitScopeInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
-    // TODO: Add details
-
-    curState.jobState.PC++
+    curState.jobState.exitFrame()
+    curState.jobState.incrPC()
     return curState
   }
 }
@@ -126,7 +135,7 @@ export class LdcInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // TODO: Add details
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
@@ -140,8 +149,10 @@ export class LdInstruction implements Instruction {
   }
     execute(curState: ExecutionState): ExecutionState {
       // TODO: Add details
+      const scope = curState.jobState.getRTS();
+      const x = scope.lookup(this.symbol)!;
 
-      curState.jobState.PC++
+      curState.jobState.incrPC()
       return curState
     }
 }
@@ -157,7 +168,7 @@ export class CallInstruction implements Instruction {
 
     // For call, we expect enter scope to be call first, we don't create new stack frame
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
@@ -166,7 +177,7 @@ export class TestAndSetInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // TODO: Add details
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
@@ -175,7 +186,7 @@ export class GoroutineInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // TODO: Add details
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
@@ -184,13 +195,14 @@ export class ClearInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
     // TODO: Add details, I kinda forgot what this does
 
-    curState.jobState.PC++
+    curState.jobState.incrPC()
     return curState
   }
 }
 
 export class ExitFunctionInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
+    curState.jobState.exitFnCall()
     return curState
   }
 }
