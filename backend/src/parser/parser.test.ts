@@ -940,4 +940,411 @@ L1:   for {
       },
     ]);
   });
+
+  test("parse switch stmts", () => {
+    expect(
+      parse(`
+    func main() {
+      switch t {
+      case 2: g++
+      case 4: i++
+      case d: { i++ }
+      case i: {
+        i++
+        i--
+      }
+      default: i=0
+      }
+
+      switch  {
+        case true: g++
+        case false: { k-- }
+        default: { i++ }
+      }
+    }
+    `)
+    ).toEqual([
+      {
+        tag: "FUNC_DECL",
+        ident: {
+          tag: "IDENT",
+          val: "main",
+        },
+        input: [],
+        returnT: null,
+        body: {
+          tag: "BLOCK",
+          stmts: [
+            {
+              tag: "STMT",
+              stmtType: "SWITCH",
+              pre: null,
+              cond: {
+                tag: "IDENT",
+                val: "t",
+              },
+              cases: [
+                {
+                  tag: "CASE_CLAUSE",
+                  case: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "INT",
+                      },
+                    },
+                    val: 2,
+                  },
+                  body: {
+                    tag: "STMT",
+                    stmtType: "INC",
+                    expr: {
+                      tag: "IDENT",
+                      val: "g",
+                    },
+                  },
+                },
+                {
+                  tag: "CASE_CLAUSE",
+                  case: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "INT",
+                      },
+                    },
+                    val: 4,
+                  },
+                  body: {
+                    tag: "STMT",
+                    stmtType: "INC",
+                    expr: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                  },
+                },
+                {
+                  tag: "CASE_CLAUSE",
+                  case: {
+                    tag: "IDENT",
+                    val: "d",
+                  },
+                  body: [
+                    {
+                      tag: "STMT",
+                      stmtType: "INC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                  ],
+                },
+                {
+                  tag: "CASE_CLAUSE",
+                  case: {
+                    tag: "IDENT",
+                    val: "i",
+                  },
+                  body: [
+                    {
+                      tag: "STMT",
+                      stmtType: "INC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                    {
+                      tag: "STMT",
+                      stmtType: "DEC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                  ],
+                },
+                {
+                  tag: "CASE_CLAUSE",
+                  case: "DEFAULT",
+                  body: {
+                    tag: "STMT",
+                    stmtType: "ASSIGN",
+                    lhs: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                    rhs: {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "INT",
+                        },
+                      },
+                      val: 0,
+                    },
+                    op: "=",
+                  },
+                },
+              ],
+            },
+            {
+              tag: "STMT",
+              stmtType: "SWITCH",
+              pre: null,
+              cond: null,
+              cases: [
+                {
+                  tag: "CASE_CLAUSE",
+                  case: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "BOOL",
+                      },
+                    },
+                    val: true,
+                  },
+                  body: {
+                    tag: "STMT",
+                    stmtType: "INC",
+                    expr: {
+                      tag: "IDENT",
+                      val: "g",
+                    },
+                  },
+                },
+                {
+                  tag: "CASE_CLAUSE",
+                  case: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "BOOL",
+                      },
+                    },
+                    val: false,
+                  },
+                  body: [
+                    {
+                      tag: "STMT",
+                      stmtType: "DEC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "k",
+                      },
+                    },
+                  ],
+                },
+                {
+                  tag: "CASE_CLAUSE",
+                  case: "DEFAULT",
+                  body: [
+                    {
+                      tag: "STMT",
+                      stmtType: "INC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+  });
+
+  test("parse select stmts", () => {
+    expect(
+      parse(`
+      func main() {
+        select {
+        case i<-k: g++
+        case kk := <- k: i++
+        case kk := <- k: { i++ }
+        case kk := <- k: {
+          i++
+          i--
+        }
+        case k<-i: i--
+        default: i=0
+        }
+      }`)
+    ).toEqual([
+      {
+        tag: "FUNC_DECL",
+        ident: {
+          tag: "IDENT",
+          val: "main",
+        },
+        input: [],
+        returnT: null,
+        body: {
+          tag: "BLOCK",
+          stmts: [
+            {
+              tag: "STMT",
+              stmtType: "SELECT",
+              cases: [
+                {
+                  tag: "SELECT_CASE",
+                  comm: {
+                    sendCh: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                    val: {
+                      tag: "IDENT",
+                      val: "k",
+                    },
+                  },
+                  body: {
+                    tag: "STMT",
+                    stmtType: "INC",
+                    expr: {
+                      tag: "IDENT",
+                      val: "g",
+                    },
+                  },
+                },
+                {
+                  tag: "SELECT_CASE",
+                  comm: {
+                    recvCh: {
+                      tag: "IDENT",
+                      val: "k",
+                    },
+                    to: {
+                      tag: "IDENT",
+                      val: "kk",
+                    },
+                    op: ":=",
+                  },
+                  body: {
+                    tag: "STMT",
+                    stmtType: "INC",
+                    expr: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                  },
+                },
+                {
+                  tag: "SELECT_CASE",
+                  comm: {
+                    recvCh: {
+                      tag: "IDENT",
+                      val: "k",
+                    },
+                    to: {
+                      tag: "IDENT",
+                      val: "kk",
+                    },
+                    op: ":=",
+                  },
+                  body: [
+                    {
+                      tag: "STMT",
+                      stmtType: "INC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                  ],
+                },
+                {
+                  tag: "SELECT_CASE",
+                  comm: {
+                    recvCh: {
+                      tag: "IDENT",
+                      val: "k",
+                    },
+                    to: {
+                      tag: "IDENT",
+                      val: "kk",
+                    },
+                    op: ":=",
+                  },
+                  body: [
+                    {
+                      tag: "STMT",
+                      stmtType: "INC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                    {
+                      tag: "STMT",
+                      stmtType: "DEC",
+                      expr: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                  ],
+                },
+                {
+                  tag: "SELECT_CASE",
+                  comm: {
+                    sendCh: {
+                      tag: "IDENT",
+                      val: "k",
+                    },
+                    val: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                  },
+                  body: {
+                    tag: "STMT",
+                    stmtType: "DEC",
+                    expr: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                  },
+                },
+                {
+                  tag: "SELECT_CASE",
+                  comm: "DEFAULT",
+                  body: {
+                    tag: "STMT",
+                    stmtType: "ASSIGN",
+                    lhs: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                    rhs: {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "INT",
+                        },
+                      },
+                      val: 0,
+                    },
+                    op: "=",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+  });
 });
