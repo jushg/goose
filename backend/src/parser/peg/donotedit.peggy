@@ -383,7 +383,7 @@ BoolLit        "bool literal"            =v:("true" / "false")
   { return makeBoolLiteral(v === "true") }
 
 IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT )*
-  { return makeIntLiteralObj(Number(a + b.filter(bb=> bb !== "_").map(i => i[1]).join(''))) }
+  { return makeIntLiteralObj(Number(a + b.filter(bb => bb !== "_").map(i => i[1]).join(''))) }
 
 StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
   { return makeStrLiteralObj(content.join('')) }

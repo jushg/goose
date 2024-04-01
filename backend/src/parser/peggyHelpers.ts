@@ -478,3 +478,8 @@ export type StmtObj =
   | DeferStmtObj
   | GoStmtObj
   | ReturnStmtObj
+  | VarDeclObj
+  | ConstDeclObj
+  | FuncDeclObj;
+
+export type ProgramObj = (ContStmtObj | VarDeclObj | FuncDeclObj)[];

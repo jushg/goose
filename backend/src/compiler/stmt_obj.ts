@@ -1,5 +1,5 @@
-import { AssignInstruction, EnterScopeInstruction, ExitFunctionInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction, LdInstruction, MarkInstruction, ResetInstruction } from "../instruction";
-import { AssignmentStmtObj, BreakStmtObj, ChanStmtObj, ContStmtObj, DecStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, makeDecStmt, makeUnaryExpr } from "../parser";
+import { AssignInstruction, DeclareInstruction, EnterScopeInstruction, ExitFunctionInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction, LdInstruction, MarkInstruction, ResetInstruction } from "../instruction";
+import { AssignmentStmtObj, BreakStmtObj, ChanStmtObj, ConstDeclObj, ContStmtObj, DecStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, FuncDeclObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, VarDeclObj, makeAssignmentStmt, makeDecStmt, makeUnaryExpr } from "../parser";
 import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
 import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
@@ -170,6 +170,31 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
     compileTagObj(s.expr,pf)
     pf.instructions.push(new ExitFunctionInstruction())
   },
+
+  "FUNC_DECL": (s,pf) => {
+    assertTagObj<FuncDeclObj>(s)
+    pf.instructions.push(new DeclareInstruction(s.ident.val, null))    
+    let declIns = pf.instructions.length
+    compileTagObj(s.body, pf)
+    pf.instructions.push(new ExitFunctionInstruction())
+    //TODO: add decl Int to closure
+},
+
+"VAR_DECL": (s,pf) => {
+    assertTagObj<VarDeclObj>(s)
+    pf.instructions.push(new DeclareInstruction(s.ident.val, s.type))
+    if(s.val !== null){
+        let assignStmt = makeAssignmentStmt(s.ident,"=", s.val)
+        compileTagObj(assignStmt, pf)
+    }
+},
+
+"CONST_DECL": (s,pf) => {
+    assertTagObj<ConstDeclObj>(s)
+    pf.instructions.push(new DeclareInstruction(s.ident.val, s.type, true))
+    let assignStmt = makeAssignmentStmt(s.ident,"=", s.val)
+    compileTagObj(assignStmt, pf)
+}
 
   // Add more functions as needed
 };

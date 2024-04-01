@@ -649,7 +649,7 @@ function peg$parse(input, options) {
   var peg$f48 = function(v) { return v; };
   var peg$f49 = function() { return makeNilLiteralObj() };
   var peg$f50 = function(v) { return makeBoolLiteral(v === "true") };
-  var peg$f51 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb=> bb !== "_").map(i => i[1]).join(''))) };
+  var peg$f51 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb => bb !== "_").map(i => i[1]).join(''))) };
   var peg$f52 = function(content) { return makeStrLiteralObj(content.join('')) };
   var peg$f53 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT, body ) };
   var peg$f54 = function(fn, arg1, rest) {
