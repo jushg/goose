@@ -425,11 +425,19 @@ function makeSelectStmt(cases: SelectCaseObj[]): SelectStmtObj {
 
 export type SelectCaseObj = {
   tag: "SELECT_CASE";
-  comm: ChanStmtObj | UnaryExprObj | AssignmentStmtObj | "DEFAULT";
+  comm:
+    | { recvCh: IdentObj }
+    | { sendCh: IdentObj; val: ExprObj }
+    | { recvCh: IdentObj; to: IdentObj; op: "=" | ":=" }
+    | "DEFAULT";
   body: StmtObj[];
 };
 function makeSelectCase(
-  comm: ChanStmtObj | UnaryExprObj | AssignmentStmtObj | "DEFAULT",
+  comm:
+    | { recvCh: IdentObj }
+    | { sendCh: IdentObj; val: ExprObj }
+    | { recvCh: IdentObj; to: IdentObj; op: "=" | ":=" }
+    | "DEFAULT",
   body: StmtObj[]
 ): SelectCaseObj {
   return { tag: "SELECT_CASE", comm, body };

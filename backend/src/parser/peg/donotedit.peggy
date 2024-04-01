@@ -518,8 +518,15 @@ mul_op          "multiplication operator"       = MUL           // "*"
 
 // # Statements ===========================
 
-Statement       "statement"                     = Declaration
-                                                / LabeledStmt
+Statement       "statement"                     = LabeledStmt
+                                                / UnlabeledStatement
+
+SimpleStatement "simple statement"              = Declaration
+                                                / IncDecStmt
+                                                / Assignment
+                                                / ExpressionStmt
+
+UnlabeledStatement "unlabeled statement" 		= Declaration
                                                 / GoStmt
                                                 / ReturnStmt
                                                 / BreakStmt
@@ -538,14 +545,9 @@ Statement       "statement"                     = Declaration
                                                 / Assignment
                                                 / ExpressionStmt
 
-SimpleStatement "simple statement"              = Declaration
-                                                / IncDecStmt
-                                                / Assignment
-                                                / ExpressionStmt
-
 // # Labeled statements ===================
 
-LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? stmt:Statement
+LabeledStmt     "labeled statement"             = label:IDENT WS? COLON WS? stmt:UnlabeledStatement
   { stmt.label = label; return stmt; }
 
 // # Expression statements ================
@@ -581,11 +583,13 @@ ElseClause  "else clause"  = "else" WS? block:( IfStmt / Block ) { return block 
 
 // # 'switch' statements ==================
 
-SwitchStmt      "expression of 'switch' statement"  = "switch" WS? pre:PreClause? WS? expr:(Expression)? WS? LBRACE WS? cases:CaseClause* WS? RBRACE
- { return makeSwitchStmt(pre, expr, cases) }
-CaseClause      "expression of 'case' clause"       = a:ExprSwitchCase WS? COLON WS? b:StatementList
+SwitchStmt      "expression of 'switch' statement"  = "switch" WS pre:PreClause? WS? expr:Expression? WS? LBRACE WS? BD cases:(CaseClause BD)* WS? RBRACE
+ { return makeSwitchStmt(pre, expr, cases.map(cc => cc[0])) }
+CaseClause      "expression of 'case' clause"       = a:ExprSwitchCase WS? COLON WS? LBRACE BD? b:(UnlabeledStatement BD?)* RBRACE
+  { return makeCaseClause(a, b.map(bb => bb[0])) }
+  													/ a:ExprSwitchCase WS? COLON WS? b:(UnlabeledStatement)
   { return makeCaseClause(a, b) }
-ExprSwitchCase  "expression of switch's 'case'"     = "case" a:Expression { return a; }
+ExprSwitchCase  "expression of switch's 'case'"     = "case" WS a:Expression { return a; }
                                                     / "default"           { return "DEFAULT"; }
 
 // # 'for' statements ======================
@@ -606,13 +610,18 @@ GoStmt          "'go' statement"                = "go" WS? expr:Expression
   { return makeGoStmt(expr) }
 
 // # 'select' statements ===================
-
-SelectStmt      "'select' statement"            = "select" WS? LBRACE WS? cases:CommClause* WS? RBRACE
-  { return makeSelectStmt(cases) }
-CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? stmts:StatementList
-  { return makeSelectCase(caseCl, stmts) }
-CommCase        "communication 'case'"          = "case" WS? caseCl:( ChanStmt / UnaryExpr / Assignment )   
-  { return caseCl; }
+SelectStmt      "'select' statement"            = "select" WS? LBRACE BD? WS? cases:(CommClause BD)* BD? WS? RBRACE
+  { return makeSelectStmt(cases.map(cc => cc[0])) }
+CommClause      "communication-clause"          = caseCl:CommCase WS? COLON WS? LBRACE BD? b:(UnlabeledStatement BD?)* RBRACE
+  { return makeSelectCase(caseCl, b.map(bb => bb[0])) }
+  												/ caseCl:CommCase WS? COLON WS? b:UnlabeledStatement
+  { return makeSelectCase(caseCl, b) }
+CommCase        "communication 'case'"          = "case" WS "<-" WS? a:IDENT   
+  { return { recvCh: a }; }
+  												/ "case" WS a:IDENT WS? "<-" WS? b:Expression   
+  { return { sendCh: a, val: b }; }
+  												/ "case" WS a:IDENT WS? op:('=' / ':=') WS? "<-" WS? b:IDENT   
+  { return { recvCh: b, to: a, op }; }
                                                 / "default"                                   
   { return "DEFAULT"; }
 
