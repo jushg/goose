@@ -4,6 +4,8 @@ import { StmtObj } from "../parser";
 // Dummy function, just for testing.
 export function compile(s: StmtObj) {
   switch (s.stmtType) {
+    case "VAR_DECL":
+    case "CONST_DECL":
     case "EXPR":
     case "SEND":
     case "INC":
