@@ -103,7 +103,7 @@ export type VarDeclObj = {
   type: AnyTypeObj;
   val: ExprObj | null;
 };
-function makeVarDecl(
+export function makeVarDecl(
   ident: IdentObj,
   type: AnyTypeObj,
   val: ExprObj | null

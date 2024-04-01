@@ -1,5 +1,5 @@
 import { AssignInstruction, DeclareInstruction, EnterScopeInstruction, ExitFunctionInstruction, ExitScopeInstruction, GotoInstruction, JofInstruction, LdInstruction, MarkInstruction, ResetInstruction } from "../instruction";
-import { AssignmentStmtObj, BreakStmtObj, ChanStmtObj, ConstDeclObj, ContStmtObj, DecStmtObj, ExprObj, ExpressionStmtObj, FallthroughStmtObj, ForStmtObj, FuncDeclObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, VarDeclObj, makeAssignmentStmt, makeDecStmt, makeUnaryExpr } from "../parser";
+import { AssignmentStmtObj, BreakStmtObj, ChanStmtObj, ConstDeclObj, ContStmtObj, DecStmtObj, ExpressionStmtObj, ForStmtObj, FuncDeclObj, GoStmtObj, GotoStmtObj, IdentObj, IfStmtObj, IncStmtObj, NilTypeObj, ReturnStmtObj, SelectStmtObj, StmtObj, SwitchStmtObj, VarDeclObj, makeAssignmentStmt, makeDecStmt, makeUnaryExpr, makeVarDecl } from "../parser";
 import { compileTagObj } from "./compileFn";
 import { ProgramFile } from "./model";
 import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
@@ -38,12 +38,15 @@ export const smtMap: { [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void} 
     assertTagObj<AssignmentStmtObj>(s)
     addLabelIfExist(pf.instructions.length, s.label, pf)
     if( s.op === ":="){
-      compileTagObj(makeDecStmt(s.lhs) as StmtObj, pf)
+      assertTagObj<IdentObj>(s.lhs)
+      let placeHolderType: NilTypeObj = { tag: "TYPE", type: { base: "NIL" } }
+      compileTagObj(makeVarDecl(s.lhs,placeHolderType,s.rhs) as StmtObj, pf)
+    } else {
+      compileTagObj(s.lhs, pf)
+      compileTagObj(s.rhs, pf)
+      pf.instructions.push(new AssignInstruction()) 
     }
 
-    compileTagObj(s.lhs, pf)
-    compileTagObj(s.rhs, pf)
-    pf.instructions.push(new AssignInstruction())
   },
 
 

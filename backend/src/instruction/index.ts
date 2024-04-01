@@ -61,8 +61,10 @@ export class GotoInstruction implements Instruction {
 export class PopInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
       // Current state -> pop -> use pop OS in heap function
+      curState.jobState.getOS().pop()
 
       curState.jobState.incrPC()
+
       return curState;
   }
 }
@@ -109,9 +111,7 @@ export class JofInstruction implements Instruction {
 
 export class EnterScopeInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
-    // TODO: Add details
     curState.jobState.addFrame({})
-
     curState.jobState.incrPC()
     return curState
   }
@@ -126,7 +126,7 @@ export class ExitScopeInstruction implements Instruction {
 }
 
 export class LdcInstruction implements Instruction {
-  value: any // Fix this
+  value: any // Fix this to correct type
 
   constructor(value: any) {
     this.value = value
@@ -148,10 +148,9 @@ export class LdInstruction implements Instruction {
     this.symbol = symbol
   }
     execute(curState: ExecutionState): ExecutionState {
-      // TODO: Add details
       const scope = curState.jobState.getRTS();
       const x = scope.lookup(this.symbol)!;
-
+      curState.jobState.getOS().push(x)
       curState.jobState.incrPC()
       return curState
     }
@@ -164,14 +163,22 @@ export class CallInstruction implements Instruction {
     this.numParam = numParam
   }
   execute(curState: ExecutionState): ExecutionState {
-    // TODO: Add details
 
-    // For call, we expect enter scope to be call first, we don't create new stack frame
 
     curState.jobState.incrPC()
     return curState
   }
 }
+
+export class ExitFunctionInstruction implements Instruction {
+  execute(curState: ExecutionState): ExecutionState {
+    curState.jobState.exitFnCall()
+    return curState
+  }
+}
+
+
+// Concurrent constructs
 
 export class TestAndSetInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
@@ -200,12 +207,6 @@ export class ClearInstruction implements Instruction {
   }
 }
 
-export class ExitFunctionInstruction implements Instruction {
-  execute(curState: ExecutionState): ExecutionState {
-    curState.jobState.exitFnCall()
-    return curState
-  }
-}
 
 
 
