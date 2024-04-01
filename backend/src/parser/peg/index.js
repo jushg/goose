@@ -641,7 +641,7 @@ function peg$parse(input, options) {
   var peg$f40 = function(ident, identType, expr) { return makeConstDecl(ident, identType, expr) };
   var peg$f41 = function(ident, identType, expr) { return makeVarDecl(ident, identType, (expr ?? [null, null])[1]); };
   var peg$f42 = function(a, bs, type) { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] };
-  var peg$f43 = function(a, b) { return [a, ...(b.map(bb => bb[2]))] };
+  var peg$f43 = function(a, b) { return [a, ...(b.map(bb => bb[2]))].flat() };
   var peg$f44 = function() { return []; };
   var peg$f45 = function(ident, inputParam, returnT, body) { return makeFuncDecl(ident, inputParam, returnT, body) };
   var peg$f46 = function(v) { return v; };

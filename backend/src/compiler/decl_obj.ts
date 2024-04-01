@@ -7,7 +7,7 @@ import { AnyTagObj, assertTagObj } from "./utils";
 export const declMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} = {
     "FUNC_DECL": (s,pf) => {
         assertTagObj<FuncDeclObj>(s)
-        pf.instructions.push(new DeclareInstruction(s.ident, null))    
+        pf.instructions.push(new DeclareInstruction(s.ident.val, null))    
         let declIns = pf.instructions.length
         compileTagObj(s.body, pf)
         pf.instructions.push(new ExitFunctionInstruction())
@@ -16,17 +16,17 @@ export const declMap: { [key: string]: (s: AnyTagObj, pf: ProgramFile) => void} 
 
     "VAR_DECL": (s,pf) => {
         assertTagObj<VarDeclObj>(s)
-        pf.instructions.push(new DeclareInstruction(s.ident, s.type))
+        pf.instructions.push(new DeclareInstruction(s.ident.val, s.type))
         if(s.val !== null){
-            let assignStmt = makeAssignmentStmt(makeIdent(s.ident),"=", s.val)
+            let assignStmt = makeAssignmentStmt(makeIdent(s.ident.val),"=", s.val)
             compileTagObj(assignStmt, pf)
         }
     },
 
     "CONST_DECL": (s,pf) => {
         assertTagObj<ConstDeclObj>(s)
-        pf.instructions.push(new DeclareInstruction(s.ident, s.type, true))
-        let assignStmt = makeAssignmentStmt(makeIdent(s.ident),"=", s.val)
+        pf.instructions.push(new DeclareInstruction(s.ident.val, s.type, true))
+        let assignStmt = makeAssignmentStmt(makeIdent(s.ident.val),"=", s.val)
         compileTagObj(assignStmt, pf)
     }
 }
