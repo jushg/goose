@@ -2,9 +2,11 @@ import {
   AnyInstructionObj,
   EnterScopeInstructionObj,
   GotoInstructionObj,
+  JofInstructionObj,
   OpCode,
 } from "../common/instructionObj";
 import { ExecutionState } from "../common/state";
+import { HeapType } from "../memory";
 
 export function executeInstruction(
   ins: AnyInstructionObj,
@@ -36,7 +38,16 @@ const instructionFn: {
     es.jobState.incrPC();
   },
   [OpCode.JOF]: function (ins: AnyInstructionObj, es: ExecutionState): void {
-    throw new Error("Function not implemented.");
+    assertType<JofInstructionObj>(ins);
+    let topOp = es.jobState.getOS().pop();
+    if (topOp.type !== HeapType.Bool) {
+      throw new Error("Expected boolean value on top of stack");
+    }
+    if (!topOp.data) {
+      es.jobState.setPC(ins.type.addr);
+    } else {
+      es.jobState.incrPC();
+    }
   },
   [OpCode.GOTO]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     assertType<GotoInstructionObj>(ins);
