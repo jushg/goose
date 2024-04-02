@@ -172,7 +172,7 @@ export class CallInstruction implements Instruction {
 
 export class ExitFunctionInstruction implements Instruction {
   execute(curState: ExecutionState): ExecutionState {
-    curState.jobState.exitFnCall()
+    curState.jobState.exitSpecialFrame('CALL')
     return curState
   }
 }

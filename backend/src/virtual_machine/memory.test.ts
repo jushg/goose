@@ -2,6 +2,7 @@ import {
   AnyGoslingObject,
   GoslingBinaryPtrObj,
   GoslingIntObj,
+  GoslingStringObj,
   assertGoslingType,
 } from ".";
 import { InstrAddr } from "../instruction/base";
@@ -317,12 +318,15 @@ describe("GoslingMemoryManager", () => {
       const f1Addr = memoryManager
         .allocNewFrame(scopeObj, f1)
         .getTopScopeAddr();
-      scopeObj = memoryManager.allocNewJumpFrame(caller1PC, scopeObj, f1Addr);
-      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
+      scopeObj = memoryManager.allocNewCallFrame(caller1PC, scopeObj, f1Addr);
+      expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
+        "CALL"
+      );
+      expect((scopeObj.lookup("__pc") as GoslingIntObj).data).toBe(
         caller1PC.addr
       );
       expect(
-        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
+        (scopeObj.lookup("__ptrToRts") as GoslingBinaryPtrObj).child1.addr
       ).toBe(caller1RTS.addr);
       {
         const x = scopeObj.lookup("foo")!;
@@ -343,10 +347,12 @@ describe("GoslingMemoryManager", () => {
 
       // Dry Run exit scope
       {
-        const { callerPC, enclosing } =
-          memoryManager.getEnclosingFrame(scopeObj);
-        expect(callerPC?.addr).toBe(caller1PC.addr);
-        expect(enclosing.getTopScopeAddr().addr).toBe(caller1RTS.addr);
+        const { pc, rts } = memoryManager.getEnclosingSpecialFrame(
+          scopeObj,
+          "CALL"
+        );
+        expect(pc.addr).toBe(caller1PC.addr);
+        expect(rts.getTopScopeAddr().addr).toBe(caller1RTS.addr);
         // scopeObj = enclosing;
 
         // Note, usually here we would reset scopeObj = enclosing, but we want to stay in the call for
@@ -395,9 +401,7 @@ describe("GoslingMemoryManager", () => {
 
       // Exit scope back to callee f1
       {
-        const { callerPC, enclosing } =
-          memoryManager.getEnclosingFrame(scopeObj);
-        expect(callerPC).toBeNull();
+        const enclosing = memoryManager.getEnclosingFrame(scopeObj);
         expect(enclosing.getTopScopeAddr().addr).toBe(preF2Addr.addr);
 
         scopeObj = enclosing;
@@ -405,12 +409,15 @@ describe("GoslingMemoryManager", () => {
 
       const caller2PC = InstrAddr.fromNum(128);
       const caller2RTS = scopeObj.getTopScopeAddr();
-      scopeObj = memoryManager.allocNewJumpFrame(caller2PC, scopeObj, f1Addr);
-      expect((scopeObj.lookup("__callerPC") as GoslingIntObj).data).toBe(
+      scopeObj = memoryManager.allocNewCallFrame(caller2PC, scopeObj, f1Addr);
+      expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
+        "CALL"
+      );
+      expect((scopeObj.lookup("__pc") as GoslingIntObj).data).toBe(
         caller2PC.addr
       );
       expect(
-        (scopeObj.lookup("__callerRTS") as GoslingBinaryPtrObj).child1.addr
+        (scopeObj.lookup("__ptrToRts") as GoslingBinaryPtrObj).child1.addr
       ).toBe(caller2RTS.addr);
 
       {
@@ -432,18 +439,22 @@ describe("GoslingMemoryManager", () => {
 
       // Exit scope back to one level above
       {
-        const { callerPC, enclosing } =
-          memoryManager.getEnclosingFrame(scopeObj);
-        expect(callerPC?.addr).toBe(caller2PC.addr);
-        scopeObj = enclosing;
+        const { pc, rts } = memoryManager.getEnclosingSpecialFrame(
+          scopeObj,
+          "CALL"
+        );
+        expect(pc.addr).toBe(caller2PC.addr);
+        scopeObj = rts;
       }
 
       // Exit scope back to one level above
       {
-        const { callerPC, enclosing } =
-          memoryManager.getEnclosingFrame(scopeObj);
-        expect(callerPC?.addr).toBe(caller1PC.addr);
-        scopeObj = enclosing;
+        const { pc, rts } = memoryManager.getEnclosingSpecialFrame(
+          scopeObj,
+          "CALL"
+        );
+        expect(pc.addr).toBe(caller1PC.addr);
+        scopeObj = rts;
       }
     });
   });

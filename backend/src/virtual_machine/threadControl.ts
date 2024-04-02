@@ -3,7 +3,7 @@ import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../instruction/base";
 import { HeapAddr } from "../memory";
-import { GoslingMemoryManager } from "./memory";
+import { GoslingMemoryManager, SpecialFrameLabels } from "./memory";
 
 export type ThreadControlObject = {
   getId(): string;
@@ -18,7 +18,7 @@ export type ThreadControlObject = {
   execFn(obj: GoslingLambdaObj): void;
 
   exitFrame(): void;
-  exitFnCall(): void;
+  exitSpecialFrame(label: SpecialFrameLabels): void;
 };
 
 let _id = 0;
@@ -82,19 +82,17 @@ export function createThreadControlObject(
     incrPC: () => (pc = InstrAddr.fromNum(pc.addr + 1)),
     addFrame: (f) => (rts = memory.allocNewFrame(rts, f)),
     execFn: (f) => {
-      rts = memory.allocNewJumpFrame(pc, rts, f.closure.getTopScopeAddr());
+      rts = memory.allocNewCallFrame(pc, rts, f.closure.getTopScopeAddr());
       t.setPC(f.pcAddr);
     },
     exitFrame: () => {
-      const { callerPC, enclosing } = memory.getEnclosingFrame(rts);
-      if (callerPC !== null) t.setPC(callerPC);
+      const enclosing = memory.getEnclosingFrame(rts);
       rts = enclosing;
     },
-    exitFnCall: () => {
-      const { callerPC, enclosing } = memory.getEnclosingFrame(rts);
-      if (callerPC === null) return t.exitFnCall();
-      t.setPC(callerPC);
-      rts = enclosing;
+    exitSpecialFrame: (label) => {
+      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(rts, label);
+      t.setPC(pc);
+      rts = newRTS;
     },
   };
   return t;
