@@ -16,10 +16,6 @@ export class InstrAddr {
   }
 }
 
-// export interface Instruction {
-//   execute: (curState: ExecutionState) => ExecutionState;
-// }
-
 // References
 export enum OpCode {
   NOP = 1,

@@ -9,7 +9,7 @@ import {
 } from "../parser";
 import { ProgramFile } from "./model";
 import { AnyTagObj, assertTagObj } from "./utils";
-import { compileTagObj } from "./compileFn";
+import { compileTagObj } from "./compileFunc";
 import {
   makeCallInstruction,
   makeLdInstruction,

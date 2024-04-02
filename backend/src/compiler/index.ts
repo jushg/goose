@@ -1,5 +1,5 @@
 import { AnyInstructionObj } from "../common/instructionObj";
-import { compileTagObj } from "./compileFn";
+import { compileTagObj } from "./compileFunc";
 import { ProgramFile } from "./model";
 import { AnyTagObj } from "./utils";
 export { ProgramFile } from "./model";

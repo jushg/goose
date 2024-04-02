@@ -32,7 +32,7 @@ import {
   makeVarDecl,
 } from "../parser";
 
-import { compileTagObj } from "./compileFn";
+import { compileTagObj } from "./compileFunc";
 import { ProgramFile } from "./model";
 import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
 

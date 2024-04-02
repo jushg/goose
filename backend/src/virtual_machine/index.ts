@@ -1,5 +1,9 @@
-import { STANDARD_TIME_SLICE } from "../common/constant";
-import { ExecutionState, JobQueue, MachineState } from "../common/state";
+import {
+  ExecutionState,
+  JobQueue,
+  MachineState,
+  STANDARD_TIME_SLICE,
+} from "../common/state";
 import { ProgramFile } from "../compiler";
 import { AnyInstructionObj, InstrAddr } from "../common/instructionObj";
 import { HeapAddr, HeapType, createHeapManager } from "../memory";
