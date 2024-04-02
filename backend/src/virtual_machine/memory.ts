@@ -9,7 +9,7 @@ import {
   assertGoslingType,
   isGoslingType,
 } from ".";
-import { InstrAddr } from "../instruction/base";
+import { InstrAddr } from "../common/instructionObj";
 import { Allocator, HeapAddr, HeapType } from "../memory";
 import { HeapInBytes, assertHeapType } from "../memory/node";
 import { GoslingScopeObj, getScopeObj, readScopeData } from "./scope";

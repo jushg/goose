@@ -1,15 +1,12 @@
 import { STANDARD_TIME_SLICE } from "../common/constant";
-import {
-  ExecutionState,
-  JobQueue,
-  MachineState,
-} from "../common/state";
+import { ExecutionState, JobQueue, MachineState } from "../common/state";
 import { ProgramFile } from "../compiler";
-import { InstrAddr, Instruction } from "../instruction/base";
+import { AnyInstructionObj, InstrAddr } from "../common/instructionObj";
 import { HeapAddr, HeapType, createHeapManager } from "../memory";
 import { GoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
+import { executeInstruction } from "./instructionLogic";
 
 // called whenever the machine is first run
 function initialize(): ExecutionState {
@@ -41,9 +38,8 @@ function isTimeout(curState: ExecutionState): boolean {
 
 function executeStep(
   curState: ExecutionState,
-  instructions: Instruction[]
-): ExecutionState {
-  // TODO: Check details
+  instructions: Array<AnyInstructionObj>
+) {
   if (isBlocked(curState) || isTimeout(curState)) {
     let nextJob = curState.machineState.JOB_QUEUE.dequeue();
     let curJob = curState.jobState;
@@ -56,7 +52,7 @@ function executeStep(
 
   let nextPCIndx = curState.jobState.getPC().addr;
   curState.machineState.TIME_SLICE--;
-  return instructions[nextPCIndx].execute(curState);
+  executeInstruction(instructions[nextPCIndx], curState);
 }
 
 export function runProgram(prog: ProgramFile) {
@@ -73,7 +69,7 @@ export function runProgram(prog: ProgramFile) {
       // throw new PotentialInfiniteLoopError(locationDummyNode(-1, -1, null), MAX_TIME)
     }
 
-    curState = executeStep(curState, instructions);
+    executeStep(curState, instructions);
   }
 
   // Clear up memory

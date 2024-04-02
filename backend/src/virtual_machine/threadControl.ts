@@ -1,7 +1,7 @@
 import { AnyGoslingObject, GoslingLambdaObj, Literal } from ".";
 import { GoslingScopeObj } from "./scope";
 
-import { InstrAddr } from "../instruction/base";
+import { InstrAddr } from "../common/instructionObj";
 import { HeapAddr } from "../memory";
 import { GoslingMemoryManager } from "./memory";
 
