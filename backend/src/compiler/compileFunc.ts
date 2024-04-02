@@ -1,4 +1,4 @@
-import { ProgramFile } from ".";
+import { CompileFile } from "../common/compileFile";
 import {
   makeEnterScopeInstruction,
   makeExitScopeInstruction,
@@ -8,7 +8,7 @@ import { exprMap } from "./exprObj";
 import { smtMap } from "./stmtObj";
 import { AnyStmtObj, AnyTagObj, isBlockObj, isStmtObj } from "./utils";
 
-export function compileTagObj(s: AnyTagObj, pf: ProgramFile) {
+export function compileTagObj(s: AnyTagObj, pf: CompileFile) {
   if (isStmtObj(s)) {
     compileStmtObj(s, pf);
   } else if (isBlockObj(s)) {
@@ -18,7 +18,7 @@ export function compileTagObj(s: AnyTagObj, pf: ProgramFile) {
   }
 }
 
-function compileBlockObj(s: BlockObj, pf: ProgramFile) {
+function compileBlockObj(s: BlockObj, pf: CompileFile) {
   pf.instructions.push(makeEnterScopeInstruction());
   s.stmts.forEach((stmt) => {
     compileTagObj(stmt, pf);
@@ -26,10 +26,10 @@ function compileBlockObj(s: BlockObj, pf: ProgramFile) {
   pf.instructions.push(makeExitScopeInstruction());
 }
 
-function compileStmtObj(s: AnyStmtObj, pf: ProgramFile) {
+function compileStmtObj(s: AnyStmtObj, pf: CompileFile) {
   smtMap[s.stmtType](s, pf);
 }
 
-function compileExprObj(obj: AnyTagObj, pf: ProgramFile) {
+function compileExprObj(obj: AnyTagObj, pf: CompileFile) {
   exprMap[obj.tag](obj, pf);
 }

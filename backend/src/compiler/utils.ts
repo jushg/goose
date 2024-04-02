@@ -1,10 +1,10 @@
 import { BlockObj, IdentObj } from "../parser";
-import { ProgramFile } from "./model";
+import { CompileFile } from "../common/compileFile";
 
 export function addLabelIfExist(
   pc: number,
   label: IdentObj | undefined,
-  pf: ProgramFile
+  pf: CompileFile
 ) {
   if (label !== undefined) {
     pf.labelMap[label.val] = pc;

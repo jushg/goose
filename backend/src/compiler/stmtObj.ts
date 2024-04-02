@@ -33,11 +33,11 @@ import {
 } from "../parser";
 
 import { compileTagObj } from "./compileFunc";
-import { ProgramFile } from "./model";
+import { CompileFile } from "../common/compileFile";
 import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
 
 export const smtMap: {
-  [key: string]: (s: AnyStmtObj, pf: ProgramFile) => void;
+  [key: string]: (s: AnyStmtObj, pf: CompileFile) => void;
 } = {
   EXPR: (s, pf) => {
     assertTagObj<ExpressionStmtObj>(s);

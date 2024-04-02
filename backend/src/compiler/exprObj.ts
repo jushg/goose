@@ -7,7 +7,7 @@ import {
   SelectorObj,
   UnaryExprObj,
 } from "../parser";
-import { ProgramFile } from "./model";
+import { CompileFile } from "../common/compileFile";
 import { AnyTagObj, assertTagObj } from "./utils";
 import { compileTagObj } from "./compileFunc";
 import {
@@ -17,7 +17,7 @@ import {
 } from "../common/instructionObj";
 
 export const exprMap: {
-  [key: string]: (s: AnyTagObj, pf: ProgramFile) => void;
+  [key: string]: (s: AnyTagObj, pf: CompileFile) => void;
 } = {
   CALL: (s, pf) => {
     assertTagObj<CallObj>(s);

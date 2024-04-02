@@ -4,13 +4,13 @@ import {
   MachineState,
   STANDARD_TIME_SLICE,
 } from "../common/state";
-import { ProgramFile } from "../compiler";
 import { AnyInstructionObj, InstrAddr } from "../common/instructionObj";
 import { HeapAddr, HeapType, createHeapManager } from "../memory";
 import { GoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
 import { executeInstruction } from "./instructionLogic";
+import { CompileFile } from "../common/compileFile";
 
 // called whenever the machine is first run
 function initialize(): ExecutionState {
@@ -59,7 +59,7 @@ function executeStep(
   executeInstruction(instructions[nextPCIndx], curState);
 }
 
-export function runProgram(prog: ProgramFile) {
+export function runProgram(prog: CompileFile) {
   const startTime = Date.now();
   const maxTimeDuration = 0; // TODO: Add
 
