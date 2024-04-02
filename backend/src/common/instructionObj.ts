@@ -91,10 +91,15 @@ export function makeGOTOInstruction(addr: InstrAddr): GotoInstructionObj {
   return { tag: "INSTR", op: OpCode.GOTO, addr: addr };
 }
 
-export type EnterScopeInstructionObj = InstructionObj<OpCode.ENTER_SCOPE>;
+export type EnterScopeInstructionObj = InstructionObj<
+  OpCode.ENTER_SCOPE,
+  { scopeDecls: [string, AnyTypeObj][] }
+>;
 
-export function makeEnterScopeInstruction(): EnterScopeInstructionObj {
-  return { tag: "INSTR", op: OpCode.ENTER_SCOPE };
+export function makeEnterScopeInstruction(
+  scopeDecls: [string, AnyTypeObj][]
+): EnterScopeInstructionObj {
+  return { tag: "INSTR", op: OpCode.ENTER_SCOPE, scopeDecls: scopeDecls };
 }
 
 export type ExitScopeInstructionObj = InstructionObj<OpCode.EXIT_SCOPE>;

@@ -18,8 +18,14 @@ import {
 } from "../parser";
 
 import { CompiledFile } from "../common/compileFile";
+import {
+  addLabelIfExist,
+  assertStmt,
+  assertTag,
+  isTag,
+  scanDeclaration,
+} from "./utils";
 import { compileTagObj } from "./compileFunc";
-import { addLabelIfExist, assertStmt, assertTag, isTag } from "./utils";
 
 export const smtMap: {
   [key: string]: (s: StmtObj, pf: CompiledFile) => void;
@@ -69,7 +75,16 @@ export const smtMap: {
     assertStmt("IF", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    pf.instructions.push(makeEnterScopeInstruction());
+    let ifScopeStmts = s.body.stmts;
+    if (s.pre !== null) {
+      // ifScopeStmts.push(s.pre);
+    }
+    if (s.elseBody !== null && isTag("BLOCK", s.elseBody)) {
+      ifScopeStmts.concat(s.elseBody.stmts);
+    }
+    let decls = scanDeclaration(ifScopeStmts);
+
+    pf.instructions.push(makeEnterScopeInstruction(decls));
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
     }
@@ -107,7 +122,7 @@ export const smtMap: {
     assertStmt("SWITCH", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    pf.instructions.push(makeEnterScopeInstruction());
+    pf.instructions.push(makeEnterScopeInstruction([]));
 
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
@@ -120,13 +135,22 @@ export const smtMap: {
     pf.instructions.push(makeExitScopeInstruction());
   },
 
-  SELECT: (s, pf) => {},
+  SELECT: (s, pf) => {
+    throw new Error("SELECT not implemented");
+  },
   FOR: (s, pf) => {
     assertStmt("FOR", s);
     let predGotoPc = -1;
 
+    let forBodyStmts = s.body.stmts;
+    if (s.pre !== null) {
+      forBodyStmts.push(s.pre);
+    }
+
+    let decls = scanDeclaration(forBodyStmts);
+
     addLabelIfExist(pf.instructions.length, s.label, pf);
-    pf.instructions.push(makeEnterScopeInstruction());
+    pf.instructions.push(makeEnterScopeInstruction(decls));
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
     }

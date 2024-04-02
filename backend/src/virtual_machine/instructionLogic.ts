@@ -54,7 +54,11 @@ const instructionFn: {
     es: ExecutionState
   ): void {
     assertOpType(OpCode.ENTER_SCOPE, ins);
-    es.jobState.addFrame({});
+    let decls: Record<string, Literal<AnyGoslingObject>> = {};
+    ins.scopeDecls.forEach(([symbol, val]) => {
+      decls[symbol] = getDefaultTypeValue(val);
+    });
+    es.jobState.addFrame(decls);
     es.jobState.incrPC();
   },
   [OpCode.EXIT_SCOPE]: function (
@@ -71,16 +75,23 @@ const instructionFn: {
       throw new Error(`Symbol ${ins.symbol} not found in envs`);
     }
     es.jobState.getOS().push(val);
+    es.jobState.incrPC();
   },
   [OpCode.ASSIGN]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     let lhs = es.jobState.getOS().pop();
     let rhs = es.jobState.getOS().pop();
 
     // Assign with value and address
+    es.jobState.incrPC();
   },
   [OpCode.CALL]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     assertOpType(OpCode.CALL, ins);
     let fn = es.jobState.getOS().pop();
+
+    if (fn.type !== HeapType.BinaryPtr) {
+      throw new Error("Expected function pointer on top of stack");
+    }
+
     let args: Literal<AnyGoslingObject>[] = [];
     for (let i = 0; i < ins.args; i++) {
       args.push(es.jobState.getOS().pop());
