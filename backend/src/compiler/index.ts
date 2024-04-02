@@ -1,10 +1,10 @@
 import { AnyInstructionObj } from "../common/instructionObj";
 import { compileTagObj } from "./compileFunc";
-import { CompileFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compileFile";
 import { AnyTagObj } from "./utils";
 
-export function compile(parsedObjs: [AnyTagObj]): CompileFile {
-  let pf: CompileFile = {
+export function compile(parsedObjs: [AnyTagObj]): CompiledFile {
+  let pf: CompiledFile = {
     instructions: new Array<AnyInstructionObj>(),
     labelMap: {},
     gotoLabelMap: {},

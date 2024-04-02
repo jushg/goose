@@ -10,7 +10,7 @@ import { GoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
 import { executeInstruction } from "./instructionLogic";
-import { CompileFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compileFile";
 
 // called whenever the machine is first run
 function initialize(): ExecutionState {
@@ -59,7 +59,7 @@ function executeStep(
   executeInstruction(instructions[nextPCIndx], curState);
 }
 
-export function runProgram(prog: CompileFile) {
+export function runProgram(prog: CompiledFile) {
   const startTime = Date.now();
   const maxTimeDuration = 0; // TODO: Add
 

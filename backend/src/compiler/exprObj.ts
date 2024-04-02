@@ -7,7 +7,7 @@ import {
   SelectorObj,
   UnaryExprObj,
 } from "../parser";
-import { CompileFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compileFile";
 import { AnyTagObj, assertTagObj } from "./utils";
 import { compileTagObj } from "./compileFunc";
 import {
@@ -17,7 +17,7 @@ import {
 } from "../common/instructionObj";
 
 export const exprMap: {
-  [key: string]: (s: AnyTagObj, pf: CompileFile) => void;
+  [key: string]: (s: AnyTagObj, pf: CompiledFile) => void;
 } = {
   CALL: (s, pf) => {
     assertTagObj<CallObj>(s);
@@ -33,7 +33,6 @@ export const exprMap: {
 
   LITERAL: (s, pf) => {
     assertTagObj<AnyLiteralObj>(s);
-    // TODO: add typechecking logic and correct value
     pf.instructions.push(makeLdcInstruction(s));
   },
 
@@ -61,7 +60,11 @@ export const exprMap: {
     pf.instructions.push(makeCallInstruction(2));
   },
 
-  MAKE: (s, pf) => {},
+  MAKE: (s, pf) => {
+    throw new Error("Not implemented");
+  },
 
-  New: (s, pf) => {},
+  New: (s, pf) => {
+    throw new Error("Not implemented");
+  },
 };

@@ -33,11 +33,11 @@ import {
 } from "../parser";
 
 import { compileTagObj } from "./compileFunc";
-import { CompileFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compileFile";
 import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
 
 export const smtMap: {
-  [key: string]: (s: AnyStmtObj, pf: CompileFile) => void;
+  [key: string]: (s: AnyStmtObj, pf: CompiledFile) => void;
 } = {
   EXPR: (s, pf) => {
     assertTagObj<ExpressionStmtObj>(s);
@@ -187,12 +187,20 @@ export const smtMap: {
     pf.instructions.push(makeExitScopeInstruction());
   },
 
-  GOTO: (s, pf) => {},
+  GOTO: (s, pf) => {
+    throw new Error("GOTO not implemented");
+  },
 
-  FALLTHROUGH: (s, pf) => {},
-  DEFER: (s, pf) => {},
+  FALLTHROUGH: (s, pf) => {
+    throw new Error("FALLTHROUGH not implemented");
+  },
+  DEFER: (s, pf) => {
+    throw new Error("DEFER not implemented");
+  },
 
-  GO: (s, pf) => {},
+  GO: (s, pf) => {
+    throw new Error("GO not implemented");
+  },
 
   RETURN: (s, pf) => {
     assertTagObj<ReturnStmtObj>(s);

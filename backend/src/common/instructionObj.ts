@@ -38,128 +38,122 @@ export enum OpCode {
   GOROUTINE,
 }
 
-export type InstructionObj<T> = { tag: "INSTR"; type: T };
+export type InstructionObj<T extends OpCode, Data = {}> = {
+  tag: "INSTR";
+  op: T;
+} & Data;
 
-export type DeclareInstructionObj = InstructionObj<{
-  op: OpCode.DECL;
-  symbol: string;
-  val: AnyTypeObj;
-}>;
+export type DeclareInstructionObj = InstructionObj<
+  OpCode.DECL,
+  { symbol: string; val: AnyTypeObj }
+>;
 
 export function makeDeclareInstruction(
   symbol: string,
   val: AnyTypeObj
 ): DeclareInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.DECL, symbol: symbol, val: val } };
+  return { tag: "INSTR", op: OpCode.DECL, symbol: symbol, val: val };
 }
 
-export type NopInstructionObj = InstructionObj<{ op: OpCode.NOP }>;
+export type NopInstructionObj = InstructionObj<OpCode.NOP>;
 
 export function makeNopInstruction(): NopInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.NOP } };
+  return { tag: "INSTR", op: OpCode.NOP };
 }
 
-export type LdcInstructionObj = InstructionObj<{
-  op: OpCode.LDC;
-  val: AnyLiteralObj;
-}>;
+export type LdcInstructionObj = InstructionObj<
+  OpCode.LDC,
+  { val: AnyLiteralObj }
+>;
 
 export function makeLdcInstruction(val: AnyLiteralObj): LdcInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.LDC, val: val } };
+  return { tag: "INSTR", op: OpCode.LDC, val: val };
 }
 
-export type PopInstructionObj = InstructionObj<{ op: OpCode.POP }>;
+export type PopInstructionObj = InstructionObj<OpCode.POP>;
 
 export function makePopInstruction(): PopInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.POP } };
+  return { tag: "INSTR", op: OpCode.POP };
 }
 
-export type JofInstructionObj = InstructionObj<{
-  op: OpCode.JOF;
-  addr: InstrAddr;
-}>;
+export type JofInstructionObj = InstructionObj<OpCode.JOF, { addr: InstrAddr }>;
 
 export function makeJOFInstruction(addr: InstrAddr): JofInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.JOF, addr: addr } };
+  return { tag: "INSTR", op: OpCode.JOF, addr: addr };
 }
 
-export type GotoInstructionObj = InstructionObj<{
-  op: OpCode.GOTO;
-  addr: InstrAddr;
-}>;
+export type GotoInstructionObj = InstructionObj<
+  OpCode.GOTO,
+  { addr: InstrAddr }
+>;
 
 export function makeGOTOInstruction(addr: InstrAddr): GotoInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.GOTO, addr: addr } };
+  return { tag: "INSTR", op: OpCode.GOTO, addr: addr };
 }
 
-export type EnterScopeInstructionObj = InstructionObj<{
-  op: OpCode.ENTER_SCOPE;
-}>;
+export type EnterScopeInstructionObj = InstructionObj<OpCode.ENTER_SCOPE>;
 
 export function makeEnterScopeInstruction(): EnterScopeInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.ENTER_SCOPE } };
+  return { tag: "INSTR", op: OpCode.ENTER_SCOPE };
 }
 
-export type ExitScopeInstructionObj = InstructionObj<{ op: OpCode.EXIT_SCOPE }>;
+export type ExitScopeInstructionObj = InstructionObj<OpCode.EXIT_SCOPE>;
 
 export function makeExitScopeInstruction(): ExitScopeInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.EXIT_SCOPE } };
+  return { tag: "INSTR", op: OpCode.EXIT_SCOPE };
 }
 
-export type LdInstructionObj = InstructionObj<{
-  op: OpCode.LD;
-  symbol: string;
-}>;
+export type LdInstructionObj = InstructionObj<
+  OpCode.LD,
+  {
+    symbol: string;
+  }
+>;
 
 export function makeLdInstruction(symbol: string): LdInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.LD, symbol: symbol } };
+  return { tag: "INSTR", op: OpCode.LD, symbol: symbol };
 }
 
-export type AssignInstructionObj = InstructionObj<{ op: OpCode.ASSIGN }>;
+export type AssignInstructionObj = InstructionObj<OpCode.ASSIGN>;
 
 export function makeAssignInstruction(): AssignInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.ASSIGN } };
+  return { tag: "INSTR", op: OpCode.ASSIGN };
 }
 
-export type CallInstructionObj = InstructionObj<{
-  op: OpCode.CALL;
-  args: number;
-}>;
+export type CallInstructionObj = InstructionObj<OpCode.CALL, { args: number }>;
 
 export function makeCallInstruction(args: number): CallInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.CALL, args: args } };
+  return { tag: "INSTR", op: OpCode.CALL, args: args };
 }
 
-export type ResetInstructionObj = InstructionObj<{ op: OpCode.RESET }>;
+export type ResetInstructionObj = InstructionObj<OpCode.RESET>;
 
 export function makeResetInstruction(): ResetInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.RESET } };
+  return { tag: "INSTR", op: OpCode.RESET };
 }
 
-export type DoneInstructionObj = InstructionObj<{ op: OpCode.DONE }>;
+export type DoneInstructionObj = InstructionObj<OpCode.DONE>;
 
 export function makeDoneInstruction(): DoneInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.DONE } };
+  return { tag: "INSTR", op: OpCode.DONE };
 }
 
-export type TestAndSetInstructionObj = InstructionObj<{
-  op: OpCode.TEST_AND_SET;
-}>;
+export type TestAndSetInstructionObj = InstructionObj<OpCode.TEST_AND_SET>;
 
 export function makeTestAndSetInstruction(): TestAndSetInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.TEST_AND_SET } };
+  return { tag: "INSTR", op: OpCode.TEST_AND_SET };
 }
 
-export type ClearInstructionObj = InstructionObj<{ op: OpCode.CLEAR }>;
+export type ClearInstructionObj = InstructionObj<OpCode.CLEAR>;
 
 export function makeClearInstruction(): ClearInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.CLEAR } };
+  return { tag: "INSTR", op: OpCode.CLEAR };
 }
 
-export type GoroutineInstructionObj = InstructionObj<{ op: OpCode.GOROUTINE }>;
+export type GoroutineInstructionObj = InstructionObj<OpCode.GOROUTINE>;
 
 export function makeGoroutineInstruction(): GoroutineInstructionObj {
-  return { tag: "INSTR", type: { op: OpCode.GOROUTINE } };
+  return { tag: "INSTR", op: OpCode.GOROUTINE };
 }
 
 export type AnyInstructionObj =
@@ -179,3 +173,19 @@ export type AnyInstructionObj =
   | TestAndSetInstructionObj
   | ClearInstructionObj
   | GoroutineInstructionObj;
+
+export function isOpType<T extends OpCode>(
+  val: T,
+  obj: AnyInstructionObj
+): obj is Extract<AnyInstructionObj, { op: T }> {
+  return obj.op === val;
+}
+
+export function assertOpType<T extends OpCode>(
+  val: T,
+  obj: AnyInstructionObj
+): asserts obj is Extract<AnyInstructionObj, { op: T }> {
+  if (!isOpType(val, obj)) {
+    throw new Error(`Expected Instruction type ${val}, got ${obj.op}`);
+  }
+}
