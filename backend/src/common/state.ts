@@ -1,5 +1,6 @@
 import { Allocator } from "../memory";
 import { ThreadControlObject } from "../virtual_machine/threadControl";
+export const STANDARD_TIME_SLICE = 100;
 
 export type ExecutionState = {
   machineState: MachineState;

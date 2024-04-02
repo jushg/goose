@@ -1,11 +1,9 @@
-
 import { compile } from ".";
 import { parse } from "../parser";
 
 describe("compileExpr - Call Statement", () => {
-
-    it("should compile call functions", ()=> {
-      const testProgram =     parse(`
+  it("should compile call functions", () => {
+    const testProgram = parse(`
 
         func x(y int, z int) int {
             return 1
@@ -15,10 +13,10 @@ describe("compileExpr - Call Statement", () => {
             y:= 5
             x(y,7)
         }  
-          `)
+          `);
 
-        let pf = compile(testProgram);
+    let pf = compile(testProgram);
 
-       expect(pf.topLevelDecl.length).toEqual(2)
-    })
+    expect(pf.topLevelDecl.length).toEqual(2);
+  });
 });

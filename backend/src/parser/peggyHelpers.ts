@@ -64,10 +64,10 @@ function makeChanOutType<T extends AnyTypeObj>(
 ): ChanTypeObj<T, "OUT"> {
   return makeChanType(inner, "OUT");
 }
-function makeFunctionType<I extends AnyTypeObj[], O extends AnyTypeObj | null>(
-  inputT: I,
-  returnT: O
-): FuncTypeObj<I, O> {
+export function makeFunctionType<
+  I extends AnyTypeObj[],
+  O extends AnyTypeObj | null,
+>(inputT: I, returnT: O): FuncTypeObj<I, O> {
   return { tag: "TYPE", type: { base: "FUNC", inputT, returnT } };
 }
 
