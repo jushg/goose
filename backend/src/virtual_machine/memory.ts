@@ -14,6 +14,8 @@ import { Allocator, HeapAddr, HeapType } from "../memory";
 import { HeapInBytes, assertHeapType } from "../memory/node";
 import { GoslingScopeObj, getScopeObj, readScopeData } from "./scope";
 
+export type SpecialFrameLabels = "CALL" | "FOR";
+
 export class GoslingMemoryManager implements IGoslingMemoryManager {
   memory: Allocator;
 
@@ -224,61 +226,91 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return this.getEnvs(newFrameAddr.at(0)?.nodeAddr || HeapAddr.getNull());
   }
 
-  allocNewJumpFrame(
-    callerPC: InstrAddr,
-    prev: GoslingScopeObj,
+  allocNewSpecialFrame(
+    pc: InstrAddr,
+    rts: GoslingScopeObj,
+    label: SpecialFrameLabels,
     newFrame: HeapAddr
   ): GoslingScopeObj {
-    const __callerPC = { type: HeapType.Int, data: callerPC.addr } as const;
-    const __callerRTS = {
+    const pcObj = { type: HeapType.Int, data: pc.addr } as const;
+    const ptrToRts = {
       type: HeapType.BinaryPtr,
-      child1: prev.getTopScopeAddr(),
+      child1: rts.getTopScopeAddr(),
       child2: HeapAddr.getNull(),
     } as const;
-    const symbolAndValues: Record<string, Literal<AnyGoslingObject>> = {
-      __callerPC,
-      __callerRTS,
-    };
-
-    const closure = this.getEnvs(newFrame);
-    return this.allocNewFrame(closure, symbolAndValues);
+    const symbolAndValues: Record<string, Literal<AnyGoslingObject>> = {};
+    symbolAndValues["__pc"] = pcObj;
+    symbolAndValues["__ptrToRts"] = ptrToRts;
+    symbolAndValues["__label"] = this.alloc({
+      type: HeapType.String,
+      data: label,
+    });
+    const newFrameObj = this.getEnvs(newFrame);
+    return this.allocNewFrame(newFrameObj, symbolAndValues);
   }
 
-  getEnclosingFrame(prev: GoslingScopeObj): {
-    callerPC: InstrAddr | null;
-    enclosing: GoslingScopeObj;
-  } {
+  allocNewCallFrame(
+    callerPC: InstrAddr,
+    callerRTS: GoslingScopeObj,
+    newFrame: HeapAddr
+  ): GoslingScopeObj {
+    return this.allocNewSpecialFrame(callerPC, callerRTS, "CALL", newFrame);
+  }
+
+  allocNewForFrame(
+    continuePC: InstrAddr,
+    continueRTS: GoslingScopeObj
+  ): GoslingScopeObj {
+    return this.allocNewSpecialFrame(
+      continuePC,
+      continueRTS,
+      "FOR",
+      continueRTS.getTopScopeAddr()
+    );
+  }
+
+  getEnclosingFrame(prev: GoslingScopeObj): GoslingScopeObj {
     const envs = prev.getScopeData();
     if (envs.length < 2)
       throw new Error(
         `Trying to exit scope from ${envs.at(0)?.nodeAddr} (envs of len ${envs.length})`
       );
 
-    const frameToExit = envs[0].env;
-    if ("__callerPC" in frameToExit && "__callerRTS" in frameToExit) {
-      const callerPC = frameToExit.__callerPC.valueObj;
-      const callerRTS = frameToExit.__callerRTS.valueObj;
-
-      if (
-        callerPC === null ||
-        callerRTS === null ||
-        !isGoslingType(HeapType.Int, callerPC) ||
-        !isGoslingType(HeapType.BinaryPtr, callerRTS)
-      )
-        throw new Error(
-          `Invalid frame to exit at ${envs.at(0)?.nodeAddr} (callerPC=${callerPC}, callerRTS=${callerRTS})`
-        );
-
-      return {
-        callerPC: InstrAddr.fromNum(callerPC.data),
-        enclosing: this.getEnvs(callerRTS.child1),
-      };
+    if (`__label` in envs[0].env) {
+      throw new Error(
+        `Exiting special frame (${envs[0].env["__label"]}) as if it was normal`
+      );
     }
 
     const enclosingScopeData = [...prev.getScopeData()].slice(1);
-    return {
-      callerPC: null,
-      enclosing: getScopeObj(enclosingScopeData, this),
-    };
+    return getScopeObj(enclosingScopeData, this);
+  }
+
+  getEnclosingSpecialFrame(prev: GoslingScopeObj, label: SpecialFrameLabels) {
+    let envs = prev.getScopeData();
+
+    const id = envs.findIndex((env) => {
+      if (!("__label" in env.env)) {
+        return false;
+      }
+      const labelObj = env.env["__label"].valueObj;
+      assertGoslingType(HeapType.String, labelObj);
+      return labelObj.data.replace(/\0/g, "") == label.replace(/\0/g, "");
+    });
+
+    if (id === -1) {
+      throw new Error(
+        `Cannot find special frame ${label} in ${prev.getTopScopeAddr()}`
+      );
+    }
+
+    const {
+      __pc: { valueObj: pc },
+      __ptrToRts: { valueObj: rtsPtr },
+    } = envs[id].env;
+    assertGoslingType(HeapType.Int, pc);
+    assertGoslingType(HeapType.BinaryPtr, rtsPtr);
+
+    return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
   }
 }

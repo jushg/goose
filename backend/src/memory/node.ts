@@ -1,4 +1,3 @@
-import { InstrAddr } from "../common/instructionObj";
 import {
   HEAP_NODE_BYTE_INDICES,
   HEAP_NODE_BYTE_SIZE,

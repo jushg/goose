@@ -1,9 +1,9 @@
-import { AnyGoslingObject, GoslingLambdaObj, Literal } from ".";
+import { AnyGoslingObject, GoslingLambdaObj, GoslingObject, Literal } from ".";
 import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../common/instructionObj";
-import { HeapAddr } from "../memory";
-import { GoslingMemoryManager } from "./memory";
+import { HeapAddr, HeapType } from "../memory";
+import { GoslingMemoryManager, SpecialFrameLabels } from "./memory";
 
 export type ThreadControlObject = {
   getId(): string;
@@ -18,7 +18,7 @@ export type ThreadControlObject = {
   execFn(obj: GoslingLambdaObj): void;
 
   exitFrame(): void;
-  exitFnCall(): void;
+  exitSpecialFrame(label: SpecialFrameLabels): void;
 };
 
 let _id = 0;
@@ -82,27 +82,44 @@ export function createThreadControlObject(
     incrPC: () => (pc = InstrAddr.fromNum(pc.addr + 1)),
     addFrame: (f) => (rts = memory.allocNewFrame(rts, f)),
     execFn: (f) => {
-      rts = memory.allocNewJumpFrame(pc, rts, f.closure.getTopScopeAddr());
+      rts = memory.allocNewCallFrame(pc, rts, f.closure.getTopScopeAddr());
       t.setPC(f.pcAddr);
     },
     exitFrame: () => {
-      const { callerPC, enclosing } = memory.getEnclosingFrame(rts);
-      if (callerPC !== null) t.setPC(callerPC);
+      const enclosing = memory.getEnclosingFrame(rts);
       rts = enclosing;
     },
-    exitFnCall: () => {
-      const { callerPC, enclosing } = memory.getEnclosingFrame(rts);
-      if (callerPC === null) return t.exitFnCall();
-      t.setPC(callerPC);
-      rts = enclosing;
+    exitSpecialFrame: (label) => {
+      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(rts, label);
+      t.setPC(pc);
+      rts = newRTS;
     },
   };
   return t;
 }
+
+type GoslingLitOrObj<T extends HeapType = HeapType> =
+  | Literal<GoslingObject<T>>
+  | GoslingObject<T>;
+
+export function isGoslingObject<T extends HeapType = HeapType>(
+  obj: GoslingLitOrObj<T>
+): obj is GoslingObject<T> {
+  return "addr" in obj;
+}
+
+export function assertGoslingObject<T extends HeapType = HeapType>(
+  obj: GoslingLitOrObj<T>
+): asserts obj is GoslingObject<T> {
+  if (!isGoslingObject(obj)) {
+    throw new Error(`Expected gosling obj, but not: ${obj}`);
+  }
+}
+
 export type GoslingOperandStackObj = {
-  push(val: Literal<AnyGoslingObject>): void;
-  pop(): Literal<AnyGoslingObject>;
-  peek(): Literal<AnyGoslingObject>;
+  push(val: GoslingLitOrObj): void;
+  pop(): GoslingLitOrObj;
+  peek(): GoslingLitOrObj;
   toString(): string;
   length(): number;
 };

@@ -119,12 +119,9 @@ describe("Test memory manager and thread control object", () => {
       },
 
       6: (m, t) => {
-        // exit braces of innerFn
-        t.exitFrame();
-
         // End of the fn call.
         // Here this exits the scope of {'__callerPC', '__callerRTS'}
-        t.exitFrame(); // Automatically sets PC, RTS to pre-call
+        t.exitSpecialFrame("CALL"); // Automatically sets PC, RTS to pre-call
         t.incrPC();
       },
 
@@ -160,8 +157,7 @@ describe("Test memory manager and thread control object", () => {
       },
 
       11: (m, t) => {
-        t.exitFrame(); // Exits main fn braces scope
-        t.exitFrame(); // Exits main function
+        t.exitSpecialFrame("CALL"); // Automatically sets PC, RTS to pre-call (exits main)
         t.incrPC();
       },
 
@@ -238,8 +234,7 @@ describe("Test memory manager and thread control object", () => {
       },
 
       18: (m, t) => {
-        t.exitFrame(); // Exits braces of fn foo
-        t.exitFrame(); // Exits function call of foo
+        t.exitSpecialFrame("CALL"); // Automatically sets PC, RTS to pre-call (exits foo)
         t.incrPC();
       },
 
