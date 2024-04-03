@@ -19,24 +19,24 @@ export class InstrAddr {
 
 // References
 export enum OpCode {
-  NOP = 1,
-  LDC, // Load value, no type checking here
-  DECL, // Declare variable
-  POP,
-  JOF,
-  GOTO,
-  ENTER_SCOPE,
-  EXIT_SCOPE,
-  LD,
-  ASSIGN,
-  CALL, // Now call instr doesn't create stack space
-  RESET,
-  DONE,
+  NOP = "NOP",
+  LDC = "LDC", // Load value, no type checking here
+  DECL = "DECL", // Declare variable
+  POP = "POP",
+  JOF = "JOF",
+  GOTO = "GOTO",
+  ENTER_SCOPE = "ENTER_SCOPE",
+  EXIT_SCOPE = "EXIT_SCOPE",
+  LD = "LD",
+  ASSIGN = "ASSIGN",
+  CALL = "CALL", // Now call instr doesn't create stack space
+  RESET = "RESET",
+  DONE = "DONE",
 
   // Concurrent instructs, atomic, use for concurrent constructs
-  TEST_AND_SET = 1000,
-  CLEAR,
-  GOROUTINE,
+  TEST_AND_SET = "TEST_AND_SET",
+  CLEAR = "CLEAR",
+  GOROUTINE = "GOROUTINE",
 }
 
 export type InstructionObj<T extends OpCode, Data = {}> = {
