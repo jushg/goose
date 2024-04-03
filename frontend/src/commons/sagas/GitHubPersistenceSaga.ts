@@ -3,7 +3,7 @@ import {
   GetResponseTypeFromEndpointMethod
 } from '@octokit/types';
 import { SagaIterator } from 'redux-saga';
-import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { call, select, takeLatest } from 'redux-saga/effects';
 
 import {
   GITHUB_OPEN_FILE,
@@ -14,18 +14,17 @@ import * as GitHubUtils from '../../features/github/GitHubUtils';
 import { getGitHubOctokitInstance } from '../../features/github/GitHubUtils';
 import { store } from '../../pages/createStore';
 import { OverallState } from '../application/ApplicationTypes';
-import { LOGIN_GITHUB, LOGOUT_GITHUB } from '../application/types/SessionTypes';
+import { LOGIN_GITHUB } from '../application/types/SessionTypes';
 import FileExplorerDialog, { FileExplorerDialogProps } from '../gitHubOverlay/FileExplorerDialog';
 import RepositoryDialog, { RepositoryDialogProps } from '../gitHubOverlay/RepositoryDialog';
 import { actions } from '../utils/ActionsHelper';
 import Constants from '../utils/Constants';
 import { promisifyDialog } from '../utils/DialogHelper';
-import { showSuccessMessage, showWarningMessage } from '../utils/notifications/NotificationsHelper';
+import { showSuccessMessage } from '../utils/notifications/NotificationsHelper';
 import { EditorTabState } from '../workspace/WorkspaceTypes';
 
 export function* GitHubPersistenceSaga(): SagaIterator {
   yield takeLatest(LOGIN_GITHUB, githubLoginSaga);
-  yield takeLatest(LOGOUT_GITHUB, githubLogoutSaga);
 
   yield takeLatest(GITHUB_OPEN_FILE, githubOpenFile);
   yield takeLatest(GITHUB_SAVE_FILE, githubSaveFile);
@@ -55,16 +54,6 @@ function* githubLoginSaga() {
     // We receive the auth token through our broadcast channel
     yield call(window.open, githubOauthLoginLink, windowName, windowSpecs);
   }
-}
-
-function* githubLogoutSaga() {
-  if (store.getState() && store.getState().workspaces.githubAssessment.hasUnsavedChanges) {
-    yield call(showWarningMessage, 'You have unsaved changes!', 2000);
-    return;
-  }
-
-  yield put(actions.removeGitHubOctokitObjectAndAccessToken());
-  yield call(showSuccessMessage, `Logged out from GitHub`, 1000);
 }
 
 function* githubOpenFile(): any {

@@ -467,28 +467,6 @@ export const defaultWorkspaceManager: WorkspaceManagerState = {
     timeElapsedBeforePause: 0,
     timeResumed: 0
   },
-  sicp: {
-    ...createDefaultWorkspace('sicp'),
-    usingSubst: false,
-    usingCse: false,
-    updateCse: true,
-    currentStep: -1,
-    stepsTotal: 0,
-    breakpointSteps: [],
-    activeEditorTabIndex: 0,
-    editorTabs: [
-      {
-        filePath: getDefaultFilePath('sicp'),
-        value: defaultEditorValue,
-        highlightedLines: [],
-        breakpoints: []
-      }
-    ]
-  },
-  githubAssessment: {
-    ...createDefaultWorkspace('githubAssessment'),
-    hasUnsavedChanges: false
-  },
   stories: {
     ...createDefaultWorkspace('stories')
     // TODO: Perhaps we can add default values?
@@ -556,8 +534,6 @@ export const defaultSideContentManager: SideContentManagerState = {
   assessment: defaultSideContent,
   grading: defaultSideContent,
   playground: defaultSideContent,
-  githubAssessment: defaultSideContent,
-  sicp: defaultSideContent,
   sourcecast: defaultSideContent,
   sourcereel: defaultSideContent,
   stories: {}

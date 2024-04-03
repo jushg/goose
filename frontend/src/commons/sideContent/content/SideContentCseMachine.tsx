@@ -470,10 +470,6 @@ const mapStateToProps: MapStateToProps<StateProps, OwnProps, OverallState> = (
     //   workspace = state.stories.envs[storyEnv]
     //   break
     // }
-    case 'sicp': {
-      workspace = state.workspaces.sicp;
-      break;
-    }
     default: {
       workspace = state.workspaces.playground;
       break;

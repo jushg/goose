@@ -231,7 +231,7 @@ export async function handleHash(
 
 const Playground: React.FC<PlaygroundProps> = props => {
   const { isSicpEditor } = props;
-  const workspaceLocation: WorkspaceLocation = isSicpEditor ? 'sicp' : 'playground';
+  const workspaceLocation: WorkspaceLocation =  'playground';
   const { isMobileBreakpoint } = useResponsive();
 
   const [deviceSecret, setDeviceSecret] = useState<string | undefined>();
