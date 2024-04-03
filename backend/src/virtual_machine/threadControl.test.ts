@@ -1,6 +1,3 @@
-import "./testHelpers";
-import { expect } from "@jest/globals";
-
 import { AnyGoslingObject, assertGoslingType, Literal } from ".";
 import { InstrAddr } from "../common/instructionObj";
 import { createHeapManager, HeapAddr, HeapType } from "../memory";
@@ -72,8 +69,14 @@ describe("Test memory manager and thread control object", () => {
         t.addFrame(staticDeclarations);
         t.incrPC();
 
-        expect(t.getRTS().getScopeData()).toBeScopeDataOf([
-          { x: "*", main: "*", foo: "*" },
+        expect(t.getRTS().getScopeData()).toMatchObject([
+          {
+            env: {
+              x: expect.anything(),
+              main: expect.anything(),
+              foo: expect.anything(),
+            },
+          },
         ]);
       },
 
