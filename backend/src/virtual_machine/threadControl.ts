@@ -107,7 +107,7 @@ export function createThreadControlObject(
   return t;
 }
 
-type GoslingLitOrObj<T extends HeapType = HeapType> =
+export type GoslingLitOrObj<T extends HeapType = HeapType> =
   | Literal<GoslingObject<T>>
   | GoslingObject<T>;
 
