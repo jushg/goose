@@ -12,9 +12,7 @@ import { createThreadControlObject } from "./threadControl";
 import { executeInstruction } from "./instructionLogic";
 import { CompiledFile } from "../common/compileFile";
 
-// called whenever the machine is first run
-function initialize(): ExecutionState {
-  // TODO: Fix this later!!
+export function initializeVirtualMachine(): ExecutionState {
   let memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
   let mainJobState = createThreadControlObject(memory);
 
@@ -40,7 +38,7 @@ function isTimeout(curState: ExecutionState): boolean {
   return curState.machineState.TIME_SLICE === 0;
 }
 
-function executeStep(
+export function executeStep(
   curState: ExecutionState,
   instructions: Array<AnyInstructionObj>
 ) {
@@ -57,23 +55,25 @@ function executeStep(
   let nextPCIndx = curState.jobState.getPC().addr;
   curState.machineState.TIME_SLICE--;
   executeInstruction(instructions[nextPCIndx], curState);
+  return curState;
 }
 
 export function runProgram(prog: CompiledFile) {
   const startTime = Date.now();
-  const maxTimeDuration = 0; // TODO: Add
+  const maxTimeDuration = /* 10 seconds */ 1000 * 10;
 
-  let curState = initialize();
+  let curState = initializeVirtualMachine();
   let instructions = prog.instructions;
 
   while (curState.machineState.IS_RUNNING) {
     // infinite loop protection
     if (Date.now() - startTime > maxTimeDuration) {
+      throw new Error("Infinite loop detected");
       return;
       // throw new PotentialInfiniteLoopError(locationDummyNode(-1, -1, null), MAX_TIME)
     }
 
-    executeStep(curState, instructions);
+    curState = executeStep(curState, instructions);
   }
 
   // Clear up memory
