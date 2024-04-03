@@ -1,58 +1,49 @@
-import {
-  AnyLiteralObj,
-  BinaryExprObj,
-  CallObj,
-  IdentObj,
-  IndexObj,
-  SelectorObj,
-  UnaryExprObj,
-} from "../parser";
 import { CompiledFile } from "../common/compileFile";
-import { AnyTagObj, assertTagObj } from "./utils";
-import { compileTagObj } from "./compileFunc";
 import {
   makeCallInstruction,
   makeLdInstruction,
   makeLdcInstruction,
 } from "../common/instructionObj";
+import { compileTagObj } from "./compileFunc";
+import { AnyTagObj, assertTag } from "./utils";
 
 export const exprMap: {
   [key: string]: (s: AnyTagObj, pf: CompiledFile) => void;
 } = {
   CALL: (s, pf) => {
-    assertTagObj<CallObj>(s);
+    assertTag("CALL", s);
     s.args.map((arg) => compileTagObj(arg, pf));
     compileTagObj(s.func, pf);
     pf.instructions.push(makeCallInstruction(s.args.length));
   },
 
   IDENT: (s, pf) => {
-    assertTagObj<IdentObj>(s);
+    assertTag("IDENT", s);
     pf.instructions.push(makeLdInstruction(s.val));
   },
 
   LITERAL: (s, pf) => {
-    assertTagObj<AnyLiteralObj>(s);
+    assertTag("LITERAL", s);
     pf.instructions.push(makeLdcInstruction(s));
   },
 
   SELECTOR: (s, pf) => {
-    assertTagObj<SelectorObj>(s);
+    assertTag("SELECTOR", s);
   },
 
   INDEX: (s, pf) => {
-    assertTagObj<IndexObj>(s);
+    assertTag("INDEX", s);
   },
 
   UNARY_EXPR: (s, pf) => {
-    assertTagObj<UnaryExprObj>(s);
+    assertTag("UNARY_EXPR", s);
     compileTagObj(s.expr, pf);
     pf.instructions.push(makeLdInstruction(s.op));
     pf.instructions.push(makeCallInstruction(1));
   },
 
   BINARY_EXPR: (s, pf) => {
-    assertTagObj<BinaryExprObj>(s);
+    assertTag("BINARY_EXPR", s);
     compileTagObj(s.rhs, pf);
     compileTagObj(s.lhs, pf);
 

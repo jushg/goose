@@ -3,15 +3,15 @@ import {
   makeEnterScopeInstruction,
   makeExitScopeInstruction,
 } from "../common/instructionObj";
-import { BlockObj } from "../parser";
+import { BlockObj, ExprObj, StmtObj } from "../parser";
 import { exprMap } from "./exprObj";
 import { smtMap } from "./stmtObj";
-import { AnyStmtObj, AnyTagObj, isBlockObj, isStmtObj } from "./utils";
+import { AnyTagObj, isTag } from "./utils";
 
 export function compileTagObj(s: AnyTagObj, pf: CompiledFile) {
-  if (isStmtObj(s)) {
+  if (isTag("STMT", s)) {
     compileStmtObj(s, pf);
-  } else if (isBlockObj(s)) {
+  } else if (isTag("BLOCK", s)) {
     compileBlockObj(s, pf);
   } else {
     compileExprObj(s, pf);
@@ -26,10 +26,10 @@ function compileBlockObj(s: BlockObj, pf: CompiledFile) {
   pf.instructions.push(makeExitScopeInstruction());
 }
 
-function compileStmtObj(s: AnyStmtObj, pf: CompiledFile) {
+function compileStmtObj(s: StmtObj, pf: CompiledFile) {
   smtMap[s.stmtType](s, pf);
 }
 
-function compileExprObj(obj: AnyTagObj, pf: CompiledFile) {
+function compileExprObj(obj: ExprObj, pf: CompiledFile) {
   exprMap[obj.tag](obj, pf);
 }
