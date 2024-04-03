@@ -6,9 +6,11 @@ import {
   makeExitScopeInstruction,
   makeGOTOInstruction,
   makeJOFInstruction,
+  makeLdInstruction,
 } from "../common/instructionObj";
 import {
   AnyLiteralObj,
+  AnyTypeObj,
   NilTypeObj,
   StmtObj,
   makeAssignmentStmt,
@@ -18,8 +20,14 @@ import {
 } from "../parser";
 
 import { CompiledFile } from "../common/compileFile";
+import {
+  addLabelIfExist,
+  assertStmt,
+  assertTag,
+  isTag,
+  scanDeclaration,
+} from "./utils";
 import { compileTagObj } from "./compileFunc";
-import { addLabelIfExist, assertStmt, assertTag, isTag } from "./utils";
 
 export const smtMap: {
   [key: string]: (s: StmtObj, pf: CompiledFile) => void;
@@ -69,7 +77,16 @@ export const smtMap: {
     assertStmt("IF", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    pf.instructions.push(makeEnterScopeInstruction());
+    let ifScopeStmts = s.body.stmts;
+    if (s.pre !== null) {
+      // ifScopeStmts.push(s.pre);
+    }
+    if (s.elseBody !== null && isTag("BLOCK", s.elseBody)) {
+      ifScopeStmts.concat(s.elseBody.stmts);
+    }
+    let decls = scanDeclaration(ifScopeStmts);
+
+    pf.instructions.push(makeEnterScopeInstruction(decls));
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
     }
@@ -107,7 +124,7 @@ export const smtMap: {
     assertStmt("SWITCH", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    pf.instructions.push(makeEnterScopeInstruction());
+    pf.instructions.push(makeEnterScopeInstruction([], "FOR"));
 
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
@@ -117,16 +134,25 @@ export const smtMap: {
 
     // TODO: Add JofInstruction and figure this out
 
-    pf.instructions.push(makeExitScopeInstruction());
+    pf.instructions.push(makeExitScopeInstruction("FOR"));
   },
 
-  SELECT: (s, pf) => {},
+  SELECT: (s, pf) => {
+    throw new Error("SELECT not implemented");
+  },
   FOR: (s, pf) => {
     assertStmt("FOR", s);
     let predGotoPc = -1;
 
+    let forBodyStmts = s.body.stmts;
+    if (s.pre !== null) {
+      forBodyStmts.push(s.pre);
+    }
+
+    let decls = scanDeclaration(forBodyStmts);
+
     addLabelIfExist(pf.instructions.length, s.label, pf);
-    pf.instructions.push(makeEnterScopeInstruction());
+    pf.instructions.push(makeEnterScopeInstruction(decls, "FOR"));
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
     }
@@ -157,7 +183,7 @@ export const smtMap: {
       );
     }
 
-    pf.instructions.push(makeExitScopeInstruction());
+    pf.instructions.push(makeExitScopeInstruction("FOR"));
   },
 
   BREAK: (s, pf) => {
@@ -169,7 +195,7 @@ export const smtMap: {
 
   CONTINUE: (s, pf) => {
     assertStmt("CONTINUE", s);
-    pf.instructions.push(makeExitScopeInstruction());
+    pf.instructions.push(makeExitScopeInstruction("FOR"));
   },
 
   GOTO: (s, pf) => {
@@ -190,8 +216,7 @@ export const smtMap: {
   RETURN: (s, pf) => {
     assertStmt("RETURN", s);
     compileTagObj(s.expr, pf);
-    // TODO: add exit label once we support that
-    pf.instructions.push(makeExitScopeInstruction());
+    pf.instructions.push(makeExitScopeInstruction("CALL"));
   },
 
   FUNC_DECL: (s, pf) => {
@@ -205,9 +230,31 @@ export const smtMap: {
         )
       )
     );
-    let declStart = pf.instructions.length;
-    compileTagObj(s.body, pf);
-    let declEnd = pf.instructions.length;
+    pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
+    const gotoPc = pf.instructions.length - 1;
+
+    let argsDecls: [string, AnyTypeObj][] = s.input.map((prm) => [
+      prm.ident.val,
+      prm.type,
+    ]);
+    let bodyDecls = scanDeclaration(s.body.stmts);
+    let decls = argsDecls.concat(bodyDecls);
+
+    pf.instructions.push(makeEnterScopeInstruction(decls));
+
+    s.input.forEach((prm) => {
+      pf.instructions.push(makeLdInstruction(prm.ident.val));
+      pf.instructions.push(makeAssignInstruction());
+    });
+
+    s.body.stmts.forEach((bodyStmt) => {
+      compileTagObj(bodyStmt, pf);
+    });
+
+    pf.instructions.push(makeExitScopeInstruction("CALL"));
+    pf.instructions[gotoPc] = makeGOTOInstruction(
+      new InstrAddr(pf.instructions.length)
+    );
 
     // TODO: Create closure object here
   },

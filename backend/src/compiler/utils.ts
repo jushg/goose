@@ -1,5 +1,12 @@
 import { CompiledFile } from "../common/compileFile";
-import { BlockObj, ExprObj, IdentObj, StmtObj } from "../parser";
+import {
+  AnyTypeObj,
+  BlockObj,
+  ExprObj,
+  IdentObj,
+  StmtObj,
+  makeFunctionType,
+} from "../parser";
 
 export function addLabelIfExist(
   pc: number,
@@ -43,4 +50,33 @@ export function assertStmt<T extends StmtObj["stmtType"]>(
   if (!isTag("STMT", val) || !isStmt(expectedStmtType, val)) {
     throw new Error(`Expected stmt type ${expectedStmtType}, on ${val}`);
   }
+}
+
+export function scanDeclaration(stmts: StmtObj[]): [string, AnyTypeObj][] {
+  let decls: [string, AnyTypeObj][] = [];
+  stmts.forEach((stmt) => {
+    if (stmt.stmtType === "VAR_DECL") {
+      assertStmt("VAR_DECL", stmt);
+      decls.push([stmt.ident.val, stmt.type]);
+    } else if (stmt.stmtType === "CONST_DECL") {
+      assertStmt("CONST_DECL", stmt);
+      let type: AnyTypeObj = { tag: "TYPE", type: { base: "NIL" } };
+      if (stmt.type !== null) {
+        type = stmt.type;
+      } else {
+        // TODO: infer type if no type here
+      }
+      decls.push([stmt.ident.val, type]);
+    } else if (stmt.stmtType === "FUNC_DECL") {
+      assertStmt("FUNC_DECL", stmt);
+      let type = makeFunctionType(
+        stmt.input.map((x) => x.type),
+        stmt.returnT
+      );
+      decls.push([stmt.ident.val, type]);
+    } else if (stmt.stmtType === "ASSIGN") {
+      //TODO: handle assignment
+    }
+  });
+  return decls;
 }

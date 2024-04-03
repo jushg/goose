@@ -1,3 +1,10 @@
+import {
+  AnyLiteralObj,
+  BinaryExprObj,
+  CallObj,
+  IdentObj,
+  UnaryExprObj,
+} from "../parser";
 import { CompiledFile } from "../common/compileFile";
 import {
   makeCallInstruction,
@@ -28,11 +35,11 @@ export const exprMap: {
   },
 
   SELECTOR: (s, pf) => {
-    assertTag("SELECTOR", s);
+    throw new Error("Not implemented");
   },
 
   INDEX: (s, pf) => {
-    assertTag("INDEX", s);
+    throw new Error("Not implemented");
   },
 
   UNARY_EXPR: (s, pf) => {

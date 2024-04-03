@@ -101,7 +101,7 @@ describe("Declare Statement only", () => {
 
     let pf = compile(testProgram);
 
-    expect(pf.instructions.length).toEqual(3);
+    expect(pf.instructions.length).toEqual(4);
     expect(pf.topLevelDecl[0]).toEqual(0);
     expect(pf.topLevelDecl.length).toEqual(1);
   });

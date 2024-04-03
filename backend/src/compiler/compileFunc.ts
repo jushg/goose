@@ -6,7 +6,8 @@ import {
 import { BlockObj, ExprObj, StmtObj } from "../parser";
 import { exprMap } from "./exprObj";
 import { smtMap } from "./stmtObj";
-import { AnyTagObj, isTag } from "./utils";
+import { isTag, scanDeclaration } from "./utils";
+import { AnyTagObj } from "./utils";
 
 export function compileTagObj(s: AnyTagObj, pf: CompiledFile) {
   if (isTag("STMT", s)) {
@@ -19,7 +20,8 @@ export function compileTagObj(s: AnyTagObj, pf: CompiledFile) {
 }
 
 function compileBlockObj(s: BlockObj, pf: CompiledFile) {
-  pf.instructions.push(makeEnterScopeInstruction());
+  let decls = scanDeclaration(s.stmts);
+  pf.instructions.push(makeEnterScopeInstruction(decls));
   s.stmts.forEach((stmt) => {
     compileTagObj(stmt, pf);
   });
