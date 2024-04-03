@@ -5,7 +5,7 @@ import {
   GoslingStringObj,
   assertGoslingType,
 } from ".";
-import { InstrAddr } from "../instruction/base";
+import { InstrAddr } from "../common/instructionObj";
 import { Allocator, HeapAddr, HeapType, createHeapManager } from "../memory";
 import { GoslingMemoryManager } from "./memory";
 
