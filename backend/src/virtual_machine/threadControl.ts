@@ -16,6 +16,7 @@ export type ThreadControlObject = {
 
   addFrame(decl: Record<string, Literal<AnyGoslingObject>>): void;
   execFn(obj: GoslingLambdaObj): void;
+  execFor(): void;
 
   exitFrame(): void;
   exitSpecialFrame(label: SpecialFrameLabels): void;
@@ -84,6 +85,14 @@ export function createThreadControlObject(
     execFn: (f) => {
       rts = memory.allocNewCallFrame(pc, rts, f.closure.getTopScopeAddr());
       t.setPC(f.pcAddr);
+    },
+    execFor: () => {
+      rts = memory.allocNewSpecialFrame(
+        t.getPC(),
+        rts,
+        "FOR",
+        rts.getTopScopeAddr()
+      );
     },
     exitFrame: () => {
       const enclosing = memory.getEnclosingFrame(rts);
