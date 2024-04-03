@@ -6,9 +6,11 @@ import {
   makeExitScopeInstruction,
   makeGOTOInstruction,
   makeJOFInstruction,
+  makeLdInstruction,
 } from "../common/instructionObj";
 import {
   AnyLiteralObj,
+  AnyTypeObj,
   NilTypeObj,
   StmtObj,
   makeAssignmentStmt,
@@ -214,7 +216,6 @@ export const smtMap: {
   RETURN: (s, pf) => {
     assertStmt("RETURN", s);
     compileTagObj(s.expr, pf);
-    // TODO: add exit label once we support that
     pf.instructions.push(makeExitScopeInstruction());
   },
 
@@ -229,9 +230,31 @@ export const smtMap: {
         )
       )
     );
-    let declStart = pf.instructions.length;
-    compileTagObj(s.body, pf);
-    let declEnd = pf.instructions.length;
+    pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
+    const gotoPc = pf.instructions.length - 1;
+
+    let argsDecls: [string, AnyTypeObj][] = s.input.map((prm) => [
+      prm.ident.val,
+      prm.type,
+    ]);
+    let bodyDecls = scanDeclaration(s.body.stmts);
+    let decls = argsDecls.concat(bodyDecls);
+
+    pf.instructions.push(makeEnterScopeInstruction(decls));
+
+    s.input.forEach((prm) => {
+      pf.instructions.push(makeLdInstruction(prm.ident.val));
+      pf.instructions.push(makeAssignInstruction());
+    });
+
+    s.body.stmts.forEach((bodyStmt) => {
+      compileTagObj(bodyStmt, pf);
+    });
+
+    pf.instructions.push(makeExitScopeInstruction());
+    pf.instructions[gotoPc] = makeGOTOInstruction(
+      new InstrAddr(pf.instructions.length)
+    );
 
     // TODO: Create closure object here
   },

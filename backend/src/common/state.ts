@@ -1,4 +1,5 @@
 import { Allocator } from "../memory";
+import { GoslingMemoryManager } from "../virtual_machine/memory";
 import { ThreadControlObject } from "../virtual_machine/threadControl";
 export const STANDARD_TIME_SLICE = 100;
 
@@ -9,7 +10,7 @@ export type ExecutionState = {
 
 export type MachineState = {
   // HEAP is array containing all dynamically allocated data structures
-  HEAP: Allocator;
+  HEAP: GoslingMemoryManager;
   // job queue
   JOB_QUEUE: JobQueue;
   //global finish flag -> end program if set

@@ -73,8 +73,8 @@ describe("Test memory manager and thread control object", () => {
       1: (m, t) => {
         const staticFrame = t.getRTS();
         const mainLambda = m.allocLambda(
-          staticFrame.getTopScopeAddr(),
-          InstrAddr.fromNum(2)
+          staticFrame.getTopScopeAddr(), // main's enclosing rts
+          InstrAddr.fromNum(2) // main pc
         );
         staticFrame.assign("main", m.get(mainLambda)!);
         t.setPC(InstrAddr.fromNum(12)); // Skip function execution

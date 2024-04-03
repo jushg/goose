@@ -1,12 +1,14 @@
 import { AnyGoslingObject, Literal } from ".";
 import {
   AnyInstructionObj,
+  InstrAddr,
   OpCode,
   assertOpType,
 } from "../common/instructionObj";
 import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
 import { AnyLiteralObj, AnyTypeObj } from "../parser";
+import { assertGoslingObject, isGoslingObject } from "./threadControl";
 
 export function executeInstruction(
   ins: AnyInstructionObj,
@@ -24,10 +26,24 @@ const instructionFn: {
   [OpCode.LDC]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     assertOpType(OpCode.LDC, ins);
     es.jobState.getOS().push(getHeapNodeFromLiteral(ins.val));
+    es.jobState.incrPC();
   },
   [OpCode.DECL]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     assertOpType(OpCode.DECL, ins);
     es.jobState.getRTS().assign(ins.symbol, getDefaultTypeValue(ins.val));
+
+    if (ins.val.type.base === "FUNC") {
+      const funcLambdaAddr = es.machineState.HEAP.allocLambda(
+        es.jobState.getRTS().getTopScopeAddr(), // main's enclosing rts
+        InstrAddr.fromNum(es.jobState.getPC().addr + 2) // main pc
+      );
+      const funcLambda = es.machineState.HEAP.get(funcLambdaAddr);
+      if (funcLambda === null) {
+        throw new Error("Lambda not assigned properly in memory");
+      }
+      es.jobState.getRTS().assign(ins.symbol, funcLambda);
+    }
+    es.jobState.incrPC();
   },
   [OpCode.POP]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     es.jobState.getOS().pop();
@@ -82,21 +98,18 @@ const instructionFn: {
     let rhs = es.jobState.getOS().pop();
 
     // Assign with value and address
+    assertGoslingObject(lhs);
+    es.machineState.HEAP.set(lhs.addr, rhs);
     es.jobState.incrPC();
   },
   [OpCode.CALL]: function (ins: AnyInstructionObj, es: ExecutionState): void {
-    assertOpType(OpCode.CALL, ins);
     let fn = es.jobState.getOS().pop();
 
-    if (fn.type !== HeapType.BinaryPtr) {
+    if (fn.type !== HeapType.BinaryPtr || !isGoslingObject(fn)) {
       throw new Error("Expected function pointer on top of stack");
     }
-
-    let args: Literal<AnyGoslingObject>[] = [];
-    for (let i = 0; i < ins.args; i++) {
-      args.push(es.jobState.getOS().pop());
-    }
-    // Call function with args
+    const innerFnLambda = es.machineState.HEAP.getLambda(fn);
+    es.jobState.execFn(innerFnLambda);
   },
   [OpCode.RESET]: function (ins: AnyInstructionObj, es: ExecutionState): void {
     throw new Error("Function not implemented.");
@@ -186,8 +199,9 @@ function getHeapNodeFromLiteral(x: AnyLiteralObj): Literal<AnyGoslingObject> {
     case "NIL":
       assertLiteral("NIL", x);
       return {
-        type: HeapType.Int,
-        data: 0,
+        type: HeapType.BinaryPtr,
+        child1: HeapAddr.getNull(),
+        child2: HeapAddr.getNull(),
       };
     case "FUNC":
       assertLiteral("FUNC", x);

@@ -74,6 +74,8 @@ export function scanDeclaration(stmts: StmtObj[]): [string, AnyTypeObj][] {
         stmt.returnT
       );
       decls.push([stmt.ident.val, type]);
+    } else if (stmt.stmtType === "ASSIGN") {
+      //TODO: handle assignment
     }
   });
   return decls;
