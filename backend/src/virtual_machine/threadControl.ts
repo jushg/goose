@@ -1,8 +1,8 @@
-import { AnyGoslingObject, GoslingLambdaObj, Literal } from ".";
+import { AnyGoslingObject, GoslingLambdaObj, GoslingObject, Literal } from ".";
 import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../common/instructionObj";
-import { HeapAddr } from "../memory";
+import { HeapAddr, HeapType } from "../memory";
 import { GoslingMemoryManager, SpecialFrameLabels } from "./memory";
 
 export type ThreadControlObject = {
@@ -97,10 +97,29 @@ export function createThreadControlObject(
   };
   return t;
 }
+
+type GoslingLitOrObj<T extends HeapType = HeapType> =
+  | Literal<GoslingObject<T>>
+  | GoslingObject<T>;
+
+export function isGoslingObject<T extends HeapType = HeapType>(
+  obj: GoslingLitOrObj<T>
+): obj is GoslingObject<T> {
+  return "addr" in obj;
+}
+
+export function assertGoslingObject<T extends HeapType = HeapType>(
+  obj: GoslingLitOrObj<T>
+): asserts obj is GoslingObject<T> {
+  if (!isGoslingObject(obj)) {
+    throw new Error(`Expected gosling obj, but not: ${obj}`);
+  }
+}
+
 export type GoslingOperandStackObj = {
-  push(val: Literal<AnyGoslingObject>): void;
-  pop(): Literal<AnyGoslingObject>;
-  peek(): Literal<AnyGoslingObject>;
+  push(val: GoslingLitOrObj): void;
+  pop(): GoslingLitOrObj;
+  peek(): GoslingLitOrObj;
   toString(): string;
   length(): number;
 };
