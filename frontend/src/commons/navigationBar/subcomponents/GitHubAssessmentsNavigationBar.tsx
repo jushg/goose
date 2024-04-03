@@ -16,7 +16,6 @@ import classNames from 'classnames';
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 
-import { GHAssessmentTypeOverview } from '../../../pages/githubAssessments/GitHubClassroom';
 import { ControlBarGitHubLoginButton } from '../../controlBar/github/ControlBarGitHubLoginButton';
 import { assessmentTypeLink } from '../../utils/ParamParseHelper';
 
@@ -33,7 +32,6 @@ type StateProps = {
   courses?: string[];
   selectedCourse: string;
   types?: string[];
-  assessmentTypeOverviews?: GHAssessmentTypeOverview[];
 };
 
 /**
@@ -54,7 +52,6 @@ const GitHubAssessmentsNavigationBar: React.FC<GitHubAssessmentsNavigationBarPro
               to={`/githubassessments/${assessmentTypeLink(type)}`}
               state={{
                 courses: props.courses,
-                assessmentTypeOverviews: props.assessmentTypeOverviews,
                 selectedCourse: props.selectedCourse
               }}
               className={({ isActive }) =>

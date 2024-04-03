@@ -23,7 +23,6 @@ import Constants from '../utils/Constants';
 import { useResponsive, useSession } from '../utils/Hooks';
 import AcademyNavigationBar from './subcomponents/AcademyNavigationBar';
 import NavigationBarLangSelectButton from './subcomponents/NavigationBarLangSelectButton';
-import SicpNavigationBar from './subcomponents/SicpNavigationBar';
 
 export type NavbarEntryInfo = {
   to: string;
@@ -175,10 +174,7 @@ const NavigationBar: React.FC = () => {
       <Routes>
         <Route path="/playground" element={null} />
         <Route path="/githubassessments/*" element={null} />
-        <Route path="/contributors" element={null} />
-        <Route path="/courses/:courseId/sourcecast" element={null} />
-        <Route path="/courses/:courseId/achievements" element={null} />
-        <Route path="/sicpjs/:section?" element={<SicpNavigationBar />} />
+
         <Route
           path="*"
           element={
