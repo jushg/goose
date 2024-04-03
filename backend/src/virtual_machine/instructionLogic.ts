@@ -6,15 +6,7 @@ import {
 } from "../common/instructionObj";
 import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
-import {
-  AnyLiteralObj,
-  AnyTypeObj,
-  BoolLiteralObj,
-  FuncLiteralObj,
-  IntLiteralObj,
-  NilLiteralObj,
-  StrLiteralObj,
-} from "../parser";
+import { AnyLiteralObj, AnyTypeObj } from "../parser";
 
 export function executeInstruction(
   ins: AnyInstructionObj,
@@ -118,10 +110,20 @@ const instructionFn: {
   },
 };
 
-function assertLiteralType<T extends AnyLiteralObj>(
+function isLiteral<T extends AnyLiteralObj["type"]["type"]["base"]>(
+  expectedType: T,
   x: AnyLiteralObj
-): asserts x is T {
-  x as T;
+): x is Extract<AnyLiteralObj, { type: { type: { base: T } } }> {
+  return expectedType === x["type"]["type"]["base"];
+}
+
+function assertLiteral<T extends AnyLiteralObj["type"]["type"]["base"]>(
+  expectedType: T,
+  x: AnyLiteralObj
+): asserts x is Extract<AnyLiteralObj, { type: { type: { base: T } } }> {
+  if (!isLiteral(expectedType, x)) {
+    throw new Error(`Expected literal type ${expectedType} on ${x}`);
+  }
 }
 
 function getDefaultTypeValue(x: AnyTypeObj): Literal<AnyGoslingObject> {
@@ -153,31 +155,31 @@ function getDefaultTypeValue(x: AnyTypeObj): Literal<AnyGoslingObject> {
 function getHeapNodeFromLiteral(x: AnyLiteralObj): Literal<AnyGoslingObject> {
   switch (x.type.type.base) {
     case "BOOL":
-      assertLiteralType<BoolLiteralObj>(x);
+      assertLiteral("BOOL", x);
       return {
         type: HeapType.Bool,
         data: x.val,
       };
     case "INT":
-      assertLiteralType<IntLiteralObj>(x);
+      assertLiteral("INT", x);
       return {
         type: HeapType.Int,
         data: x.val,
       };
     case "STR":
-      assertLiteralType<StrLiteralObj>(x);
+      assertLiteral("STR", x);
       return {
         type: HeapType.String,
         data: x.val,
       };
     case "NIL":
-      assertLiteralType<NilLiteralObj>(x);
+      assertLiteral("NIL", x);
       return {
         type: HeapType.Int,
         data: 0,
       };
     case "FUNC":
-      assertLiteralType<FuncLiteralObj>(x);
+      assertLiteral("FUNC", x);
       return {
         type: HeapType.BinaryPtr,
         child1: HeapAddr.getNull(),

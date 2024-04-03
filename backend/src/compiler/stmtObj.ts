@@ -9,43 +9,28 @@ import {
 } from "../common/instructionObj";
 import {
   AnyLiteralObj,
-  AssignmentStmtObj,
-  BreakStmtObj,
-  ChanStmtObj,
-  ConstDeclObj,
-  ContStmtObj,
-  DecStmtObj,
-  ExpressionStmtObj,
-  ForStmtObj,
-  FuncDeclObj,
-  IdentObj,
-  IfStmtObj,
-  IncStmtObj,
   NilTypeObj,
-  ReturnStmtObj,
   StmtObj,
-  SwitchStmtObj,
-  VarDeclObj,
   makeAssignmentStmt,
   makeFunctionType,
   makeUnaryExpr,
   makeVarDecl,
 } from "../parser";
 
-import { compileTagObj } from "./compileFunc";
 import { CompiledFile } from "../common/compileFile";
-import { AnyStmtObj, addLabelIfExist, assertTagObj, isStmtObj } from "./utils";
+import { compileTagObj } from "./compileFunc";
+import { addLabelIfExist, assertStmt, assertTag, isTag } from "./utils";
 
 export const smtMap: {
-  [key: string]: (s: AnyStmtObj, pf: CompiledFile) => void;
+  [key: string]: (s: StmtObj, pf: CompiledFile) => void;
 } = {
   EXPR: (s, pf) => {
-    assertTagObj<ExpressionStmtObj>(s);
+    assertStmt("EXPR", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
     compileTagObj(s.expr, pf);
   },
   SEND: (s, pf) => {
-    assertTagObj<ChanStmtObj>(s);
+    assertStmt("SEND", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
     compileTagObj(s.lhs, pf);
     compileTagObj(s.rhs, pf);
@@ -53,24 +38,24 @@ export const smtMap: {
   },
 
   INC: (s, pf) => {
-    assertTagObj<IncStmtObj>(s);
+    assertStmt("INC", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
     let unaryExprObj = makeUnaryExpr(s.expr, "++");
     compileTagObj(unaryExprObj, pf);
   },
 
   DEC: (s, pf) => {
-    assertTagObj<DecStmtObj>(s);
+    assertStmt("DEC", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
     let unaryExprObj = makeUnaryExpr(s.expr, "--");
     compileTagObj(unaryExprObj, pf);
   },
 
   ASSIGN: (s, pf) => {
-    assertTagObj<AssignmentStmtObj>(s);
+    assertStmt("ASSIGN", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
     if (s.op === ":=") {
-      assertTagObj<IdentObj>(s.lhs);
+      assertTag("IDENT", s.lhs);
       let placeHolderType: NilTypeObj = { tag: "TYPE", type: { base: "NIL" } };
       compileTagObj(makeVarDecl(s.lhs, placeHolderType, s.rhs), pf);
     } else {
@@ -81,7 +66,7 @@ export const smtMap: {
   },
 
   IF: (s, pf) => {
-    assertTagObj<IfStmtObj>(s);
+    assertStmt("IF", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
     pf.instructions.push(makeEnterScopeInstruction());
@@ -104,7 +89,7 @@ export const smtMap: {
     );
 
     if (s.elseBody !== null) {
-      if (isStmtObj(s.elseBody)) {
+      if (isTag("STMT", s.elseBody)) {
         compileTagObj(s.elseBody, pf);
       } else {
         s.elseBody.stmts.forEach((elseBodyStmt) => {
@@ -119,7 +104,7 @@ export const smtMap: {
   },
 
   SWITCH: (s, pf) => {
-    assertTagObj<SwitchStmtObj>(s);
+    assertStmt("SWITCH", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
     pf.instructions.push(makeEnterScopeInstruction());
@@ -137,7 +122,7 @@ export const smtMap: {
 
   SELECT: (s, pf) => {},
   FOR: (s, pf) => {
-    assertTagObj<ForStmtObj>(s);
+    assertStmt("FOR", s);
     let predGotoPc = -1;
 
     addLabelIfExist(pf.instructions.length, s.label, pf);
@@ -176,14 +161,14 @@ export const smtMap: {
   },
 
   BREAK: (s, pf) => {
-    assertTagObj<BreakStmtObj>(s);
+    assertStmt("BREAK", s);
 
     // TODO: Add exit label once we support that
     pf.instructions.push(makeExitScopeInstruction());
   },
 
   CONTINUE: (s, pf) => {
-    assertTagObj<ContStmtObj>(s);
+    assertStmt("CONTINUE", s);
     pf.instructions.push(makeExitScopeInstruction());
   },
 
@@ -203,14 +188,14 @@ export const smtMap: {
   },
 
   RETURN: (s, pf) => {
-    assertTagObj<ReturnStmtObj>(s);
+    assertStmt("RETURN", s);
     compileTagObj(s.expr, pf);
     // TODO: add exit label once we support that
     pf.instructions.push(makeExitScopeInstruction());
   },
 
   FUNC_DECL: (s, pf) => {
-    assertTagObj<FuncDeclObj>(s);
+    assertStmt("FUNC_DECL", s);
     pf.instructions.push(
       makeDeclareInstruction(
         s.ident.val,
@@ -228,7 +213,7 @@ export const smtMap: {
   },
 
   VAR_DECL: (s, pf) => {
-    assertTagObj<VarDeclObj>(s);
+    assertStmt("VAR_DECL", s);
     pf.instructions.push(makeDeclareInstruction(s.ident.val, s.type));
     if (s.val !== null) {
       let assignStmt = makeAssignmentStmt(s.ident, "=", s.val);
@@ -237,7 +222,7 @@ export const smtMap: {
   },
 
   CONST_DECL: (s, pf) => {
-    assertTagObj<ConstDeclObj>(s);
+    assertStmt("CONST_DECL", s);
     pf.instructions.push(
       makeDeclareInstruction(
         s.ident.val,

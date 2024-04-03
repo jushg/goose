@@ -1,5 +1,5 @@
-import { BlockObj, IdentObj } from "../parser";
 import { CompiledFile } from "../common/compileFile";
+import { BlockObj, ExprObj, IdentObj, StmtObj } from "../parser";
 
 export function addLabelIfExist(
   pc: number,
@@ -11,20 +11,36 @@ export function addLabelIfExist(
   }
 }
 
-export type AnyStmtObj = { tag: string; stmtType: string };
+export type AnyTagObj = StmtObj | ExprObj | BlockObj;
 
-export type AnyTagObj = { tag: string };
-
-export function isStmtObj(val: AnyTagObj): val is AnyStmtObj {
-  return val.tag === "STMT";
-}
-
-export function isBlockObj(val: AnyTagObj): val is BlockObj {
-  return val.tag === "BLOCK";
-}
-
-export function assertTagObj<T extends AnyTagObj>(
+export function isTag<T extends AnyTagObj["tag"]>(
+  expectedTag: T,
   val: AnyTagObj
-): asserts val is T {
-  let obj = val as T;
+): val is Extract<AnyTagObj, { tag: T }> {
+  return val.tag === expectedTag;
+}
+
+export function assertTag<T extends AnyTagObj["tag"]>(
+  expectedTag: T,
+  val: AnyTagObj
+): asserts val is Extract<AnyTagObj, { tag: T }> {
+  if (!isTag(expectedTag, val)) {
+    throw new Error(`Expected tag ${expectedTag} on ${val}`);
+  }
+}
+
+export function isStmt<T extends StmtObj["stmtType"]>(
+  expectedStmtType: T,
+  val: AnyTagObj
+): val is Extract<StmtObj, { stmtType: T }> {
+  return isTag("STMT", val) && val.stmtType === expectedStmtType;
+}
+
+export function assertStmt<T extends StmtObj["stmtType"]>(
+  expectedStmtType: T,
+  val: AnyTagObj
+): asserts val is Extract<StmtObj, { stmtType: T }> {
+  if (!isTag("STMT", val) || !isStmt(expectedStmtType, val)) {
+    throw new Error(`Expected stmt type ${expectedStmtType}, on ${val}`);
+  }
 }

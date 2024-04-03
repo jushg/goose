@@ -218,7 +218,7 @@ export type UnaryExprObj = {
   op: string;
   expr: ExprObj;
 };
-export function makeUnaryExpr(expr: ExprObj, op: string) {
+export function makeUnaryExpr(expr: ExprObj, op: string): UnaryExprObj {
   return { tag: "UNARY_EXPR", expr, op };
 }
 
@@ -228,7 +228,7 @@ export type BinaryExprObj = {
   lhs: ExprObj;
   rhs: ExprObj;
 };
-function makeBinaryExpr(lhs: ExprObj, op: string, rhs: ExprObj) {
+function makeBinaryExpr(lhs: ExprObj, op: string, rhs: ExprObj): BinaryExprObj {
   return { tag: "BINARY_EXPR", lhs, op, rhs };
 }
 
