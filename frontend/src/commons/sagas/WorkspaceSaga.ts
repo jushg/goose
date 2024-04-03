@@ -1045,7 +1045,7 @@ export function* evalCode(
   const isStoriesBlock = actionType === EVAL_STORY || workspaceLocation === 'stories';
 
   // Logic for execution of substitution model visualizer
-  const correctWorkspace = workspaceLocation === 'playground' || workspaceLocation === 'sicp';
+  const correctWorkspace = workspaceLocation === 'playground';
   const substIsActive: boolean = correctWorkspace
     ? yield select(
         (state: OverallState) =>

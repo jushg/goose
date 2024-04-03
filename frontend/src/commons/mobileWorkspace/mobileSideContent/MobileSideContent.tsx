@@ -112,7 +112,7 @@ const MobileSideContent: React.FC<MobileSideContentProps> = ({
               {allTabs.map(tab => renderTab(tab, isIOS))}
 
               {/* Render the bottom ControlBar 'Cog' button only in the Playground or Sicp Workspace */}
-              {(props.workspaceLocation === 'playground' || props.workspaceLocation === 'sicp') && (
+              {(props.workspaceLocation === 'playground' ) && (
                 <MobileControlBar {...mobileControlBarProps} />
               )}
             </Tabs>
