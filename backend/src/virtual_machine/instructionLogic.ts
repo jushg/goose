@@ -74,14 +74,21 @@ const instructionFn: {
     ins.scopeDecls.forEach(([symbol, val]) => {
       decls[symbol] = getDefaultTypeValue(val);
     });
+    if (ins.label === "FOR") {
+      es.jobState.execFor();
+    }
     es.jobState.addFrame(decls);
+
     es.jobState.incrPC();
   },
   [OpCode.EXIT_SCOPE]: function (
     ins: AnyInstructionObj,
     es: ExecutionState
   ): void {
-    es.jobState.exitFrame();
+    assertOpType(OpCode.EXIT_SCOPE, ins);
+    ins.label
+      ? es.jobState.exitSpecialFrame(ins.label)
+      : es.jobState.exitFrame();
     es.jobState.incrPC();
   },
   [OpCode.LD]: function (ins: AnyInstructionObj, es: ExecutionState): void {

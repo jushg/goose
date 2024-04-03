@@ -19,7 +19,7 @@ function initialize(): ExecutionState {
   let mainJobState = createThreadControlObject(memory);
 
   const startingMachineState: MachineState = {
-    HEAP: createHeapManager(/* nodeCount = */ 2 ** 8),
+    HEAP: new GoslingMemoryManager(createHeapManager(/* nodeCount = */ 2 ** 8)),
     JOB_QUEUE: new JobQueue(),
     IS_RUNNING: true,
     TIME_SLICE: STANDARD_TIME_SLICE,

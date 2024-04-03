@@ -1,4 +1,5 @@
 import { AnyLiteralObj, AnyTypeObj } from "../parser";
+import { SpecialFrameLabels } from "../virtual_machine/memory";
 
 export class InstrAddr {
   addr: number;
@@ -93,19 +94,30 @@ export function makeGOTOInstruction(addr: InstrAddr): GotoInstructionObj {
 
 export type EnterScopeInstructionObj = InstructionObj<
   OpCode.ENTER_SCOPE,
-  { scopeDecls: [string, AnyTypeObj][] }
+  { scopeDecls: [string, AnyTypeObj][]; label?: "FOR" }
 >;
 
 export function makeEnterScopeInstruction(
-  scopeDecls: [string, AnyTypeObj][]
+  scopeDecls: [string, AnyTypeObj][],
+  label?: "FOR"
 ): EnterScopeInstructionObj {
-  return { tag: "INSTR", op: OpCode.ENTER_SCOPE, scopeDecls: scopeDecls };
+  return {
+    tag: "INSTR",
+    op: OpCode.ENTER_SCOPE,
+    scopeDecls: scopeDecls,
+    label: label,
+  };
 }
 
-export type ExitScopeInstructionObj = InstructionObj<OpCode.EXIT_SCOPE>;
+export type ExitScopeInstructionObj = InstructionObj<
+  OpCode.EXIT_SCOPE,
+  { label?: SpecialFrameLabels }
+>;
 
-export function makeExitScopeInstruction(): ExitScopeInstructionObj {
-  return { tag: "INSTR", op: OpCode.EXIT_SCOPE };
+export function makeExitScopeInstruction(
+  label?: SpecialFrameLabels
+): ExitScopeInstructionObj {
+  return { tag: "INSTR", op: OpCode.EXIT_SCOPE, label: label };
 }
 
 export type LdInstructionObj = InstructionObj<

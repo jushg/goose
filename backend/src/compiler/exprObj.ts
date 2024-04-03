@@ -1,3 +1,10 @@
+import {
+  AnyLiteralObj,
+  BinaryExprObj,
+  CallObj,
+  IdentObj,
+  UnaryExprObj,
+} from "../parser";
 import { CompiledFile } from "../common/compileFile";
 import {
   makeCallInstruction,
