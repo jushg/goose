@@ -1,16 +1,13 @@
 import { Classes, NonIdealState } from '@blueprintjs/core';
 import { IconNames } from '@blueprintjs/icons';
 import classNames from 'classnames';
-import { useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useEffect, useState } from 'react';
 import { RouterProvider } from 'react-router';
 import { createBrowserRouter } from 'react-router-dom';
 
-import { getFullAcademyRouterConfig, playgroundOnlyRouterConfig } from '../../routes/routerConfig';
+import { playgroundOnlyRouterConfig } from '../../routes/routerConfig';
 import { getHealth } from '../sagas/RequestsSaga';
 import Constants from '../utils/Constants';
-import { useSession } from '../utils/Hooks';
-import { updateReactRouter } from './actions/CommonsActions';
 
 /**
  * Application wrapper component which figures out which deployment and set of routes to render.
@@ -21,8 +18,7 @@ import { updateReactRouter } from './actions/CommonsActions';
  * 3. Disabled (disabled SA which only allows `staff` and `admin` accounts to log in - e.g. during examinations)
  */
 const ApplicationWrapper: React.FC = () => {
-  const dispatch = useDispatch();
-  const { isLoggedIn, role, name, courseId } = useSession();
+
   const [isApiHealthy, setIsApiHealthy] = useState(true);
 
   useEffect(() => {
@@ -31,21 +27,6 @@ const ApplicationWrapper: React.FC = () => {
     }
   }, []);
 
-  const router = useMemo(() => {
-    const routerConfig = Constants.playgroundOnly
-      ? playgroundOnlyRouterConfig
-      : getFullAcademyRouterConfig({
-          name,
-          role,
-          isLoggedIn,
-          courseId
-        });
-
-    const r = createBrowserRouter(routerConfig);
-    dispatch(updateReactRouter(r));
-
-    return r;
-  }, [isLoggedIn, role, name, courseId, dispatch]);
 
   if (!isApiHealthy) {
     return (
@@ -59,7 +40,7 @@ const ApplicationWrapper: React.FC = () => {
     );
   }
 
-  return <RouterProvider router={router} />;
+  return <RouterProvider router={createBrowserRouter(playgroundOnlyRouterConfig)} />;
 };
 
 export default ApplicationWrapper;
