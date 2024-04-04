@@ -18,20 +18,27 @@ export type ThreadControlObject = {
   execFn(obj: GoslingLambdaObj): void;
   execFor(): void;
 
+  print(s: string): void;
+
   exitFrame(): void;
   exitSpecialFrame(label: SpecialFrameLabels): void;
+
+  setStatus(status: "DONE" | "RUNNABLE" | "BREAKPOINT"): void;
+  getStatus(): "DONE" | "RUNNABLE" | "BREAKPOINT";
 };
 
 let _id = 0;
 
 export function createThreadControlObject(
   memory: GoslingMemoryManager,
+  printer: (threadId: string, s: string) => void,
   caller?: { call: GoslingLambdaObj; args: Literal<AnyGoslingObject>[] }
 ): ThreadControlObject {
   const id = `${++_id}_` + Math.random().toString(36).substring(7);
   let pc = InstrAddr.fromNum(0);
   let rts = memory.getEnvs(HeapAddr.getNull());
   let _os = memory.allocList([]);
+  let _status: "DONE" | "RUNNABLE" | "BREAKPOINT" = "RUNNABLE";
 
   if (caller) {
     pc = caller.call.pcAddr;
@@ -107,6 +114,9 @@ export function createThreadControlObject(
       t.setPC(pc);
       rts = newRTS;
     },
+    setStatus: (status) => (_status = status),
+    getStatus: () => _status,
+    print: (s) => printer(id, s),
   };
   return t;
 }

@@ -262,7 +262,7 @@ describe("Test memory manager and thread control object", () => {
     };
 
     memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
-    let threadControlObj = createThreadControlObject(memory);
+    let threadControlObj = createThreadControlObject(memory, () => {});
 
     while (!isDone) {
       /*

@@ -1,6 +1,7 @@
 import { CompiledFile } from "../common/compileFile";
 import { AnyInstructionObj } from "../common/instructionObj";
 import { BlockObj, ProgramObj } from "../parser";
+import { sysCallFunctionDefs } from "../virtual_machine/sysCalls";
 import { compileTagObj } from "./compileFunc";
 
 function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
@@ -8,12 +9,12 @@ function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
     tag: "STMT",
     stmtType: "BLOCK",
     stmts: [
-      // { tag: "STMT", stmtType: "BLOCK", stmts: builtins }
       {
         tag: "STMT",
         stmtType: "BLOCK",
         stmts: programTopLevelDeclarations,
       },
+      ...sysCallFunctionDefs,
     ],
   };
 }

@@ -177,8 +177,25 @@ export function makeGoroutineInstruction(): GoroutineInstructionObj {
 
 export type SysCallInstructionObj = InstructionObj<
   OpCode.SYS_CALL,
-  { sym: string }
+  {
+    sym:
+      | "make"
+      | "done"
+      | "printOS"
+      | "printHeap"
+      | "triggerBreakpoint"
+      | "new";
+    type: AnyTypeObj | null;
+    argCount: number;
+  }
 >;
+export function makeSysCallInstruction(
+  sym: SysCallInstructionObj["sym"],
+  type: AnyTypeObj | null,
+  argCount: number
+): SysCallInstructionObj {
+  return { tag: "INSTR", op: OpCode.SYS_CALL, sym, type, argCount };
+}
 
 export type AnyInstructionObj =
   | NopInstructionObj
@@ -196,7 +213,8 @@ export type AnyInstructionObj =
   | DoneInstructionObj
   | TestAndSetInstructionObj
   | ClearInstructionObj
-  | GoroutineInstructionObj;
+  | GoroutineInstructionObj
+  | SysCallInstructionObj;
 
 export function isOpType<T extends OpCode>(
   val: T,

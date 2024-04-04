@@ -140,6 +140,9 @@ function makeSelectCase(comm, body) {
 function makeReturnStmt(expr) {
     return { tag: "STMT", stmtType: "RETURN", expr };
 }
+function makeSysCall(sym, type, args) {
+    return { tag: "SYS_CALL", sym, type, args };
+}
 
 
 }}
@@ -394,12 +397,16 @@ FunctionLit     "function literal"              = "func" inputT:FnParamListType 
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 
 // # Primary expressions ===================
-
-PrimaryExpr     "primary expression"            = fn:("make"/"new") LPAREN WS? arg1:Type WS? rest:(COMMA WS? Expression WS?)* RPAREN
+PrimaryExpr     "primary expression"            = sym:("make"/"new") LPAREN WS? typeArg:Type WS? rest:(COMMA WS? Expression WS?)* RPAREN
     // Note that arg1 must be a type with `make` and `new`. This also means make, new are reserved and cannot be used as identifiers.
   {
-    const args = [arg1, ...(rest.map(r => r[2]))]
-    return { tag: fn === "make" ? "MAKE" : "NEW", args }
+    return makeSysCall(sym, typeArg, rest.map(r => r[2]));
+  }
+                                                / "__sys" LPAREN WS? sym:IDENT WS? COMMA WS? typeArg:(Type/"void") RPAREN
+    // Note that arg1 must be a type with `make` and `new`. This also means make, new are reserved and cannot be used as identifiers.
+  {
+    typeArg = typeArg === "void" ? null : typeArg;
+    return makeSysCall(sym, typeArg, []);
   }
                                                 / a:Operand b:((Selector / Index / Arguments)*)
   {

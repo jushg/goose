@@ -38,22 +38,22 @@ func main() {
                 val: "messages",
               },
               rhs: {
-                tag: "MAKE",
-                args: [
-                  {
-                    tag: "TYPE",
-                    type: {
-                      base: "CHAN",
-                      inner: {
-                        tag: "TYPE",
-                        type: {
-                          base: "STR",
-                        },
+                tag: "SYS_CALL",
+                sym: "make",
+                type: {
+                  tag: "TYPE",
+                  type: {
+                    base: "CHAN",
+                    inner: {
+                      tag: "TYPE",
+                      type: {
+                        base: "STR",
                       },
-                      mode: "DUAL",
                     },
+                    mode: "DUAL",
                   },
-                ],
+                },
+                args: [],
               },
               op: ":=",
             },

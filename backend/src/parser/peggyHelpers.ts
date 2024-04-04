@@ -188,16 +188,6 @@ export type CallObj = {
   args: ExprObj[];
 };
 
-export type MakeCallObj = {
-  tag: "MAKE";
-  args: (AnyTypeObj | ExprObj)[];
-};
-export type NewCallObj = {
-  tag: "New";
-  type: AnyTypeObj;
-  len: ExprObj | null;
-};
-
 function primaryExprReduceHelper(
   expr: ExprObj,
   op: any
@@ -240,8 +230,7 @@ export type ExprObj =
   | CallObj
   | UnaryExprObj
   | BinaryExprObj
-  | MakeCallObj
-  | NewCallObj;
+  | SysCallObj;
 
 export type ExpressionStmtObj = {
   tag: "STMT";
@@ -459,6 +448,20 @@ export type ReturnStmtObj = {
 };
 function makeReturnStmt(expr: ExprObj): ReturnStmtObj {
   return { tag: "STMT", stmtType: "RETURN", expr };
+}
+
+export type SysCallObj = {
+  tag: "SYS_CALL";
+  sym: string;
+  type: AnyTypeObj | null;
+  args: ExprObj[];
+};
+function makeSysCall(
+  sym: string,
+  type: AnyTypeObj | null,
+  args: ExprObj[]
+): SysCallObj {
+  return { tag: "SYS_CALL", sym, type, args };
 }
 
 export type SimpleStmtObj =

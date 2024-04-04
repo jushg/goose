@@ -1,20 +1,22 @@
+import { CompiledFile } from "../common/compileFile";
+import { AnyInstructionObj, InstrAddr } from "../common/instructionObj";
 import {
   ExecutionState,
   JobQueue,
   MachineState,
   STANDARD_TIME_SLICE,
 } from "../common/state";
-import { AnyInstructionObj, InstrAddr } from "../common/instructionObj";
 import { HeapAddr, HeapType, createHeapManager } from "../memory";
+import { executeInstruction } from "./instructionLogic";
 import { GoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
-import { executeInstruction } from "./instructionLogic";
-import { CompiledFile } from "../common/compileFile";
 
 export function initializeVirtualMachine(): ExecutionState {
   let memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
-  let mainJobState = createThreadControlObject(memory);
+  let mainJobState = createThreadControlObject(memory, (threadId, s) =>
+    console.log(`Thread ${threadId}: ${s}`)
+  );
 
   const startingMachineState: MachineState = {
     HEAP: new GoslingMemoryManager(createHeapManager(/* nodeCount = */ 2 ** 8)),
