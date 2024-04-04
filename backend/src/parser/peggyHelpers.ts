@@ -303,14 +303,14 @@ export function makeAssignmentStmt(
 export type IfStmtObj = {
   tag: "STMT";
   stmtType: "IF";
-  pre: ExprObj | null;
+  pre: SimpleStmtObj | null;
   cond: ExprObj;
   body: BlockObj;
   elseBody: BlockObj | IfStmtObj | null;
   label?: IdentObj;
 };
 function makeIfStmt(
-  pre: ExprObj | null,
+  pre: SimpleStmtObj | null,
   cond: ExprObj,
   body: BlockObj,
   elseBody: BlockObj | IfStmtObj | null
@@ -321,13 +321,13 @@ function makeIfStmt(
 export type SwitchStmtObj = {
   tag: "STMT";
   stmtType: "SWITCH";
-  pre: ExprObj | null;
+  pre: SimpleStmtObj | null;
   cond: ExprObj;
   cases: CaseClauseObj[];
   label?: IdentObj;
 };
 function makeSwitchStmt(
-  pre: ExprObj | null,
+  pre: SimpleStmtObj | null,
   cond: ExprObj | null,
   cases: CaseClauseObj[]
 ): SwitchStmtObj {
@@ -355,16 +355,16 @@ function makeCaseClause(
 export type ForStmtObj = {
   tag: "STMT";
   stmtType: "FOR";
-  pre: StmtObj | null;
+  pre: SimpleStmtObj | null;
   cond: ExprObj | null;
-  post: StmtObj | null;
+  post: SimpleStmtObj | null;
   body: BlockObj;
   label?: IdentObj;
 };
 function makeForStmt(
-  pre: StmtObj | null,
+  pre: SimpleStmtObj | null,
   cond: ExprObj | null,
-  post: StmtObj | null,
+  post: SimpleStmtObj | null,
   body: BlockObj
 ): ForStmtObj {
   return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
@@ -460,6 +460,15 @@ export type ReturnStmtObj = {
 function makeReturnStmt(expr: ExprObj): ReturnStmtObj {
   return { tag: "STMT", stmtType: "RETURN", expr };
 }
+
+export type SimpleStmtObj =
+  | VarDeclObj
+  | FuncDeclObj
+  | ConstDeclObj
+  | IncStmtObj
+  | DecStmtObj
+  | AssignmentStmtObj
+  | ExpressionStmtObj;
 
 export type StmtObj =
   | ExpressionStmtObj

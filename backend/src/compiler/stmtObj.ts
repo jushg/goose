@@ -85,20 +85,15 @@ export const smtMap: {
     assertStmt("IF", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    let ifScopeStmts: StmtObj[] = [];
-    if (s.pre !== null) {
-      // push into scope stmt.
-      // This is the only content of ifscope stmt as the if clause and else clause
-      // both have their own scopes.
-      throw new Error("IF pre not implemented");
-    }
-
-    let decls = scanDeclaration(ifScopeStmts);
-
+    // This is the only content of the stmt as the if clause and else clause
+    // both have their own scopes.
+    let decls = scanDeclaration(s.pre === null ? [] : [s.pre]);
     pf.instructions.push(makeEnterScopeInstruction(decls));
+
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
     }
+
     compileTagObj(s.cond, pf);
     pf.instructions.push(makeJOFInstruction(new InstrAddr(0)));
 
@@ -125,7 +120,8 @@ export const smtMap: {
     assertStmt("SWITCH", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    pf.instructions.push(makeEnterScopeInstruction([], "FOR"));
+    let decls = scanDeclaration(s.pre === null ? [] : [s.pre]);
+    pf.instructions.push(makeEnterScopeInstruction(decls, "FOR"));
 
     if (s.pre !== null) {
       compileTagObj(s.pre, pf);
@@ -133,8 +129,7 @@ export const smtMap: {
 
     compileTagObj(s.cond, pf);
 
-    // TODO: Add JofInstruction and figure this out
-
+    throw new Error("SWITCH not implemented");
     pf.instructions.push(makeExitScopeInstruction("FOR"));
   },
 
@@ -145,12 +140,10 @@ export const smtMap: {
     assertStmt("FOR", s);
     let predGotoPc = -1;
 
-    let forBodyStmts = s.body.stmts;
-    if (s.pre !== null) {
-      forBodyStmts.push(s.pre);
-    }
-
-    let decls = scanDeclaration(forBodyStmts);
+    // Note that the body has its own block to allow for redeclaration.
+    let decls = scanDeclaration(
+      [s.pre, s.post].filter((x: StmtObj | null) => x !== null) as StmtObj[]
+    );
 
     addLabelIfExist(pf.instructions.length, s.label, pf);
     pf.instructions.push(makeEnterScopeInstruction(decls, "FOR"));
@@ -169,9 +162,7 @@ export const smtMap: {
       predGotoPc = pf.instructions.length - 1;
     }
 
-    s.body.stmts.forEach((bodyStmt) => {
-      compileTagObj(bodyStmt, pf);
-    });
+    compileTagObj(s.body, pf);
 
     if (s.post !== null) {
       compileTagObj(s.post, pf);

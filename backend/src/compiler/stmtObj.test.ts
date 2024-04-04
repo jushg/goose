@@ -1,7 +1,7 @@
 import { compile } from ".";
 import { parse } from "../parser";
 
-describe.skip("compileStmt - If stmt", () => {
+describe("compileStmt - If stmt", () => {
   it("should compile if functions without else", () => {
     const testProgram = parse(`
 
