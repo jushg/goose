@@ -17,17 +17,9 @@ import Application from '../commons/application/Application';
 
 
 
-const GitHubCallback = () => import('../pages/githubCallback/GitHubCallback');
 const Playground = () => import('../pages/playground/Playground');
 const NotFound = () => import('../pages/notFound/NotFound');
 
-
-const commonChildrenRoutes: RouteObject[] = [
-  {
-    path: 'callback/github',
-    lazy: GitHubCallback
-  }
-];
 
 export const playgroundOnlyRouterConfig: RouteObject[] = [
   {
@@ -42,7 +34,6 @@ export const playgroundOnlyRouterConfig: RouteObject[] = [
         path: 'playground',
         lazy: Playground
       },
-      ...commonChildrenRoutes,
       {
         path: '*',
         lazy: NotFound
