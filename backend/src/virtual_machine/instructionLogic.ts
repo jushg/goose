@@ -20,15 +20,15 @@ export function executeInstruction(
 const instructionFn: {
   [key in OpCode]: (ins: AnyInstructionObj, es: ExecutionState) => void;
 } = {
-  [OpCode.NOP]: (ins: AnyInstructionObj, es: ExecutionState) => {
+  [OpCode.NOP]: (ins, es) => {
     es.jobState.incrPC();
   },
-  [OpCode.LDC]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.LDC]: (ins, es) => {
     assertOpType(OpCode.LDC, ins);
     es.jobState.getOS().push(getHeapNodeFromLiteral(ins.val));
     es.jobState.incrPC();
   },
-  [OpCode.DECL]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.DECL]: (ins, es) => {
     assertOpType(OpCode.DECL, ins);
     es.jobState.getRTS().assign(ins.symbol, getDefaultTypeValue(ins.val));
 
@@ -45,11 +45,11 @@ const instructionFn: {
     }
     es.jobState.incrPC();
   },
-  [OpCode.POP]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.POP]: (ins, es) => {
     es.jobState.getOS().pop();
     es.jobState.incrPC();
   },
-  [OpCode.JOF]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.JOF]: (ins, es) => {
     assertOpType(OpCode.JOF, ins);
     let topOp = es.jobState.getOS().pop();
     if (topOp.type !== HeapType.Bool) {
@@ -61,14 +61,11 @@ const instructionFn: {
       es.jobState.incrPC();
     }
   },
-  [OpCode.GOTO]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.GOTO]: (ins, es) => {
     assertOpType(OpCode.GOTO, ins);
     es.jobState.setPC(ins.addr);
   },
-  [OpCode.ENTER_SCOPE]: function (
-    ins: AnyInstructionObj,
-    es: ExecutionState
-  ): void {
+  [OpCode.ENTER_SCOPE]: (ins, es) => {
     assertOpType(OpCode.ENTER_SCOPE, ins);
     let decls: Record<string, Literal<AnyGoslingObject>> = {};
     ins.scopeDecls.forEach(([symbol, val]) => {
@@ -81,17 +78,14 @@ const instructionFn: {
 
     es.jobState.incrPC();
   },
-  [OpCode.EXIT_SCOPE]: function (
-    ins: AnyInstructionObj,
-    es: ExecutionState
-  ): void {
+  [OpCode.EXIT_SCOPE]: (ins, es) => {
     assertOpType(OpCode.EXIT_SCOPE, ins);
     ins.label
       ? es.jobState.exitSpecialFrame(ins.label)
       : es.jobState.exitFrame();
     es.jobState.incrPC();
   },
-  [OpCode.LD]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.LD]: (ins, es) => {
     assertOpType(OpCode.LD, ins);
     let val = es.jobState.getRTS().lookup(ins.symbol);
     if (val === null) {
@@ -100,7 +94,7 @@ const instructionFn: {
     es.jobState.getOS().push(val);
     es.jobState.incrPC();
   },
-  [OpCode.ASSIGN]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.ASSIGN]: (ins, es) => {
     let lhs = es.jobState.getOS().pop();
     let rhs = es.jobState.getOS().pop();
 
@@ -109,7 +103,7 @@ const instructionFn: {
     es.machineState.HEAP.set(lhs.addr, rhs);
     es.jobState.incrPC();
   },
-  [OpCode.CALL]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.CALL]: (ins, es) => {
     let fn = es.jobState.getOS().pop();
 
     if (fn.type !== HeapType.BinaryPtr || !isGoslingObject(fn)) {
@@ -118,10 +112,10 @@ const instructionFn: {
     const innerFnLambda = es.machineState.HEAP.getLambda(fn);
     es.jobState.execFn(innerFnLambda);
   },
-  [OpCode.RESET]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.RESET]: (ins, es) => {
     throw new Error("Function not implemented.");
   },
-  [OpCode.DONE]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.DONE]: (ins, es) => {
     es.machineState.IS_RUNNING = false;
   },
   [OpCode.TEST_AND_SET]: function (
@@ -130,13 +124,13 @@ const instructionFn: {
   ): void {
     throw new Error("Function not implemented.");
   },
-  [OpCode.CLEAR]: function (ins: AnyInstructionObj, es: ExecutionState): void {
+  [OpCode.CLEAR]: (ins, es) => {
     throw new Error("Function not implemented.");
   },
-  [OpCode.GOROUTINE]: function (
-    ins: AnyInstructionObj,
-    es: ExecutionState
-  ): void {
+  [OpCode.GOROUTINE]: (ins, es) => {
+    throw new Error("Function not implemented.");
+  },
+  [OpCode.SYS_CALL]: (ins, es) => {
     throw new Error("Function not implemented.");
   },
 };

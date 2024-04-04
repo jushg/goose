@@ -37,6 +37,8 @@ export enum OpCode {
   TEST_AND_SET = "TEST_AND_SET",
   CLEAR = "CLEAR",
   GOROUTINE = "GOROUTINE",
+
+  SYS_CALL = "SYS_CALL",
 }
 
 export type InstructionObj<T extends OpCode, Data = {}> = {
@@ -172,6 +174,11 @@ export type GoroutineInstructionObj = InstructionObj<OpCode.GOROUTINE>;
 export function makeGoroutineInstruction(): GoroutineInstructionObj {
   return { tag: "INSTR", op: OpCode.GOROUTINE };
 }
+
+export type SysCallInstructionObj = InstructionObj<
+  OpCode.SYS_CALL,
+  { sym: string }
+>;
 
 export type AnyInstructionObj =
   | NopInstructionObj

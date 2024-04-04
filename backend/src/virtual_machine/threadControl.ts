@@ -40,9 +40,13 @@ export function createThreadControlObject(
   }
 
   const os: GoslingOperandStackObj = {
-    push: (val: Literal<AnyGoslingObject>) => {
+    push: (val: Literal<AnyGoslingObject> | HeapAddr) => {
       _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
-      const valueObj = memory.alloc(val);
+      const valueObj =
+        val instanceof HeapAddr ? memory.get(val) : memory.alloc(val);
+
+      if (valueObj === null)
+        throw new Error("Value object for os.push() is null");
       _os = memory.allocList([valueObj.addr], _os);
     },
     pop: () => {
@@ -126,9 +130,9 @@ export function assertGoslingObject<T extends HeapType = HeapType>(
 }
 
 export type GoslingOperandStackObj = {
-  push(val: GoslingLitOrObj): void;
-  pop(): GoslingLitOrObj;
-  peek(): GoslingLitOrObj;
+  push(val: Literal<AnyGoslingObject> | HeapAddr): void;
+  pop(): AnyGoslingObject;
+  peek(): AnyGoslingObject;
   toString(): string;
   length(): number;
 };
