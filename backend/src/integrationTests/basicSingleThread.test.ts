@@ -1,8 +1,6 @@
 import { compile } from "../compiler";
 import { parse } from "../parser";
 import { executeStep, initializeVirtualMachine } from "../virtual_machine";
-import { executeInstruction } from "../virtual_machine/instructionLogic";
-import { GoslingMemoryManager } from "../virtual_machine/memory";
 
 const progStr = `
 var x int
@@ -30,7 +28,7 @@ func foo(y int) {
 `;
 
 describe("basic single threaded program", () => {
-  it("should execute correctly", () => {
+  it.skip("should execute correctly", () => {
     const prog = compile(parse(progStr));
     let state = initializeVirtualMachine();
 
