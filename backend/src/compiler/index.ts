@@ -1,20 +1,41 @@
 import { CompiledFile } from "../common/compileFile";
-import { AnyInstructionObj } from "../common/instructionObj";
-import { BlockObj, ProgramObj } from "../parser";
+import {
+  AnyInstructionObj,
+  DoneInstructionObj,
+} from "../common/instructionObj";
+import { BlockObj, CallObj, ProgramObj, StmtObj, SysCallObj } from "../parser";
 import { builtinsFnDef } from "../virtual_machine/builtins";
 import { compileTagObj } from "./compileFunc";
 
 function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
+  const callMain: CallObj = {
+    tag: "CALL",
+    func: { tag: "IDENT", val: "main" },
+    args: [],
+  };
+  const done: SysCallObj = {
+    tag: "SYS_CALL",
+    sym: "done",
+    type: null,
+    args: [],
+  };
+
   return {
     tag: "STMT",
     stmtType: "BLOCK",
     stmts: [
+      ...builtinsFnDef,
       {
         tag: "STMT",
         stmtType: "BLOCK",
-        stmts: programTopLevelDeclarations,
+        stmts: [
+          ...programTopLevelDeclarations,
+          ...[callMain, done].map((expr) => {
+            const stmt: StmtObj = { tag: "STMT", stmtType: "EXPR", expr };
+            return stmt;
+          }),
+        ],
       },
-      ...builtinsFnDef,
     ],
   };
 }
