@@ -1,37 +1,18 @@
-import { IOptions } from ".";
-import { compileParsedProgram } from "./compiler";
-import { UNKNOWN_LOCATION } from "./constants";
+import { compileParsedProgram } from "../compiler";
 import parseProgram from "./preprocessFile";
-import { Context, ParsedProgram, RecursivePartial, Result } from "./types";
-import { runProgram } from "./virtual_machine";
-
-const DEFAULT_SOURCE_OPTIONS: Readonly<IOptions> = {
-  scheduler: "async",
-  steps: 1000,
-  stepLimit: -1,
-  originalMaxExecTime: 1000,
-  useSubst: false,
-  isPrelude: false,
-  throwInfiniteLoops: true,
-  envSteps: -1,
-  shouldAddFileName: null,
-};
-
-let previousCode: {
-  files: Partial<Record<string, string>>;
-  entrypointFilePath: string;
-} | null = null;
-let isPreviousCodeTimeoutError = false;
+import { Context, Result } from "../types";
+import { runProgram } from "../virtual_machine";
+import { ProgramObj } from "../parser";
 
 export async function codeRunner(
-  parsedProgram: ParsedProgram,
+  parsedProgram: ProgramObj,
   context: Context
 ): Promise<Result> {
   try {
     return Promise.resolve({
       status: "finished",
       context,
-      value: runProgram(compileParsedProgram(parsedProgram.topLvlDecls)),
+      value: runProgram(compileParsedProgram(parsedProgram)),
     });
   } catch (error) {
     // if (
@@ -49,8 +30,7 @@ export async function codeRunner(
 export async function codeFilesRunner(
   files: Partial<Record<string, string>>,
   entrypointFilePath: string,
-  context: Context,
-  options: RecursivePartial<IOptions> = {}
+  context: Context
 ): Promise<Result> {
   const preprocessedProgram = await parseProgram(files, entrypointFilePath);
   if (!preprocessedProgram) {

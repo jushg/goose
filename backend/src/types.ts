@@ -1,11 +1,7 @@
 /*
-	This file contains definitions of some interfaces and classes that are used in Source (such as
+	This file contains definitions of some interfaces and classes that are used in Goose (such as
 	error-related classes).
 */
-
-import { AnyTagObj } from "./compiler/utils";
-
-/* tslint:disable:max-classes-per-file */
 
 /**
  * Defines functions that act as built-ins, but might rely on
@@ -20,7 +16,6 @@ export interface CustomBuiltIns {
 }
 
 export enum ErrorType {
-  IMPORT = "Import",
   RUNTIME = "Runtime",
   SYNTAX = "Syntax",
   TYPE = "Type",
@@ -56,19 +51,6 @@ export interface Rule<T extends Node> {
   checkers: {
     [name: string]: (node: T, ancestors: Node[]) => GoslangError[];
   };
-}
-
-export type ValueWrapper = LetWrapper | ConstWrapper;
-
-export interface LetWrapper {
-  kind: "let";
-  getValue: () => Value;
-  assignNewValue: <T>(newValue: T) => T;
-}
-
-export interface ConstWrapper {
-  kind: "const";
-  getValue: () => Value;
 }
 
 export interface NativeStorage {
@@ -299,7 +281,3 @@ export class EnvTreeNode {
     return newChild;
   }
 }
-
-export type ParsedProgram = {
-  topLvlDecls: [AnyTagObj];
-};

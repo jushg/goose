@@ -1,6 +1,6 @@
-import { CompiledFile } from "./common/compileFile";
-import { compileParsedProgram } from "./compiler";
-import { InterruptedError } from "./error";
+import { CompiledFile } from "../common/compileFile";
+import { compileParsedProgram } from "../compiler";
+import { InterruptedError } from "../error";
 import { codeFilesRunner } from "./fileRunner";
 import parseProgram from "./preprocessFile";
 import {
@@ -9,8 +9,7 @@ import {
   Finished,
   RecursivePartial,
   Result,
-  GoslangError,
-} from "./types";
+} from "../types";
 
 export interface IOptions {
   scheduler: "preemptive" | "async";
@@ -84,7 +83,7 @@ export async function runFilesInContext(
   context: Context,
   options: RecursivePartial<IOptions> = {}
 ): Promise<Result> {
-  return codeFilesRunner(files, entrypointFilePath, context, options);
+  return codeFilesRunner(files, entrypointFilePath, context);
 }
 
 // DONE
@@ -131,7 +130,7 @@ export async function compileFiles(
   }
 
   try {
-    return compileParsedProgram(parsedProgram.topLvlDecls);
+    return compileParsedProgram(parsedProgram);
   } catch (error) {
     // context.errors.push(error);
     return undefined;
