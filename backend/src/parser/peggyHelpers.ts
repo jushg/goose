@@ -203,22 +203,47 @@ function primaryExprReduceHelper(
   }
 }
 
+export type UnaryOpSymbol = "+" | "-" | "!" | "&" | "*" | "<-";
+
+export type BinaryOpSymbol =
+  | "=="
+  | "!="
+  | "<="
+  | "<"
+  | ">="
+  | ">"
+  | "+"
+  | "-"
+  | "|"
+  | "^"
+  | "*"
+  | "/"
+  | "%"
+  | "<<"
+  | ">>"
+  | "&"
+  | "&^";
+
 export type UnaryExprObj = {
   tag: "UNARY_EXPR";
-  op: string;
+  op: UnaryOpSymbol;
   expr: ExprObj;
 };
-export function makeUnaryExpr(expr: ExprObj, op: string): UnaryExprObj {
+export function makeUnaryExpr(expr: ExprObj, op: UnaryOpSymbol): UnaryExprObj {
   return { tag: "UNARY_EXPR", expr, op };
 }
 
 export type BinaryExprObj = {
   tag: "BINARY_EXPR";
-  op: string;
+  op: BinaryOpSymbol;
   lhs: ExprObj;
   rhs: ExprObj;
 };
-function makeBinaryExpr(lhs: ExprObj, op: string, rhs: ExprObj): BinaryExprObj {
+function makeBinaryExpr(
+  lhs: ExprObj,
+  op: BinaryOpSymbol,
+  rhs: ExprObj
+): BinaryExprObj {
   return { tag: "BINARY_EXPR", lhs, op, rhs };
 }
 
