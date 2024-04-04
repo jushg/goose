@@ -1,5 +1,5 @@
 import { FSModule } from 'browserfs/dist/node/core/FS';
-import { Context, findDeclaration, getNames, interrupt, resume, runFilesInContext } from 'js-slang';
+import { Context, findDeclaration, getNames, interrupt, resume, runFilesInContext } from 'go-slang';
 import { defineSymbol } from 'js-slang/dist/createContext';
 import { InterruptedError } from 'js-slang/dist/errors/errors';
 import { parse } from 'js-slang/dist/parser/parser';
@@ -8,7 +8,6 @@ import { Chapter, Variant } from 'js-slang/dist/types';
 import Phaser from 'phaser';
 import { SagaIterator } from 'redux-saga';
 import { call, put, race, select, StrictEffect, take } from 'redux-saga/effects';
-
 import DataVisualizer from '../../features/dataVisualizer/dataVisualizer';
 import { WORKSPACE_BASE_PATHS } from '../../pages/fileSystem/createInBrowserFileSystem';
 import {

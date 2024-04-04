@@ -1,6 +1,6 @@
 import { CompiledFile } from "../common/compileFile";
 import { compileParsedProgram } from "../compiler";
-import { InterruptedError } from "../error";
+import { InterruptedError } from "../errors";
 import { codeFilesRunner } from "./fileRunner";
 import parseProgram from "./preprocessFile";
 import {
