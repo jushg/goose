@@ -1,6 +1,6 @@
 import { MatcherFunction } from "expect";
 import { HeapAddr } from "../memory";
-import { AnyGoslingObject, GoslingListObj, Literal } from "./";
+import { AnyGoslingObject, GoslingListObj, Literal } from ".";
 import { GoslingMemoryManager } from "./memory";
 import { GoslingScopeData } from "./scope";
 
