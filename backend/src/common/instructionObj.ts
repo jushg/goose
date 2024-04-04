@@ -184,6 +184,7 @@ export type SysCallInstructionObj = InstructionObj<
       | "printOS"
       | "printHeap"
       | "triggerBreakpoint"
+      | "makeLambda"
       | "new";
     type: AnyTypeObj | null;
     argCount: number;

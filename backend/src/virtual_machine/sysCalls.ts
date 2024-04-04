@@ -1,6 +1,7 @@
-import { AnyGoslingObject } from ".";
+import { AnyGoslingObject, assertGoslingType } from ".";
 import {
   AnyInstructionObj,
+  InstrAddr,
   OpCode,
   SysCallInstructionObj,
   assertOpType,
@@ -89,6 +90,22 @@ const new_: SysCall = ({ ins, memory, thread }) => {
   });
 };
 
+const makeLambda: SysCall = ({ ins, memory, thread }) => {
+  assertOpType(OpCode.SYS_CALL, ins);
+  const { argCount } = ins;
+  if (argCount !== 1) throw new Error("Invalid arg count for makeLambda");
+
+  const rtsAddr = thread.getRTS().getTopScopeAddr();
+  const pcAddr = thread.getOS().pop();
+  assertGoslingType(HeapType.Int, pcAddr);
+  const ptrToLambda = memory.allocLambda(
+    rtsAddr,
+    InstrAddr.fromNum(pcAddr.data)
+  );
+
+  thread.getOS().push(ptrToLambda);
+};
+
 export const sysCallLogic = {
   make,
   done,
@@ -96,4 +113,5 @@ export const sysCallLogic = {
   printHeap,
   triggerBreakpoint,
   new: new_,
+  makeLambda,
 } satisfies { [key in SysCallInstructionObj["sym"]]: SysCall };
