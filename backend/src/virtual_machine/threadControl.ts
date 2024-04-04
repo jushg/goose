@@ -48,7 +48,7 @@ export function createThreadControlObject(
 
   const os: GoslingOperandStackObj = {
     push: (val: Literal<AnyGoslingObject> | HeapAddr) => {
-      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
+      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
       const valueObj =
         val instanceof HeapAddr ? memory.get(val) : memory.alloc(val);
 
@@ -62,24 +62,24 @@ export function createThreadControlObject(
       return val;
     },
     peek: () => {
-      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
+      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
       if (_os.length === 0) throw new Error("Operand stack is empty");
 
-      const val = _os.at(-1)!.value;
+      const val = _os.at(0)!.value;
       if (val === null) throw new Error("Operand stack .top is null");
       return val;
     },
     length: () => {
-      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
+      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
       return _os.length;
     },
     toString: () => {
-      _os = memory.getList(_os.at(-1)?.nodeAddr || HeapAddr.getNull());
+      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
       return (
         `OS(${_os.length}): [\n` +
         `${_os
           .map((n) => JSON.stringify(n.value, undefined, "  "))
-          .join(",\n")}` +
+          .join(", ")}` +
         `\n]`
       );
     },
