@@ -1,4 +1,4 @@
-import { compile } from ".";
+import { compileParsedProgram } from ".";
 import { parse } from "../parser";
 
 describe("compileStmt - If stmt", () => {
@@ -13,7 +13,7 @@ describe("compileStmt - If stmt", () => {
   
           `);
 
-    let pf = compile(testProgram);
+    let pf = compileParsedProgram(testProgram);
   }),
     it("should compile if functions with else", () => {
       const testProgram = parse(`
@@ -28,7 +28,7 @@ describe("compileStmt - If stmt", () => {
     
             `);
 
-      let pf = compile(testProgram);
+      let pf = compileParsedProgram(testProgram);
     }),
     it("should compile if functions with else if", () => {
       const testProgram = parse(`
@@ -45,7 +45,7 @@ describe("compileStmt - If stmt", () => {
     
             `);
 
-      let pf = compile(testProgram);
+      let pf = compileParsedProgram(testProgram);
     });
 });
 
@@ -61,7 +61,7 @@ describe("compileStmt - For stmt", () => {
   
           `);
 
-    let pf = compile(testProgram);
+    let pf = compileParsedProgram(testProgram);
   }),
     it("should compile for functions with cond and pre", () => {
       const testProgram = parse(`
@@ -75,7 +75,7 @@ describe("compileStmt - For stmt", () => {
     
             `);
 
-      let pf = compile(testProgram);
+      let pf = compileParsedProgram(testProgram);
     });
 });
 
@@ -89,7 +89,7 @@ describe("Declare Statement only", () => {
         
         `);
 
-    let pf = compile(testProgram);
+    let pf = compileParsedProgram(testProgram);
   });
 
   it("should compile multiple empty function", () => {
@@ -105,7 +105,7 @@ describe("Declare Statement only", () => {
         
         `);
 
-    let pf = compile(testProgram);
+    let pf = compileParsedProgram(testProgram);
   }),
     it("should compile multiple function", () => {
       const testProgram = parse(`
@@ -120,6 +120,6 @@ describe("Declare Statement only", () => {
         
         `);
 
-      let pf = compile(testProgram);
+      let pf = compileParsedProgram(testProgram);
     });
 });
