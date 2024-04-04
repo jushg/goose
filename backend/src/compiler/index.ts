@@ -1,19 +1,31 @@
-import { AnyInstructionObj } from "../common/instructionObj";
-import { compileTagObj } from "./compileFunc";
 import { CompiledFile } from "../common/compileFile";
-import { AnyTagObj } from "./utils";
+import { AnyInstructionObj } from "../common/instructionObj";
+import { BlockObj, ProgramObj } from "../parser";
+import { sysCallFunctionDefs } from "../virtual_machine/sysCalls";
+import { compileTagObj } from "./compileFunc";
 
-export function compile(parsedObjs: [AnyTagObj]): CompiledFile {
+function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
+  return {
+    tag: "STMT",
+    stmtType: "BLOCK",
+    stmts: [
+      {
+        tag: "STMT",
+        stmtType: "BLOCK",
+        stmts: programTopLevelDeclarations,
+      },
+      ...sysCallFunctionDefs,
+    ],
+  };
+}
+
+export function compile(programTopLevelDeclarations: ProgramObj): CompiledFile {
   let pf: CompiledFile = {
     instructions: new Array<AnyInstructionObj>(),
     labelMap: {},
     gotoLabelMap: {},
-    topLevelDecl: new Array<number>(),
   };
-  parsedObjs.forEach((parsedObj) => {
-    pf.topLevelDecl.push(pf.instructions.length);
-    compileTagObj(parsedObj, pf);
-  });
 
+  compileTagObj(addGlobalEnv(programTopLevelDeclarations), pf);
   return pf;
 }

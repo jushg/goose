@@ -76,9 +76,9 @@ export function makeIdent(val: string): IdentObj {
   return { tag: "IDENT", val };
 }
 
-export type BlockObj = { tag: "BLOCK"; stmts: StmtObj[] };
+export type BlockObj = { tag: "STMT"; stmtType: "BLOCK"; stmts: StmtObj[] };
 function makeBlock(stmts: StmtObj[]): BlockObj {
-  return { tag: "BLOCK", stmts };
+  return { tag: "STMT", stmtType: "BLOCK", stmts };
 }
 
 export type ConstDeclObj = {
@@ -188,16 +188,6 @@ export type CallObj = {
   args: ExprObj[];
 };
 
-export type MakeCallObj = {
-  tag: "MAKE";
-  args: (AnyTypeObj | ExprObj)[];
-};
-export type NewCallObj = {
-  tag: "New";
-  type: AnyTypeObj;
-  len: ExprObj | null;
-};
-
 function primaryExprReduceHelper(
   expr: ExprObj,
   op: any
@@ -240,8 +230,7 @@ export type ExprObj =
   | CallObj
   | UnaryExprObj
   | BinaryExprObj
-  | MakeCallObj
-  | NewCallObj;
+  | SysCallObj;
 
 export type ExpressionStmtObj = {
   tag: "STMT";
@@ -303,14 +292,14 @@ export function makeAssignmentStmt(
 export type IfStmtObj = {
   tag: "STMT";
   stmtType: "IF";
-  pre: ExprObj | null;
+  pre: SimpleStmtObj | null;
   cond: ExprObj;
   body: BlockObj;
   elseBody: BlockObj | IfStmtObj | null;
   label?: IdentObj;
 };
 function makeIfStmt(
-  pre: ExprObj | null,
+  pre: SimpleStmtObj | null,
   cond: ExprObj,
   body: BlockObj,
   elseBody: BlockObj | IfStmtObj | null
@@ -321,13 +310,13 @@ function makeIfStmt(
 export type SwitchStmtObj = {
   tag: "STMT";
   stmtType: "SWITCH";
-  pre: ExprObj | null;
+  pre: SimpleStmtObj | null;
   cond: ExprObj;
   cases: CaseClauseObj[];
   label?: IdentObj;
 };
 function makeSwitchStmt(
-  pre: ExprObj | null,
+  pre: SimpleStmtObj | null,
   cond: ExprObj | null,
   cases: CaseClauseObj[]
 ): SwitchStmtObj {
@@ -355,16 +344,16 @@ function makeCaseClause(
 export type ForStmtObj = {
   tag: "STMT";
   stmtType: "FOR";
-  pre: StmtObj | null;
+  pre: SimpleStmtObj | null;
   cond: ExprObj | null;
-  post: StmtObj | null;
+  post: SimpleStmtObj | null;
   body: BlockObj;
   label?: IdentObj;
 };
 function makeForStmt(
-  pre: StmtObj | null,
+  pre: SimpleStmtObj | null,
   cond: ExprObj | null,
-  post: StmtObj | null,
+  post: SimpleStmtObj | null,
   body: BlockObj
 ): ForStmtObj {
   return { tag: "STMT", stmtType: "FOR", pre, cond, post, body };
@@ -461,6 +450,29 @@ function makeReturnStmt(expr: ExprObj): ReturnStmtObj {
   return { tag: "STMT", stmtType: "RETURN", expr };
 }
 
+export type SysCallObj = {
+  tag: "SYS_CALL";
+  sym: string;
+  type: AnyTypeObj | null;
+  args: ExprObj[];
+};
+function makeSysCall(
+  sym: string,
+  type: AnyTypeObj | null,
+  args: ExprObj[]
+): SysCallObj {
+  return { tag: "SYS_CALL", sym, type, args };
+}
+
+export type SimpleStmtObj =
+  | VarDeclObj
+  | FuncDeclObj
+  | ConstDeclObj
+  | IncStmtObj
+  | DecStmtObj
+  | AssignmentStmtObj
+  | ExpressionStmtObj;
+
 export type StmtObj =
   | ExpressionStmtObj
   | ChanStmtObj
@@ -478,6 +490,7 @@ export type StmtObj =
   | DeferStmtObj
   | GoStmtObj
   | ReturnStmtObj
+  | BlockObj
   | VarDeclObj
   | ConstDeclObj
   | FuncDeclObj;

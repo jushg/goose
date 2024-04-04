@@ -19,24 +19,26 @@ export class InstrAddr {
 
 // References
 export enum OpCode {
-  NOP = 1,
-  LDC, // Load value, no type checking here
-  DECL, // Declare variable
-  POP,
-  JOF,
-  GOTO,
-  ENTER_SCOPE,
-  EXIT_SCOPE,
-  LD,
-  ASSIGN,
-  CALL, // Now call instr doesn't create stack space
-  RESET,
-  DONE,
+  NOP = "NOP",
+  LDC = "LDC", // Load value, no type checking here
+  DECL = "DECL", // Declare variable
+  POP = "POP",
+  JOF = "JOF",
+  GOTO = "GOTO",
+  ENTER_SCOPE = "ENTER_SCOPE",
+  EXIT_SCOPE = "EXIT_SCOPE",
+  LD = "LD",
+  ASSIGN = "ASSIGN",
+  CALL = "CALL", // Now call instr doesn't create stack space
+  RESET = "RESET",
+  DONE = "DONE",
 
   // Concurrent instructs, atomic, use for concurrent constructs
-  TEST_AND_SET = 1000,
-  CLEAR,
-  GOROUTINE,
+  TEST_AND_SET = "TEST_AND_SET",
+  CLEAR = "CLEAR",
+  GOROUTINE = "GOROUTINE",
+
+  SYS_CALL = "SYS_CALL",
 }
 
 export type InstructionObj<T extends OpCode, Data = {}> = {
@@ -173,6 +175,28 @@ export function makeGoroutineInstruction(): GoroutineInstructionObj {
   return { tag: "INSTR", op: OpCode.GOROUTINE };
 }
 
+export type SysCallInstructionObj = InstructionObj<
+  OpCode.SYS_CALL,
+  {
+    sym:
+      | "make"
+      | "done"
+      | "printOS"
+      | "printHeap"
+      | "triggerBreakpoint"
+      | "new";
+    type: AnyTypeObj | null;
+    argCount: number;
+  }
+>;
+export function makeSysCallInstruction(
+  sym: SysCallInstructionObj["sym"],
+  type: AnyTypeObj | null,
+  argCount: number
+): SysCallInstructionObj {
+  return { tag: "INSTR", op: OpCode.SYS_CALL, sym, type, argCount };
+}
+
 export type AnyInstructionObj =
   | NopInstructionObj
   | LdcInstructionObj
@@ -189,7 +213,8 @@ export type AnyInstructionObj =
   | DoneInstructionObj
   | TestAndSetInstructionObj
   | ClearInstructionObj
-  | GoroutineInstructionObj;
+  | GoroutineInstructionObj
+  | SysCallInstructionObj;
 
 export function isOpType<T extends OpCode>(
   val: T,

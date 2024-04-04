@@ -68,6 +68,16 @@ describe("Test memory manager and thread control object", () => {
         } satisfies Record<string, Literal<AnyGoslingObject>>;
         t.addFrame(staticDeclarations);
         t.incrPC();
+
+        expect(t.getRTS().getScopeData()).toMatchObject([
+          {
+            env: {
+              x: expect.anything(),
+              main: expect.anything(),
+              foo: expect.anything(),
+            },
+          },
+        ]);
       },
 
       1: (m, t) => {
@@ -252,7 +262,7 @@ describe("Test memory manager and thread control object", () => {
     };
 
     memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
-    let threadControlObj = createThreadControlObject(memory);
+    let threadControlObj = createThreadControlObject(memory, () => {});
 
     while (!isDone) {
       /*
