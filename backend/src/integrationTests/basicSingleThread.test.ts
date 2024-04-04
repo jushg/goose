@@ -39,7 +39,7 @@ describe("basic single threaded program", () => {
     const pcExecutionOrder: number[] = [];
     const maxInstrExecutions = 100;
 
-    console.dir(prog.instructions);
+    console.dir(prog.instructions, { depth: null });
 
     while (getPC() !== prog.instructions.length) {
       if (pcExecutionOrder.length > maxInstrExecutions)

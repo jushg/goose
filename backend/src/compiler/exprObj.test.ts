@@ -16,13 +16,5 @@ describe("compileExpr - Call Statement", () => {
           `);
 
     let pf = compile(testProgram);
-
-    // const expectedCall: CallInstructionObj = {
-    //   tag: "INSTR",
-    //   op: OpCode.CALL,
-    //   args: 2,
-    // };
-
-    // expect(pf.instructions).toContain();
   });
 });
