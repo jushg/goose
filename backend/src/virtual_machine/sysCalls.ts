@@ -6,7 +6,6 @@ import {
   assertOpType,
 } from "../common/instructionObj";
 import { HeapAddr, HeapType } from "../memory";
-import { FuncDeclObj, SysCallObj } from "../parser";
 import { GoslingMemoryManager } from "./memory";
 import { ThreadControlObject } from "./threadControl";
 
@@ -98,34 +97,3 @@ export const sysCallLogic = {
   triggerBreakpoint,
   new: new_,
 } satisfies { [key in SysCallInstructionObj["sym"]]: SysCall };
-
-export const sysCallFunctionDefs = Object.keys(sysCallLogic)
-  .filter(
-    (key: string) =>
-      // goose.peggy ensures that make and new are converted to SysCallObj.
-      // Therefore, we do not need to create fn definitions for them.
-      key !== "make" && key !== "new"
-  )
-  .map((key: string) => {
-    return {
-      tag: "SYS_CALL",
-      sym: key,
-      type: null,
-      args: [],
-    } satisfies SysCallObj;
-  })
-  .map((sysCall) => {
-    const key = sysCall.sym;
-    return {
-      tag: "STMT",
-      stmtType: "FUNC_DECL",
-      ident: { tag: "IDENT", val: key },
-      input: [],
-      returnT: null,
-      body: {
-        tag: "STMT",
-        stmtType: "BLOCK",
-        stmts: [{ tag: "STMT", stmtType: "EXPR", expr: sysCall }],
-      },
-    } satisfies FuncDeclObj;
-  });

@@ -63,16 +63,36 @@ export function getStmtLogic(
       return (s, pf) => {
         assertStmt("INC", s);
         addLabelIfExist(pf.instructions.length, s.label, pf);
-        let unaryExprObj = makeUnaryExpr(s.expr, "++");
-        compileTagObj(unaryExprObj, pf);
+
+        const converted = makeAssignmentStmt(s.expr, "=", {
+          tag: "BINARY_EXPR",
+          op: "+",
+          lhs: s.expr,
+          rhs: {
+            tag: "LITERAL",
+            type: { tag: "TYPE", type: { base: "INT" } },
+            val: 1,
+          },
+        });
+        compileTagObj(converted, pf);
       };
 
     case "DEC":
       return (s, pf) => {
         assertStmt("DEC", s);
         addLabelIfExist(pf.instructions.length, s.label, pf);
-        let unaryExprObj = makeUnaryExpr(s.expr, "--");
-        compileTagObj(unaryExprObj, pf);
+
+        const converted = makeAssignmentStmt(s.expr, "=", {
+          tag: "BINARY_EXPR",
+          op: "-",
+          lhs: s.expr,
+          rhs: {
+            tag: "LITERAL",
+            type: { tag: "TYPE", type: { base: "INT" } },
+            val: 1,
+          },
+        });
+        compileTagObj(converted, pf);
       };
 
     case "ASSIGN":
