@@ -5,16 +5,16 @@ import { compileTagObj } from "./compileFunc";
 
 function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
   return {
-    tag: "BLOCK",
-    stmts:
-      // [
-      // { tag: "BLOCK", stmts: builtins }
-      // {
-      //   tag: "BLOCK",
-      // stmts:
-      programTopLevelDeclarations,
-    // },
-    // ],
+    tag: "STMT",
+    stmtType: "BLOCK",
+    stmts: [
+      // { tag: "STMT", stmtType: "BLOCK", stmts: builtins }
+      {
+        tag: "STMT",
+        stmtType: "BLOCK",
+        stmts: programTopLevelDeclarations,
+      },
+    ],
   };
 }
 

@@ -1,4 +1,4 @@
-import { AnyTypeObj, IdentObj, ProgramObj, TypeObj, parse } from ".";
+import { AnyTypeObj, IdentObj, ProgramObj, parse } from ".";
 
 describe("peggy parsing tests", () => {
   test("arbitrary parsing test", () => {
@@ -27,7 +27,8 @@ func main() {
         input: [],
         returnT: null,
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [
             {
               tag: "STMT",
@@ -72,7 +73,8 @@ func main() {
                     },
                   },
                   body: {
-                    tag: "BLOCK",
+                    tag: "STMT",
+                    stmtType: "BLOCK",
                     stmts: [
                       {
                         tag: "STMT",
@@ -164,7 +166,8 @@ func x() int {
       {
         body: {
           stmts: [],
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
         },
         ident: {
           tag: "IDENT",
@@ -193,7 +196,8 @@ func x() int {
               tag: "STMT",
             },
           ],
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
         },
         ident: {
           tag: "IDENT",
@@ -293,7 +297,8 @@ func x() int {
                     tag: "STMT",
                   },
                 ],
-                tag: "BLOCK",
+                tag: "STMT",
+                stmtType: "BLOCK",
               },
               cond: {
                 lhs: {
@@ -344,7 +349,8 @@ func x() int {
               tag: "STMT",
             },
           ],
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
         },
         ident: {
           tag: "IDENT",
@@ -411,7 +417,8 @@ func x() int {
             {
               body: {
                 stmts: [],
-                tag: "BLOCK",
+                tag: "STMT",
+                stmtType: "BLOCK",
               },
               cond: null,
               post: null,
@@ -420,7 +427,8 @@ func x() int {
               tag: "STMT",
             },
           ],
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
         },
         ident: {
           tag: "IDENT",
@@ -540,7 +548,8 @@ func x() int {
               tag: "STMT",
             },
           ],
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
         },
         ident: {
           tag: "IDENT",
@@ -667,7 +676,8 @@ func x() int {
         ],
         returnT: null,
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [],
         },
       },
@@ -706,7 +716,8 @@ func x() int {
         ],
         returnT: null,
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [],
         },
       },
@@ -750,7 +761,8 @@ func x() int {
           },
         },
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [
             {
               tag: "STMT",
@@ -854,7 +866,8 @@ func x() int {
           },
         },
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [
             {
               tag: "STMT",
@@ -916,7 +929,8 @@ L1:   for {
                     tag: "STMT",
                   },
                 ],
-                tag: "BLOCK",
+                tag: "STMT",
+                stmtType: "BLOCK",
               },
               cond: null,
               label: {
@@ -929,7 +943,8 @@ L1:   for {
               tag: "STMT",
             },
           ],
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
         },
         ident: {
           tag: "IDENT",
@@ -976,7 +991,8 @@ L1:   for {
         input: [],
         returnT: null,
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [
             {
               tag: "STMT",
@@ -1207,7 +1223,8 @@ L1:   for {
         input: [],
         returnT: null,
         body: {
-          tag: "BLOCK",
+          tag: "STMT",
+          stmtType: "BLOCK",
           stmts: [
             {
               tag: "STMT",

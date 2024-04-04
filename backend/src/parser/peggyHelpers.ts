@@ -76,9 +76,9 @@ export function makeIdent(val: string): IdentObj {
   return { tag: "IDENT", val };
 }
 
-export type BlockObj = { tag: "BLOCK"; stmts: StmtObj[] };
+export type BlockObj = { tag: "STMT"; stmtType: "BLOCK"; stmts: StmtObj[] };
 function makeBlock(stmts: StmtObj[]): BlockObj {
-  return { tag: "BLOCK", stmts };
+  return { tag: "STMT", stmtType: "BLOCK", stmts };
 }
 
 export type ConstDeclObj = {
@@ -478,6 +478,7 @@ export type StmtObj =
   | DeferStmtObj
   | GoStmtObj
   | ReturnStmtObj
+  | BlockObj
   | VarDeclObj
   | ConstDeclObj
   | FuncDeclObj;

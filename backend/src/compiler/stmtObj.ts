@@ -20,18 +20,26 @@ import {
 } from "../parser";
 
 import { CompiledFile } from "../common/compileFile";
+import { compileTagObj } from "./compileFunc";
 import {
   addLabelIfExist,
   assertStmt,
   assertTag,
-  isTag,
   scanDeclaration,
 } from "./utils";
-import { compileTagObj } from "./compileFunc";
 
 export const smtMap: {
-  [key: string]: (s: StmtObj, pf: CompiledFile) => void;
+  [key in StmtObj["stmtType"]]: (s: StmtObj, pf: CompiledFile) => void;
 } = {
+  BLOCK: (s, pf) => {
+    assertStmt("BLOCK", s);
+    let decls = scanDeclaration(s.stmts);
+    pf.instructions.push(makeEnterScopeInstruction(decls));
+    s.stmts.forEach((stmt) => {
+      compileTagObj(stmt, pf);
+    });
+    pf.instructions.push(makeExitScopeInstruction());
+  },
   EXPR: (s, pf) => {
     assertStmt("EXPR", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
@@ -42,7 +50,7 @@ export const smtMap: {
     addLabelIfExist(pf.instructions.length, s.label, pf);
     compileTagObj(s.lhs, pf);
     compileTagObj(s.rhs, pf);
-    // TODO: Add SendInstruction
+    throw new Error("SEND not implemented");
   },
 
   INC: (s, pf) => {
@@ -77,13 +85,14 @@ export const smtMap: {
     assertStmt("IF", s);
     addLabelIfExist(pf.instructions.length, s.label, pf);
 
-    let ifScopeStmts = s.body.stmts;
+    let ifScopeStmts: StmtObj[] = [];
     if (s.pre !== null) {
-      // ifScopeStmts.push(s.pre);
+      // push into scope stmt.
+      // This is the only content of ifscope stmt as the if clause and else clause
+      // both have their own scopes.
+      throw new Error("IF pre not implemented");
     }
-    if (s.elseBody !== null && isTag("BLOCK", s.elseBody)) {
-      ifScopeStmts.concat(s.elseBody.stmts);
-    }
+
     let decls = scanDeclaration(ifScopeStmts);
 
     pf.instructions.push(makeEnterScopeInstruction(decls));
@@ -95,24 +104,16 @@ export const smtMap: {
 
     let jofPc = pf.instructions.length - 1;
 
-    s.body.stmts.forEach((bodyStmt) => {
-      compileTagObj(bodyStmt, pf);
-    });
-
+    compileTagObj(s.body, pf);
     pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
     let gotoPc = pf.instructions.length - 1;
+
     pf.instructions[jofPc] = makeJOFInstruction(
       new InstrAddr(pf.instructions.length)
     );
 
     if (s.elseBody !== null) {
-      if (isTag("STMT", s.elseBody)) {
-        compileTagObj(s.elseBody, pf);
-      } else {
-        s.elseBody.stmts.forEach((elseBodyStmt) => {
-          compileTagObj(elseBodyStmt, pf);
-        });
-      }
+      compileTagObj(s.elseBody, pf);
     }
     pf.instructions[gotoPc] = makeGOTOInstruction(
       new InstrAddr(pf.instructions.length)

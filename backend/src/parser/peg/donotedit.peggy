@@ -34,7 +34,7 @@ function makeIdent(val) {
     return { tag: "IDENT", val };
 }
 function makeBlock(stmts) {
-    return { tag: "BLOCK", stmts };
+    return { tag: "STMT", stmtType: "BLOCK", stmts };
 }
 function makeConstDecl(ident, type, val) {
     return { tag: "STMT", stmtType: "CONST_DECL", ident, type, val };
