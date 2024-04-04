@@ -7,7 +7,7 @@ import {
 } from "./";
 
 export class HeapAddr {
-  addr: number;
+  _a: string;
 
   static getNull = () => HeapAddr.fromNum(0);
 
@@ -20,16 +20,20 @@ export class HeapAddr {
     return new HeapAddr(pointer);
   }
 
+  toNum(): number {
+    return parseInt(this._a, 16);
+  }
+
   isNull() {
-    return this.addr === HeapAddr.getNull().addr;
+    return this.toNum() === HeapAddr.getNull().toNum();
   }
 
   private constructor(address: number) {
-    this.addr = address;
+    this._a = `0x${address.toString(16)}`;
   }
 
   toString(): string {
-    return `0x${this.addr.toString(16)}`;
+    return `H: 0x${this.toNum().toString(16)}`;
   }
 }
 
@@ -132,9 +136,9 @@ export class HeapInBytes {
     if (heapVal.type === HeapType.Bool || heapVal.type === HeapType.Int) {
       // For primitive types, child is empty.
     } else if (heapVal.type === HeapType.BinaryPtr) {
-      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child1.addr);
+      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child1.toNum());
     } else if (heapVal.type === HeapType.String) {
-      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.next.addr);
+      child = HeapInBytes.convertPrimitiveDataToBytes(heapVal.next.toNum());
     } else {
       const _: never = heapVal;
     }
@@ -151,7 +155,7 @@ export class HeapInBytes {
     ) {
       data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.data);
     } else if (heapVal.type === HeapType.BinaryPtr) {
-      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child2.addr);
+      data = HeapInBytes.convertPrimitiveDataToBytes(heapVal.child2.toNum());
     }
 
     if (heapVal.type === HeapType.String) {

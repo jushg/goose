@@ -150,8 +150,8 @@ describe("GoslingMemoryManager", () => {
         const result: AnyGoslingObject | null = memoryManager.get(addr);
         expect(result).not.toBeNull();
         assertGoslingType(HeapType.BinaryPtr, result!);
-        expect(result.child1.addr).toBe(datum[idx][0].addr);
-        expect(result.child2.addr).toBe(datum[idx][1].addr);
+        expect(result.child1.toNum()).toBe(datum[idx][0].toNum());
+        expect(result.child2.toNum()).toBe(datum[idx][1].toNum());
       });
     });
   });
@@ -264,8 +264,8 @@ describe("GoslingMemoryManager", () => {
         const result: AnyGoslingObject | null = memoryManager.get(addr);
         expect(result).not.toBeNull();
         assertGoslingType(HeapType.BinaryPtr, result!);
-        expect(result.child1.addr).toBe(datum[idx][0].addr);
-        expect(result.child2.addr).toBe(datum[idx][1].addr);
+        expect(result.child1.toNum()).toBe(datum[idx][0].toNum());
+        expect(result.child2.toNum()).toBe(datum[idx][1].toNum());
       });
     });
   });
@@ -282,7 +282,7 @@ describe("GoslingMemoryManager", () => {
         memoryManager.get(allocatedAddress);
       expect(result).not.toBeNull();
       assertGoslingType(HeapType.BinaryPtr, result!);
-      expect(result.child1.addr).toBe(closureAddr.addr);
+      expect(result.child1.toNum()).toBe(closureAddr.toNum());
       expect((memoryManager.get(result.child2)! as any).data).toBe(pcAddr.addr);
     });
 
@@ -326,8 +326,8 @@ describe("GoslingMemoryManager", () => {
         caller1PC.addr
       );
       expect(
-        (scopeObj.lookup("__ptrToRts") as GoslingBinaryPtrObj).child1.addr
-      ).toBe(caller1RTS.addr);
+        (scopeObj.lookup("__ptrToRts") as GoslingBinaryPtrObj).child1.toNum()
+      ).toBe(caller1RTS.toNum());
       {
         const x = scopeObj.lookup("foo")!;
         assertGoslingType(HeapType.Int, x);
@@ -336,8 +336,8 @@ describe("GoslingMemoryManager", () => {
       {
         const x = scopeObj.lookup("bar")!;
         assertGoslingType(HeapType.BinaryPtr, x);
-        expect(x.child1.addr).toBe(f1.bar.child1.addr);
-        expect(x.child2.addr).toBe(f1.bar.child2.addr);
+        expect(x.child1.toNum()).toBe(f1.bar.child1.toNum());
+        expect(x.child2.toNum()).toBe(f1.bar.child2.toNum());
       }
       {
         const x = scopeObj.lookup("baz")!;
@@ -352,7 +352,7 @@ describe("GoslingMemoryManager", () => {
           "CALL"
         );
         expect(pc.addr).toBe(caller1PC.addr);
-        expect(rts.getTopScopeAddr().addr).toBe(caller1RTS.addr);
+        expect(rts.getTopScopeAddr().toNum()).toBe(caller1RTS.toNum());
         // scopeObj = enclosing;
 
         // Note, usually here we would reset scopeObj = enclosing, but we want to stay in the call for
@@ -375,7 +375,7 @@ describe("GoslingMemoryManager", () => {
       const preF2Addr = scopeObj.getTopScopeAddr();
       scopeObj = memoryManager.allocNewFrame(scopeObj, f2);
       const f2Addr = scopeObj.getTopScopeAddr();
-      expect(f2Addr.addr).not.toBe(f1Addr.addr);
+      expect(f2Addr.toNum()).not.toBe(f1Addr.toNum());
 
       {
         const x = scopeObj.lookup("foo")!;
@@ -385,8 +385,8 @@ describe("GoslingMemoryManager", () => {
       {
         const x = scopeObj.lookup("bar")!;
         assertGoslingType(HeapType.BinaryPtr, x);
-        expect(x.child1.addr).toBe(f2.bar.child1.addr);
-        expect(x.child2.addr).toBe(f2.bar.child2.addr);
+        expect(x.child1.toNum()).toBe(f2.bar.child1.toNum());
+        expect(x.child2.toNum()).toBe(f2.bar.child2.toNum());
       }
       {
         const x = scopeObj.lookup("baz")!;
@@ -402,7 +402,7 @@ describe("GoslingMemoryManager", () => {
       // Exit scope back to callee f1
       {
         const enclosing = memoryManager.getEnclosingFrame(scopeObj);
-        expect(enclosing.getTopScopeAddr().addr).toBe(preF2Addr.addr);
+        expect(enclosing.getTopScopeAddr().toNum()).toBe(preF2Addr.toNum());
 
         scopeObj = enclosing;
       }
@@ -417,8 +417,8 @@ describe("GoslingMemoryManager", () => {
         caller2PC.addr
       );
       expect(
-        (scopeObj.lookup("__ptrToRts") as GoslingBinaryPtrObj).child1.addr
-      ).toBe(caller2RTS.addr);
+        (scopeObj.lookup("__ptrToRts") as GoslingBinaryPtrObj).child1.toNum()
+      ).toBe(caller2RTS.toNum());
 
       {
         const x = scopeObj.lookup("foo")!;
@@ -428,8 +428,8 @@ describe("GoslingMemoryManager", () => {
       {
         const x = scopeObj.lookup("bar")!;
         assertGoslingType(HeapType.BinaryPtr, x);
-        expect(x.child1.addr).toBe(f1.bar.child1.addr);
-        expect(x.child2.addr).toBe(f1.bar.child2.addr);
+        expect(x.child1.toNum()).toBe(f1.bar.child1.toNum());
+        expect(x.child2.toNum()).toBe(f1.bar.child2.toNum());
       }
       {
         const x = scopeObj.lookup("baz")!;
