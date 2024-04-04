@@ -1,4 +1,4 @@
-import { compile } from "../compiler";
+import { compileParsedProgram } from "../compiler";
 import { parse } from "../parser";
 import { executeStep, initializeVirtualMachine } from "../virtual_machine";
 
@@ -29,7 +29,7 @@ func foo(y int) {
 
 describe("basic single threaded program", () => {
   it.skip("should execute correctly", () => {
-    const prog = compile(parse(progStr));
+    const prog = compileParsedProgram(parse(progStr));
     let state = initializeVirtualMachine();
 
     const getMemory = () => state.machineState.HEAP;

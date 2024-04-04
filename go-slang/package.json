@@ -1,7 +1,7 @@
 {
-  "name": "backend",
+  "name": "go-slang",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.js",
   "license": "MIT",
   "scripts": {
     "updateParser": "npm run updatePeggySource && peggy -o src/parser/peg/index.js --format es src/parser/peg/donotedit.peggy",
@@ -12,7 +12,9 @@
     "updatePeggySource_buildFile_fromPEG": "cat src/parser/peg/goose.peggy >> src/parser/peg/donotedit.peggy",
     "updatePeggySource_rmTranspiledFile": "rm src/parser/peggyHelpers.js",
     "updatePeggySource": "npm run updatePeggySource_transpileHelpersTs && npm run updatePeggySource_wipeFile && npm run updatePeggySource_buildFile && npm run updatePeggySource_rmTranspiledFile",
-    "test": "npm run updateParser > /dev/null && tsc && jest"
+    "test": "npm run updateParser > /dev/null && tsc && jest",
+    "build": "yarn build:slang",
+    "build:slang": "tsc --project tsconfig.json"
   },
   "dependencies": {
     "peggy": "^4.0.2"

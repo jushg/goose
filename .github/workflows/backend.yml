@@ -1,4 +1,4 @@
-name: Backend CI
+name: Go-slang CI
 on:
   push:
     branches: "main"
@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./backend
+        working-directory: ./go-slang
     steps:
       - uses: actions/checkout@v2
       - name: Install modules
