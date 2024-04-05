@@ -1,4 +1,4 @@
-import { CompiledFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compiledFile";
 import { AnyInstructionObj, InstrAddr } from "../common/instructionObj";
 import {
   ExecutionState,

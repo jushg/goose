@@ -19,12 +19,13 @@ import {
   NilTypeObj,
   StmtObj,
   makeAssignmentStmt,
+  makeBoolLiteral,
   makeFunctionType,
   makeUnaryExpr,
   makeVarDecl,
 } from "../parser";
 
-import { CompiledFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compiledFile";
 import { compileTagObj } from "./compileFunc";
 import {
   addLabelIfExist,
@@ -180,15 +181,25 @@ export function getStmtLogic(
     case "FOR":
       return (s, pf) => {
         assertStmt("FOR", s);
-        let predGotoPc = -1;
+        let predJofPc = -1;
+        let endJofPc = -1;
 
         // Note that the body has its own block to allow for redeclaration.
+
+        // Logic to exit the loop properly
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(true)));
+
         let decls = scanDeclaration(
           [s.pre, s.post].filter((x: StmtObj | null) => x !== null) as StmtObj[]
         );
 
         addLabelIfExist(pf.instructions.length, s.label, pf);
         pf.instructions.push(makeEnterScopeInstruction(decls, "FOR"));
+
+        // Logic to exit the loop properly
+        pf.instructions.push(makeJOFInstruction(new InstrAddr(0)));
+        endJofPc = pf.instructions.length - 1;
+
         if (s.pre !== null) {
           compileTagObj(s.pre, pf);
         }
@@ -197,11 +208,8 @@ export function getStmtLogic(
 
         if (s.cond !== null) {
           compileTagObj(s.cond, pf);
-          pf.instructions.push(
-            makeJOFInstruction(new InstrAddr(pf.instructions.length + 1))
-          );
-          pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
-          predGotoPc = pf.instructions.length - 1;
+          pf.instructions.push(makeJOFInstruction(new InstrAddr(0)));
+          predJofPc = pf.instructions.length - 1;
         }
 
         compileTagObj(s.body, pf);
@@ -211,24 +219,31 @@ export function getStmtLogic(
         }
 
         pf.instructions.push(makeGOTOInstruction(new InstrAddr(startPc)));
-        if (predGotoPc !== -1) {
-          pf.instructions[predGotoPc] = makeGOTOInstruction(
+        if (predJofPc !== -1) {
+          pf.instructions[predJofPc] = makeJOFInstruction(
             new InstrAddr(pf.instructions.length)
           );
         }
 
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(false))); // False to let JOF break
         pf.instructions.push(makeExitScopeInstruction("FOR"));
+
+        pf.instructions[endJofPc] = makeJOFInstruction(
+          new InstrAddr(pf.instructions.length)
+        );
       };
 
     case "BREAK":
       return (s, pf) => {
         assertStmt("BREAK", s);
-        throw new Error("BREAK not implemented");
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(false))); // False to break
+        pf.instructions.push(makeExitScopeInstruction("FOR"));
       };
 
     case "CONTINUE":
       return (s, pf) => {
         assertStmt("CONTINUE", s);
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(true))); // True to continue
         pf.instructions.push(makeExitScopeInstruction("FOR"));
       };
 

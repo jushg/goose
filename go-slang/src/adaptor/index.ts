@@ -1,4 +1,4 @@
-import { CompiledFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compiledFile";
 import { compileParsedProgram } from "../compiler";
 import { InterruptedError } from "../errors";
 import { codeFilesRunner } from "./fileRunner";

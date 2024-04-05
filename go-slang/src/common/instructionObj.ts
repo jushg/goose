@@ -1,4 +1,10 @@
-import { AnyLiteralObj, AnyTypeObj, FuncLiteralObj } from "../parser";
+import {
+  AnyLiteralObj,
+  AnyTypeObj,
+  BinaryOpSymbol,
+  FuncLiteralObj,
+  UnaryOpSymbol,
+} from "../parser";
 import { SpecialFrameLabels } from "../virtual_machine/memory";
 
 export class InstrAddr {
@@ -39,6 +45,7 @@ export enum OpCode {
   GOROUTINE = "GOROUTINE",
 
   SYS_CALL = "SYS_CALL",
+  ALU = "ALU",
 }
 
 export type InstructionObj<T extends OpCode, Data = {}> = {
@@ -200,6 +207,23 @@ export function makeSysCallInstruction(
   return { tag: "INSTR", op: OpCode.SYS_CALL, sym, type, argCount };
 }
 
+export type AluInstructionObj = InstructionObj<
+  OpCode.ALU,
+  { binary: BinaryOpSymbol } | { unary: UnaryOpSymbol }
+>;
+
+export function makeBinaryAluInstruction(
+  binary: BinaryOpSymbol
+): AluInstructionObj {
+  return { tag: "INSTR", op: OpCode.ALU, binary };
+}
+
+export function makeUnaryAluInstruction(
+  unary: UnaryOpSymbol
+): AluInstructionObj {
+  return { tag: "INSTR", op: OpCode.ALU, unary };
+}
+
 export type AnyInstructionObj =
   | NopInstructionObj
   | LdcInstructionObj
@@ -217,7 +241,8 @@ export type AnyInstructionObj =
   | TestAndSetInstructionObj
   | ClearInstructionObj
   | GoroutineInstructionObj
-  | SysCallInstructionObj;
+  | SysCallInstructionObj
+  | AluInstructionObj;
 
 export function isOpType<T extends OpCode>(
   val: T,

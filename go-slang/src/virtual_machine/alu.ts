@@ -3,7 +3,6 @@ import { AnyInstructionObj } from "../common/instructionObj";
 import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
 import { BinaryOpSymbol, UnaryOpSymbol } from "../parser";
-import { assertGoslingObject } from "./threadControl";
 
 export function getUnaryOpLogic(
   key: UnaryOpSymbol

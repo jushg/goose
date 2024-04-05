@@ -22,8 +22,13 @@ func foo(y int) {
     var baz string
     var bay string
     x = x + y
-    if x < 16 {
+    if x < 4 {
         foo(y * 2)
+    }
+
+    for i := 0; i < 3; i = i + 1 {
+      baz = "BAZ"
+      bay = "BAY"
     }
 }
 `;
@@ -46,7 +51,7 @@ describe("basic single threaded program", () => {
       );
 
     const pcExecutionOrder: number[] = [];
-    const maxInstrExecutions = 100;
+    const maxInstrExecutions = 400;
 
     console.dir(
       prog.instructions.map((a, idx) => {
@@ -60,8 +65,8 @@ describe("basic single threaded program", () => {
 
       pcExecutionOrder.push(getPC());
       if (
-        prog.instructions[getPC()].op === OpCode.ENTER_SCOPE ||
-        prog.instructions[getPC()].op === OpCode.EXIT_SCOPE
+        prog.instructions[getPC()].op === OpCode.EXIT_SCOPE ||
+        prog.instructions[getPC()].op === OpCode.ENTER_SCOPE
       ) {
         printRts();
       }
