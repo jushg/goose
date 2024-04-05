@@ -2,6 +2,7 @@ import { OpCode } from "../common/instructionObj";
 import { compileParsedProgram } from "../compiler";
 import { parse } from "../parser";
 import { executeStep, initializeVirtualMachine } from "../virtual_machine";
+import { setBoingFoo } from "../virtual_machine/memory";
 
 const progStr = `
 var x int
@@ -49,10 +50,13 @@ describe("basic single threaded program", () => {
     const maxInstrExecutions = 100;
 
     console.dir(
-      prog.instructions.map((a, idx) => {
-        return { idx, ...a };
-      })
+      prog.instructions
+        .map((a, idx) => {
+          return { idx, ...a };
+        })
+        .slice(-10)
     );
+    setBoingFoo(true);
 
     while (getPC() !== prog.instructions.length) {
       if (pcExecutionOrder.length > maxInstrExecutions)
@@ -79,5 +83,6 @@ describe("basic single threaded program", () => {
         throw e;
       }
     }
+    setBoingFoo(false);
   });
 });
