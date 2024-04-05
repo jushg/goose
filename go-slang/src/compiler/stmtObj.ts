@@ -180,7 +180,7 @@ export function getStmtLogic(
     case "FOR":
       return (s, pf) => {
         assertStmt("FOR", s);
-        let predGotoPc = -1;
+        let predJofPc = -1;
 
         // Note that the body has its own block to allow for redeclaration.
         let decls = scanDeclaration(
@@ -197,11 +197,8 @@ export function getStmtLogic(
 
         if (s.cond !== null) {
           compileTagObj(s.cond, pf);
-          pf.instructions.push(
-            makeJOFInstruction(new InstrAddr(pf.instructions.length + 1))
-          );
-          pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
-          predGotoPc = pf.instructions.length - 1;
+          pf.instructions.push(makeJOFInstruction(new InstrAddr(0)));
+          predJofPc = pf.instructions.length - 1;
         }
 
         compileTagObj(s.body, pf);
@@ -211,8 +208,8 @@ export function getStmtLogic(
         }
 
         pf.instructions.push(makeGOTOInstruction(new InstrAddr(startPc)));
-        if (predGotoPc !== -1) {
-          pf.instructions[predGotoPc] = makeGOTOInstruction(
+        if (predJofPc !== -1) {
+          pf.instructions[predJofPc] = makeJOFInstruction(
             new InstrAddr(pf.instructions.length)
           );
         }
