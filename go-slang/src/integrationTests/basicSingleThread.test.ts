@@ -53,34 +53,15 @@ describe("basic single threaded program", () => {
     const pcExecutionOrder: number[] = [];
     const maxInstrExecutions = 400;
 
-    console.dir(
-      prog.instructions.map((a, idx) => {
-        return { idx, ...a };
-      })
-    );
-
     while (getSingleThreadStatus() !== "DONE") {
       if (pcExecutionOrder.length > maxInstrExecutions)
         expect(pcExecutionOrder).toHaveLength(0);
 
       pcExecutionOrder.push(getPC());
-      if (
-        prog.instructions[getPC()].op === OpCode.EXIT_SCOPE ||
-        prog.instructions[getPC()].op === OpCode.ENTER_SCOPE
-      ) {
-        printRts();
-      }
 
       try {
         state = executeStep(state, prog.instructions);
       } catch (e) {
-        console.dir(
-          pcExecutionOrder.map((instrIdx, stepIdx) => {
-            return { stepIdx, instrIdx, ...prog.instructions[instrIdx] };
-          })
-        );
-        printRts();
-        console.dir(pcExecutionOrder);
         throw e;
       }
     }
