@@ -37,44 +37,11 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
   }
 
   setHeapValueInBytes(addr: HeapAddr, val: number[]): void {
-    if (addr._a === "0x4a")
-      console.dir({
-        addr: addr._a,
-        foo: "set",
-        counter: counter++,
-        val: JSON.stringify(val),
-        prior: JSON.stringify(
-          Array.from(
-            new Uint8Array(
-              this.memory.buf,
-              addr.toNum() * HEAP_NODE_BYTE_TOTAL_SIZE,
-              HEAP_NODE_BYTE_TOTAL_SIZE
-            )
-          )
-        ),
-        now: Date.now(),
-      });
     const node = this.getHeapNode(addr);
     node.set(val);
   }
 
   getHeapValueInBytes(addr: HeapAddr): number[] {
-    if (addr._a === "0x4a")
-      console.dir({
-        addr: addr._a,
-        foo: "get",
-        counter: counter++,
-        prior: JSON.stringify(
-          Array.from(
-            new Uint8Array(
-              this.memory.buf,
-              addr.toNum() * HEAP_NODE_BYTE_TOTAL_SIZE,
-              HEAP_NODE_BYTE_TOTAL_SIZE
-            )
-          )
-        ),
-        now: Date.now(),
-      });
     const node = this.getHeapNode(addr);
     return Array.from(node);
   }
@@ -117,5 +84,3 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
     );
   }
 }
-
-let counter = 0;

@@ -100,15 +100,10 @@ function getInstructionLogic(
         let lhs = es.jobState.getOS().pop();
         let rhs = es.jobState.getOS().pop();
 
-        console.dir({ ASSIGN: true });
-        console.dir(lhs);
-        console.dir(rhs);
 
         // Assign with value and address
         assertGoslingObject(lhs);
         es.machineState.HEAP.set(lhs.addr, rhs);
-        console.dir(es.machineState.HEAP.get(lhs.addr));
-        console.log(es.jobState.getRTS().toString());
         es.jobState.incrPC();
       };
 
