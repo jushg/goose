@@ -111,8 +111,8 @@ export function getStmtLogic(
           };
           compileTagObj(makeVarDecl(s.lhs, placeHolderType, s.rhs), pf);
         } else {
-          compileTagObj(s.lhs, pf);
           compileTagObj(s.rhs, pf);
+          compileTagObj(s.lhs, pf);
           pf.instructions.push(makeAssignInstruction());
         }
       };
@@ -297,7 +297,6 @@ export function getStmtLogic(
         );
 
         // Assign symbol to lambda
-        pf.instructions.push(makeLdInstruction(s.ident.val));
         pf.instructions.push(
           makeLdcInstruction({
             tag: "LITERAL",
@@ -313,6 +312,7 @@ export function getStmtLogic(
           type: null,
         } satisfies SysCallInstructionObj);
 
+        pf.instructions.push(makeLdInstruction(s.ident.val));
         pf.instructions.push(makeAssignInstruction());
       };
 

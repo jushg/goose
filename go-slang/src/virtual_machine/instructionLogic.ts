@@ -38,18 +38,6 @@ function getInstructionLogic(
       return (ins, es) => {
         assertOpType(OpCode.DECL, ins);
         es.jobState.getRTS().assign(ins.symbol, getDefaultTypeValue(ins.val));
-
-        if (ins.val.type.base === "FUNC") {
-          const funcLambdaAddr = es.machineState.HEAP.allocLambda(
-            es.jobState.getRTS().getTopScopeAddr(), // main's enclosing rts
-            InstrAddr.fromNum(es.jobState.getPC().addr + 2) // main pc
-          );
-          const funcLambda = es.machineState.HEAP.get(funcLambdaAddr);
-          if (funcLambda === null) {
-            throw new Error("Lambda not assigned properly in memory");
-          }
-          es.jobState.getRTS().assign(ins.symbol, funcLambda);
-        }
         es.jobState.incrPC();
       };
 
@@ -116,8 +104,8 @@ function getInstructionLogic(
 
     case OpCode.ASSIGN:
       return (ins, es) => {
-        let lhs = es.jobState.getOS().pop();
         let rhs = es.jobState.getOS().pop();
+        let lhs = es.jobState.getOS().pop();
 
         // Assign with value and address
         assertGoslingObject(lhs);
