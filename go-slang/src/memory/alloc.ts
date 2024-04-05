@@ -30,14 +30,6 @@ export class Allocator {
     return this.alloc.getNewHeapAddresses(size);
   }
 
-  setHeapValueInBytes(addr: HeapAddr, val: number[]): void {
-    return this.alloc.setHeapValueInBytes(addr, val);
-  }
-
-  getHeapValueInBytes(addr: HeapAddr): number[] {
-    return this.alloc.getHeapValueInBytes(addr);
-  }
-
   getHeapValue(addr: HeapAddr): HeapInBytes {
     const node = this.alloc.getHeapValueInBytes(addr);
     return HeapInBytes.fromBytes(node);

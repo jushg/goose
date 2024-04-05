@@ -204,8 +204,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     try {
       return this.memory.getHeapValue(addr).toHeapValue();
     } catch (e) {
-      const bytes = this.memory.getHeapValueInBytes(addr);
-      throw new Error(`Invalid heap value at ${addr}: [ ${bytes} ]`);
+      throw new Error(`Invalid heap value at ${addr}: ${e}`);
     }
   }
 
@@ -314,3 +313,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
   }
 }
+
+var foo = false;
+var boingfoo = false;
+export const setBoingFoo = (a: boolean) => (boingfoo = a);

@@ -59,25 +59,6 @@ describe.skip("Memory Manager", () => {
     expect(spy.getNewHeapAddresses).toHaveBeenCalledWith(size);
   });
 
-  test("should set heap value in bytes", () => {
-    const addr = manager.getNewHeapAddress();
-    const val = [1, 2, 3, 4, 5, 6, 7, 8];
-
-    manager.setHeapValueInBytes(addr, val);
-
-    expect(spy.setHeapValueInBytes).toHaveBeenCalledWith(addr, val);
-  });
-
-  test("should get heap value in bytes", () => {
-    const addr = manager.getNewHeapAddress();
-    const val = [1, 2, 3, 4, 5, 6, 7, 8];
-
-    manager.setHeapValueInBytes(addr, val);
-
-    expect(manager.getHeapValueInBytes(addr)).toEqual(val);
-    expect(spy.getHeapValueInBytes).toHaveBeenCalledWith(addr);
-  });
-
   test("should be able to alloc and later read a boolean", () => {
     const values = [true, false];
     for (const val of values) {

@@ -51,14 +51,14 @@ export function getScopeObj(
   scopeData: GoslingScopeData,
   memory: GoslingMemoryManager
 ): GoslingScopeObj {
-  const start = scopeData.at(0)?.nodeAddr || HeapAddr.getNull();
-  const getScopeData = () => readScopeData(start, memory);
+  const getStart = () => scopeData.at(0)?.nodeAddr || HeapAddr.getNull();
+  const getScopeData = () => readScopeData(getStart(), memory);
   const toString = () => `[ ${getScopeData().map(scopeToString)} ]`;
 
   return {
     toString,
     getScopeData,
-    getTopScopeAddr: () => start,
+    getTopScopeAddr: () => getStart(),
 
     lookup: (symbol: string) => {
       for (const envNode of getScopeData()) {
@@ -68,7 +68,7 @@ export function getScopeObj(
         }
       }
       throw new Error(
-        `Symbol ${symbol} not found in envs at ${start}: ${toString()}`
+        `Symbol ${symbol} not found in envs at ${getStart()}: ${toString()}`
       );
     },
 
@@ -90,7 +90,7 @@ export function getScopeObj(
         }
       }
       throw new Error(
-        `Symbol ${symbol} not found in envs at ${start}: ${toString()}`
+        `Symbol ${symbol} not found in envs at ${getStart()}: ${toString()}`
       );
     },
   };

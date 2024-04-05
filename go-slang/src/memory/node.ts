@@ -291,7 +291,9 @@ export class HeapInBytes {
       }
 
       default:
-        throw new Error(`Invalid type for heap node: ${type}`);
+        throw new Error(
+          `Invalid type for heap node: ${type}: [${tag} ${childBytes} ${dataBytes}]`
+        );
     }
   }
 

@@ -91,14 +91,15 @@ function getInstructionLogic(
         if (val === null) {
           throw new Error(`Symbol ${ins.symbol} not found in envs`);
         }
-        es.jobState.getOS().push(val);
+        es.jobState.getOS().push(val.addr);
         es.jobState.incrPC();
       };
 
     case OpCode.ASSIGN:
       return (ins, es) => {
-        let rhs = es.jobState.getOS().pop();
         let lhs = es.jobState.getOS().pop();
+        let rhs = es.jobState.getOS().pop();
+
 
         // Assign with value and address
         assertGoslingObject(lhs);
