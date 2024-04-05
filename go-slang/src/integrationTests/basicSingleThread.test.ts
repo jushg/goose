@@ -22,8 +22,13 @@ func foo(y int) {
     var baz string
     var bay string
     x = x + y
-    if x < 16 {
+    if x < 4 {
         foo(y * 2)
+    }
+
+    for i := 0; i < 3; i = i + 1 {
+      baz = "BAZ"
+      bay = "BAY"
     }
 }
 `;
