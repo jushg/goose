@@ -1,7 +1,6 @@
 import { AnyGoslingObject, Literal } from ".";
 import {
   AnyInstructionObj,
-  InstrAddr,
   OpCode,
   assertOpType,
 } from "../common/instructionObj";
@@ -10,6 +9,7 @@ import { HeapAddr, HeapType } from "../memory";
 import { AnyLiteralObj, AnyTypeObj, FuncLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 import { assertGoslingObject, isGoslingObject } from "./threadControl";
+import { getBinaryOpLogic, getUnaryOpLogic } from "./alu";
 
 export function executeInstruction(
   ins: AnyInstructionObj,
@@ -150,6 +150,19 @@ function getInstructionLogic(
         }
         const sysCall = sysCallLogic[ins.sym as keyof typeof sysCallLogic];
         sysCall({ ins, memory: es.machineState.HEAP, thread: es.jobState });
+        es.jobState.incrPC();
+      };
+
+    case OpCode.ALU:
+      return (ins, es) => {
+        assertOpType(OpCode.ALU, ins);
+        if ("binary" in ins) {
+          const binaryOpLogic = getBinaryOpLogic(ins.binary);
+          binaryOpLogic(ins, es);
+        } else {
+          const unaryOpLogic = getUnaryOpLogic(ins.unary);
+          unaryOpLogic(ins, es);
+        }
         es.jobState.incrPC();
       };
 

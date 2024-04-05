@@ -24,7 +24,7 @@ import {
   makeVarDecl,
 } from "../parser";
 
-import { CompiledFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compiledFile";
 import { compileTagObj } from "./compileFunc";
 import {
   addLabelIfExist,

@@ -1,16 +1,19 @@
-import { CompiledFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compiledFile";
 import {
   InstrAddr,
   OpCode,
   SysCallInstructionObj,
   makeAssignInstruction,
+  makeBinaryAluInstruction,
   makeCallInstruction,
+  makeDeclareInstruction,
   makeEnterScopeInstruction,
   makeExitScopeInstruction,
   makeGOTOInstruction,
   makeLdInstruction,
   makeLdcInstruction,
   makeSysCallInstruction,
+  makeUnaryAluInstruction,
 } from "../common/instructionObj";
 import { AnyLiteralObj, AnyTypeObj, ExprObj, FuncLiteralObj } from "../parser";
 import { sysCallLogic } from "../virtual_machine/sysCalls";
@@ -59,6 +62,7 @@ export function getExprLogic(
         pf.instructions.push(makeEnterScopeInstruction(decls));
 
         fnLit.input.forEach((prm) => {
+          pf.instructions.push(makeDeclareInstruction(prm.ident.val, prm.type));
           pf.instructions.push(makeLdInstruction(prm.ident.val));
           pf.instructions.push(makeAssignInstruction());
         });
@@ -105,8 +109,7 @@ export function getExprLogic(
       return (s, pf) => {
         assertTag("UNARY_EXPR", s);
         compileTagObj(s.expr, pf);
-        pf.instructions.push(makeLdInstruction(s.op));
-        pf.instructions.push(makeCallInstruction(1));
+        pf.instructions.push(makeUnaryAluInstruction(s.op));
       };
 
     case "BINARY_EXPR":
@@ -115,8 +118,7 @@ export function getExprLogic(
         compileTagObj(s.rhs, pf);
         compileTagObj(s.lhs, pf);
 
-        pf.instructions.push(makeLdInstruction(s.op));
-        pf.instructions.push(makeCallInstruction(2));
+        pf.instructions.push(makeBinaryAluInstruction(s.op));
       };
 
     case "SYS_CALL":

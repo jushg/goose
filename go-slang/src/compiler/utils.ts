@@ -1,4 +1,4 @@
-import { CompiledFile } from "../common/compileFile";
+import { CompiledFile } from "../common/compiledFile";
 import {
   AnyTypeObj,
   BlockObj,

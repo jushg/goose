@@ -46,7 +46,7 @@ describe("basic single threaded program", () => {
       );
 
     const pcExecutionOrder: number[] = [];
-    const maxInstrExecutions = 100;
+    const maxInstrExecutions = 400;
 
     console.dir(
       prog.instructions.map((a, idx) => {
@@ -60,8 +60,8 @@ describe("basic single threaded program", () => {
 
       pcExecutionOrder.push(getPC());
       if (
-        prog.instructions[getPC()].op === OpCode.ENTER_SCOPE ||
-        prog.instructions[getPC()].op === OpCode.EXIT_SCOPE
+        prog.instructions[getPC()].op === OpCode.EXIT_SCOPE ||
+        prog.instructions[getPC()].op === OpCode.ENTER_SCOPE
       ) {
         printRts();
       }
