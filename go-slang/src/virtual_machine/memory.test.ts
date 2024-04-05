@@ -31,8 +31,6 @@ describe("GoslingMemoryManager", () => {
     spy = createCompoundSpy(allocator, [
       "getNewHeapAddress",
       "getNewHeapAddresses",
-      "setHeapValueInBytes",
-      "getHeapValueInBytes",
       "printHeap",
       "getNodeCount",
 

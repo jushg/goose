@@ -313,7 +313,3 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
   }
 }
-
-var foo = false;
-var boingfoo = false;
-export const setBoingFoo = (a: boolean) => (boingfoo = a);
