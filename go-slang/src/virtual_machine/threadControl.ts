@@ -5,6 +5,12 @@ import { InstrAddr } from "../common/instructionObj";
 import { HeapAddr, HeapType } from "../memory";
 import { GoslingMemoryManager, SpecialFrameLabels } from "./memory";
 
+export type ThreadStatus =
+  | "DONE"
+  | "RUNNABLE"
+  | "BREAKPOINT"
+  | "TIME_SLICE_EXCEEDED";
+
 export type ThreadControlObject = {
   getId(): string;
   getOS(): GoslingOperandStackObj;
@@ -23,8 +29,8 @@ export type ThreadControlObject = {
   exitFrame(): void;
   exitSpecialFrame(label: SpecialFrameLabels): void;
 
-  setStatus(status: "DONE" | "RUNNABLE" | "BREAKPOINT"): void;
-  getStatus(): "DONE" | "RUNNABLE" | "BREAKPOINT";
+  setStatus(status: ThreadStatus): void;
+  getStatus(): ThreadStatus;
 };
 
 let _id = 0;
@@ -38,7 +44,7 @@ export function createThreadControlObject(
   let pc = InstrAddr.fromNum(0);
   let rts = memory.getEnvs(HeapAddr.getNull());
   let _os = memory.allocList([]);
-  let _status: "DONE" | "RUNNABLE" | "BREAKPOINT" = "RUNNABLE";
+  let _status: ThreadStatus = "RUNNABLE";
 
   if (caller) {
     pc = caller.call.pcAddr;
