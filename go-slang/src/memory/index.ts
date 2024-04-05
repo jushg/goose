@@ -19,34 +19,16 @@ export const HEAP_NODE_BYTE_TOTAL_SIZE =
 export const MAX_INT = Math.floor(2 ** (8 * HEAP_NODE_BYTE_SIZE.data) / 2) - 1;
 export const MIN_INT = -Math.floor(2 ** (8 * HEAP_NODE_BYTE_SIZE.data) / 2);
 
-type EightTupleNum = [
-  number,
-  number,
-  number,
-  number,
-
-  number,
-  number,
-  number,
-  number,
-];
-
 export type IHeap = {
   nodeCount: number;
-  buf: EightTupleNum[];
+  buf: ArrayBuffer;
 };
 
 export function validateHeap(heap: IHeap) {
-  if (heap.buf[0].length !== HEAP_NODE_BYTE_TOTAL_SIZE) {
-    throw new Error(
-      "Invalid heap. Node size does not match with buf:" +
-        ` ${heap.buf[0].length} !== * ${HEAP_NODE_BYTE_TOTAL_SIZE}`
-    );
-  }
-  if (heap.buf.length !== heap.nodeCount) {
+  if (heap.buf.byteLength !== heap.nodeCount * HEAP_NODE_BYTE_TOTAL_SIZE) {
     throw new Error(
       "Invalid heap. Buffer size does not match heap size:" +
-        ` ${heap.buf.length} !== ${heap.nodeCount}`
+        ` ${heap.buf.byteLength} !== ${heap.nodeCount} * ${HEAP_NODE_BYTE_TOTAL_SIZE}`
     );
   }
 
@@ -72,10 +54,11 @@ export type IUntypedAllocator = {
 };
 
 export function createHeapManager(heapNodeCount: number): Allocator {
+  const size = heapNodeCount * HEAP_NODE_BYTE_TOTAL_SIZE;
   return new Allocator(
     new SimpleMemoryAllocator({
       nodeCount: heapNodeCount,
-      buf: new Array(heapNodeCount).fill(0).map(() => [0, 0, 0, 0, 0, 0, 0, 0]),
+      buf: new ArrayBuffer(size),
     })
   );
 }

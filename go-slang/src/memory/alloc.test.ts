@@ -23,7 +23,7 @@ describe.skip("Memory Manager", () => {
   beforeEach(() => {
     memAlloc = new SimpleMemoryAllocator({
       nodeCount,
-      buf: new Array(nodeCount).fill(0).map(() => [0, 0, 0, 0, 0, 0, 0, 0]),
+      buf: new ArrayBuffer(100 * HEAP_NODE_BYTE_TOTAL_SIZE),
     });
     spy = createCompoundSpy(memAlloc, [
       "getNewHeapAddress",
