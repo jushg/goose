@@ -1,4 +1,4 @@
-import { AnyLiteralObj, AnyTypeObj } from "../parser";
+import { AnyLiteralObj, AnyTypeObj, FuncLiteralObj } from "../parser";
 import { SpecialFrameLabels } from "../virtual_machine/memory";
 
 export class InstrAddr {
@@ -66,10 +66,12 @@ export function makeNopInstruction(): NopInstructionObj {
 
 export type LdcInstructionObj = InstructionObj<
   OpCode.LDC,
-  { val: AnyLiteralObj }
+  { val: Exclude<AnyLiteralObj, FuncLiteralObj> }
 >;
 
-export function makeLdcInstruction(val: AnyLiteralObj): LdcInstructionObj {
+export function makeLdcInstruction(
+  val: Exclude<AnyLiteralObj, FuncLiteralObj>
+): LdcInstructionObj {
   return { tag: "INSTR", op: OpCode.LDC, val: val };
 }
 

@@ -22,12 +22,18 @@ const sysCallFunctionDefs = Object.keys(sysCallLogic)
       tag: "STMT",
       stmtType: "FUNC_DECL",
       ident: { tag: "IDENT", val: key },
-      input: [],
-      returnT: null,
-      body: {
-        tag: "STMT",
-        stmtType: "BLOCK",
-        stmts: [{ tag: "STMT", stmtType: "EXPR", expr: sysCall }],
+      lit: {
+        tag: "LITERAL",
+        type: {
+          tag: "TYPE",
+          type: { base: "FUNC", inputT: [], returnT: null },
+        },
+        input: [],
+        body: {
+          tag: "STMT",
+          stmtType: "BLOCK",
+          stmts: [{ tag: "STMT", stmtType: "EXPR", expr: sysCall }],
+        },
       },
     } satisfies FuncDeclObj;
   });

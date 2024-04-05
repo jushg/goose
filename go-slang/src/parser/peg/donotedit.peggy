@@ -43,7 +43,12 @@ function makeVarDecl(ident, type, val) {
     return { tag: "STMT", stmtType: "VAR_DECL", ident, type, val };
 }
 function makeFuncDecl(ident, input, returnT, body) {
-    return { tag: "STMT", stmtType: "FUNC_DECL", ident, input, returnT, body };
+    return {
+        tag: "STMT",
+        stmtType: "FUNC_DECL",
+        ident,
+        lit: makeFuncLiteral(input, returnT, body),
+    };
 }
 function makeBoolLiteral(val) {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
@@ -57,8 +62,13 @@ function makeStrLiteralObj(val) {
 function makeNilLiteralObj() {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "NIL" } } };
 }
-function makeFuncLiteral(inputT, returnT, body) {
-    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
+function makeFuncLiteral(input, returnT, body) {
+    return {
+        tag: "LITERAL",
+        type: makeFunctionType(input.map(({ type }) => type), returnT),
+        input,
+        body,
+    };
 }
 function primaryExprReduceHelper(expr, op) {
     if (op.tag === "SELECTOR") {
@@ -391,8 +401,8 @@ IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT
 StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
   { return makeStrLiteralObj(content.join('')) }
 
-FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) WS? body:Block
-  { return makeFuncLiteral(inputT, returnT, body ) }
+FunctionLit     "function literal"              = "func" input:FnParamList WS? returnT:(Type?) WS? body:Block
+  { return makeFuncLiteral(input, returnT, body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 

@@ -48,7 +48,12 @@ function makeVarDecl(ident, type, val) {
     return { tag: "STMT", stmtType: "VAR_DECL", ident, type, val };
 }
 function makeFuncDecl(ident, input, returnT, body) {
-    return { tag: "STMT", stmtType: "FUNC_DECL", ident, input, returnT, body };
+    return {
+        tag: "STMT",
+        stmtType: "FUNC_DECL",
+        ident,
+        lit: makeFuncLiteral(input, returnT, body),
+    };
 }
 function makeBoolLiteral(val) {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
@@ -62,8 +67,13 @@ function makeStrLiteralObj(val) {
 function makeNilLiteralObj() {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "NIL" } } };
 }
-function makeFuncLiteral(inputT, returnT, body) {
-    return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
+function makeFuncLiteral(input, returnT, body) {
+    return {
+        tag: "LITERAL",
+        type: makeFunctionType(input.map(({ type }) => type), returnT),
+        input,
+        body,
+    };
 }
 function primaryExprReduceHelper(expr, op) {
     if (op.tag === "SELECTOR") {
@@ -658,7 +668,7 @@ function peg$parse(input, options) {
   var peg$f50 = function(v) { return makeBoolLiteral(v === "true") };
   var peg$f51 = function(a, b) { return makeIntLiteralObj(Number(a + b.filter(bb => bb !== "_").map(i => i[1]).join(''))) };
   var peg$f52 = function(content) { return makeStrLiteralObj(content.join('')) };
-  var peg$f53 = function(inputT, returnT, body) { return makeFuncLiteral(inputT, returnT, body ) };
+  var peg$f53 = function(input, returnT, body) { return makeFuncLiteral(input, returnT, body ) };
   var peg$f54 = function(sym, typeArg, rest) {
     return makeSysCall(sym, typeArg, rest.map(r => r[2]));
   };
@@ -4243,7 +4253,7 @@ function peg$parse(input, options) {
       if (peg$silentFails === 0) { peg$fail(peg$e125); }
     }
     if (s1 !== peg$FAILED) {
-      s2 = peg$parseFnParamListType();
+      s2 = peg$parseFnParamList();
       if (s2 !== peg$FAILED) {
         s3 = peg$parseWS();
         if (s3 === peg$FAILED) {

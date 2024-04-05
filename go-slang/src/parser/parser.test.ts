@@ -1,4 +1,4 @@
-import { AnyTypeObj, IdentObj, ProgramObj, parse } from ".";
+import { AnyTypeObj, FuncLiteralObj, IdentObj, ProgramObj, parse } from ".";
 
 describe("peggy parsing tests", () => {
   test("arbitrary parsing test", () => {
@@ -24,125 +24,132 @@ func main() {
           tag: "IDENT",
           val: "main",
         },
-        input: [],
-        returnT: null,
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [
-            {
-              tag: "STMT",
-              stmtType: "ASSIGN",
-              lhs: {
-                tag: "IDENT",
-                val: "messages",
-              },
-              rhs: {
-                tag: "SYS_CALL",
-                sym: "make",
-                type: {
-                  tag: "TYPE",
-                  type: {
-                    base: "CHAN",
-                    inner: {
-                      tag: "TYPE",
-                      type: {
-                        base: "STR",
-                      },
-                    },
-                    mode: "DUAL",
-                  },
-                },
-                args: [],
-              },
-              op: ":=",
-            },
-            {
-              tag: "STMT",
-              stmtType: "GO",
-              expr: {
-                tag: "CALL",
-                func: {
-                  tag: "LITERAL",
-                  type: {
-                    tag: "TYPE",
-                    type: {
-                      base: "FUNC",
-                      inputT: [],
-                      returnT: null,
-                    },
-                  },
-                  body: {
-                    tag: "STMT",
-                    stmtType: "BLOCK",
-                    stmts: [
-                      {
-                        tag: "STMT",
-                        stmtType: "EXPR",
-                        expr: {
-                          tag: "BINARY_EXPR",
-                          lhs: {
-                            tag: "IDENT",
-                            val: "messages",
-                          },
-                          op: "<",
-                          rhs: {
-                            tag: "UNARY_EXPR",
-                            expr: {
-                              tag: "LITERAL",
-                              type: {
-                                tag: "TYPE",
-                                type: {
-                                  base: "STR",
-                                },
-                              },
-                              val: "ping",
-                            },
-                            op: "-",
-                          },
-                        },
-                      },
-                    ],
-                  },
-                },
-                args: [],
-              },
-            },
-            {
-              tag: "STMT",
-              stmtType: "ASSIGN",
-              lhs: {
-                tag: "IDENT",
-                val: "msg",
-              },
-              rhs: {
-                tag: "UNARY_EXPR",
-                expr: {
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          input: [],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [
+              {
+                tag: "STMT",
+                stmtType: "ASSIGN",
+                lhs: {
                   tag: "IDENT",
                   val: "messages",
                 },
-                op: "<-",
-              },
-              op: ":=",
-            },
-            {
-              tag: "STMT",
-              stmtType: "EXPR",
-              expr: {
-                tag: "CALL",
-                func: {
-                  tag: "IDENT",
-                  val: "Println",
-                },
-                args: [
-                  {
-                    tag: "IDENT",
-                    val: "msg",
+                rhs: {
+                  tag: "SYS_CALL",
+                  sym: "make",
+                  type: {
+                    tag: "TYPE",
+                    type: {
+                      base: "CHAN",
+                      inner: {
+                        tag: "TYPE",
+                        type: {
+                          base: "STR",
+                        },
+                      },
+                      mode: "DUAL",
+                    },
                   },
-                ],
+                  args: [],
+                },
+                op: ":=",
               },
-            },
-          ],
+              {
+                tag: "STMT",
+                stmtType: "GO",
+                expr: {
+                  tag: "CALL",
+                  func: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "FUNC",
+                        inputT: [],
+                        returnT: null,
+                      },
+                    },
+                    input: [],
+                    body: {
+                      tag: "STMT",
+                      stmtType: "BLOCK",
+                      stmts: [
+                        {
+                          tag: "STMT",
+                          stmtType: "EXPR",
+                          expr: {
+                            tag: "BINARY_EXPR",
+                            lhs: {
+                              tag: "IDENT",
+                              val: "messages",
+                            },
+                            op: "<",
+                            rhs: {
+                              tag: "UNARY_EXPR",
+                              expr: {
+                                tag: "LITERAL",
+                                type: {
+                                  tag: "TYPE",
+                                  type: {
+                                    base: "STR",
+                                  },
+                                },
+                                val: "ping",
+                              },
+                              op: "-",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  } satisfies FuncLiteralObj,
+                  args: [],
+                },
+              },
+              {
+                tag: "STMT",
+                stmtType: "ASSIGN",
+                lhs: {
+                  tag: "IDENT",
+                  val: "msg",
+                },
+                rhs: {
+                  tag: "UNARY_EXPR",
+                  expr: {
+                    tag: "IDENT",
+                    val: "messages",
+                  },
+                  op: "<-",
+                },
+                op: ":=",
+              },
+              {
+                tag: "STMT",
+                stmtType: "EXPR",
+                expr: {
+                  tag: "CALL",
+                  func: {
+                    tag: "IDENT",
+                    val: "Println",
+                  },
+                  args: [
+                    {
+                      tag: "IDENT",
+                      val: "msg",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
         },
       },
     ] satisfies ProgramObj);
@@ -164,50 +171,66 @@ func x() int {
   `)
     ).toEqual([
       {
-        body: {
-          stmts: [],
-          tag: "STMT",
-          stmtType: "BLOCK",
-        },
         ident: {
           tag: "IDENT",
           val: "main",
         },
-        input: [],
-        returnT: null,
         tag: "STMT",
         stmtType: "FUNC_DECL",
+        lit: {
+          input: [],
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          body: {
+            stmts: [],
+            tag: "STMT",
+            stmtType: "BLOCK",
+          },
+        },
       },
       {
-        body: {
-          stmts: [
-            {
-              expr: {
-                tag: "LITERAL",
-                type: {
-                  tag: "TYPE",
-                  type: {
-                    base: "INT",
-                  },
-                },
-                val: 1,
-              },
-              stmtType: "RETURN",
-              tag: "STMT",
-            },
-          ],
-          tag: "STMT",
-          stmtType: "BLOCK",
-        },
         ident: {
           tag: "IDENT",
           val: "x",
         },
-        input: [],
-        returnT: {
-          tag: "TYPE",
+        lit: {
+          tag: "LITERAL",
           type: {
-            base: "INT",
+            tag: "TYPE",
+            type: {
+              base: "FUNC",
+              inputT: [],
+              returnT: {
+                tag: "TYPE",
+                type: {
+                  base: "INT",
+                },
+              },
+            },
+          },
+          input: [],
+          body: {
+            stmts: [
+              {
+                expr: {
+                  tag: "LITERAL",
+                  type: {
+                    tag: "TYPE",
+                    type: {
+                      base: "INT",
+                    },
+                  },
+                  val: 1,
+                },
+                stmtType: "RETURN",
+                tag: "STMT",
+              },
+            ],
+            tag: "STMT",
+            stmtType: "BLOCK",
           },
         },
         tag: "STMT",
@@ -230,106 +253,38 @@ func x() int {
   `)
     ).toEqual([
       {
-        body: {
-          stmts: [
-            {
-              ident: {
-                tag: "IDENT",
-                val: "y",
-              },
-              tag: "STMT",
-              stmtType: "VAR_DECL",
-              type: {
-                tag: "TYPE",
-                type: {
-                  base: "INT",
+        ident: {
+          tag: "IDENT",
+          val: "main",
+        },
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          input: [],
+          body: {
+            stmts: [
+              {
+                ident: {
+                  tag: "IDENT",
+                  val: "y",
                 },
-              },
-              val: null,
-            },
-            {
-              lhs: {
-                tag: "IDENT",
-                val: "sum",
-              },
-              op: ":=",
-              rhs: {
-                tag: "LITERAL",
+                tag: "STMT",
+                stmtType: "VAR_DECL",
                 type: {
                   tag: "TYPE",
                   type: {
                     base: "INT",
                   },
                 },
-                val: 0,
+                val: null,
               },
-              stmtType: "ASSIGN",
-              tag: "STMT",
-            },
-            {
-              body: {
-                stmts: [
-                  {
-                    lhs: {
-                      tag: "IDENT",
-                      val: "sum",
-                    },
-                    op: ":=",
-                    rhs: {
-                      lhs: {
-                        tag: "LITERAL",
-                        type: {
-                          tag: "TYPE",
-                          type: {
-                            base: "INT",
-                          },
-                        },
-                        val: 1,
-                      },
-                      op: "+",
-                      rhs: {
-                        tag: "IDENT",
-                        val: "y",
-                      },
-                      tag: "BINARY_EXPR",
-                    },
-                    stmtType: "ASSIGN",
-                    tag: "STMT",
-                  },
-                ],
-                tag: "STMT",
-                stmtType: "BLOCK",
-              },
-              cond: {
+              {
                 lhs: {
                   tag: "IDENT",
-                  val: "i",
-                },
-                op: "<",
-                rhs: {
-                  tag: "LITERAL",
-                  type: {
-                    tag: "TYPE",
-                    type: {
-                      base: "INT",
-                    },
-                  },
-                  val: 10,
-                },
-                tag: "BINARY_EXPR",
-              },
-              post: {
-                expr: {
-                  tag: "IDENT",
-                  val: "i",
-                },
-                stmtType: "INC",
-                tag: "STMT",
-              },
-              pre: {
-                lhs: {
-                  tag: "IDENT",
-                  val: "i",
+                  val: "sum",
                 },
                 op: ":=",
                 rhs: {
@@ -345,19 +300,93 @@ func x() int {
                 stmtType: "ASSIGN",
                 tag: "STMT",
               },
-              stmtType: "FOR",
-              tag: "STMT",
-            },
-          ],
-          tag: "STMT",
-          stmtType: "BLOCK",
+              {
+                body: {
+                  stmts: [
+                    {
+                      lhs: {
+                        tag: "IDENT",
+                        val: "sum",
+                      },
+                      op: ":=",
+                      rhs: {
+                        lhs: {
+                          tag: "LITERAL",
+                          type: {
+                            tag: "TYPE",
+                            type: {
+                              base: "INT",
+                            },
+                          },
+                          val: 1,
+                        },
+                        op: "+",
+                        rhs: {
+                          tag: "IDENT",
+                          val: "y",
+                        },
+                        tag: "BINARY_EXPR",
+                      },
+                      stmtType: "ASSIGN",
+                      tag: "STMT",
+                    },
+                  ],
+                  tag: "STMT",
+                  stmtType: "BLOCK",
+                },
+                cond: {
+                  lhs: {
+                    tag: "IDENT",
+                    val: "i",
+                  },
+                  op: "<",
+                  rhs: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "INT",
+                      },
+                    },
+                    val: 10,
+                  },
+                  tag: "BINARY_EXPR",
+                },
+                post: {
+                  expr: {
+                    tag: "IDENT",
+                    val: "i",
+                  },
+                  stmtType: "INC",
+                  tag: "STMT",
+                },
+                pre: {
+                  lhs: {
+                    tag: "IDENT",
+                    val: "i",
+                  },
+                  op: ":=",
+                  rhs: {
+                    tag: "LITERAL",
+                    type: {
+                      tag: "TYPE",
+                      type: {
+                        base: "INT",
+                      },
+                    },
+                    val: 0,
+                  },
+                  stmtType: "ASSIGN",
+                  tag: "STMT",
+                },
+                stmtType: "FOR",
+                tag: "STMT",
+              },
+            ],
+            tag: "STMT",
+            stmtType: "BLOCK",
+          },
         },
-        ident: {
-          tag: "IDENT",
-          val: "main",
-        },
-        input: [],
-        returnT: null,
         tag: "STMT",
         stmtType: "FUNC_DECL",
       },
@@ -378,64 +407,70 @@ func x() int {
   `)
     ).toEqual([
       {
-        body: {
-          stmts: [
-            {
-              ident: {
-                tag: "IDENT",
-                val: "y",
-              },
-              tag: "STMT",
-              stmtType: "VAR_DECL",
-              type: {
-                tag: "TYPE",
-                type: {
-                  base: "INT",
+        ident: {
+          tag: "IDENT",
+          val: "main",
+        },
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          body: {
+            stmts: [
+              {
+                ident: {
+                  tag: "IDENT",
+                  val: "y",
                 },
-              },
-              val: null,
-            },
-            {
-              lhs: {
-                tag: "IDENT",
-                val: "sum",
-              },
-              op: ":=",
-              rhs: {
-                tag: "LITERAL",
+                tag: "STMT",
+                stmtType: "VAR_DECL",
                 type: {
                   tag: "TYPE",
                   type: {
                     base: "INT",
                   },
                 },
-                val: 0,
+                val: null,
               },
-              stmtType: "ASSIGN",
-              tag: "STMT",
-            },
-            {
-              body: {
-                stmts: [],
+              {
+                lhs: {
+                  tag: "IDENT",
+                  val: "sum",
+                },
+                op: ":=",
+                rhs: {
+                  tag: "LITERAL",
+                  type: {
+                    tag: "TYPE",
+                    type: {
+                      base: "INT",
+                    },
+                  },
+                  val: 0,
+                },
+                stmtType: "ASSIGN",
                 tag: "STMT",
-                stmtType: "BLOCK",
               },
-              cond: null,
-              post: null,
-              pre: null,
-              stmtType: "FOR",
-              tag: "STMT",
-            },
-          ],
-          tag: "STMT",
-          stmtType: "BLOCK",
+              {
+                body: {
+                  stmts: [],
+                  tag: "STMT",
+                  stmtType: "BLOCK",
+                },
+                cond: null,
+                post: null,
+                pre: null,
+                stmtType: "FOR",
+                tag: "STMT",
+              },
+            ],
+            tag: "STMT",
+            stmtType: "BLOCK",
+          },
+          input: [],
         },
-        ident: {
-          tag: "IDENT",
-          val: "main",
-        },
-        input: [],
-        returnT: null,
         tag: "STMT",
         stmtType: "FUNC_DECL",
       },
@@ -452,113 +487,123 @@ func x() int {
     }`)
     ).toEqual([
       {
-        body: {
-          stmts: [
-            {
-              expr: {
-                args: [
-                  {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
-                      type: {
-                        base: "STR",
-                      },
-                    },
-                    val: "Hello, World!",
-                  },
-                ],
-                func: {
-                  tag: "IDENT",
-                  val: "Println",
-                },
-                tag: "CALL",
-              },
-              stmtType: "EXPR",
-              tag: "STMT",
-            },
-            {
-              expr: {
-                args: [
-                  {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
-                      type: {
-                        base: "INT",
-                      },
-                    },
-                    val: 1,
-                  },
-                  {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
-                      type: {
-                        base: "STR",
-                      },
-                    },
-                    val: "!",
-                  },
-                ],
-                func: {
-                  tag: "IDENT",
-                  val: "foo",
-                },
-                tag: "CALL",
-              },
-              stmtType: "EXPR",
-              tag: "STMT",
-            },
-            {
-              expr: {
-                args: [
-                  {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
-                      type: {
-                        base: "INT",
-                      },
-                    },
-                    val: 1,
-                  },
-                  {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
-                      type: {
-                        base: "STR",
-                      },
-                    },
-                    val: "!",
-                  },
-                  {
-                    tag: "IDENT",
-                    val: "k",
-                  },
-                ],
-                func: {
-                  tag: "IDENT",
-                  val: "bar",
-                },
-                tag: "CALL",
-              },
-              stmtType: "EXPR",
-              tag: "STMT",
-            },
-          ],
-          tag: "STMT",
-          stmtType: "BLOCK",
-        },
         ident: {
           tag: "IDENT",
           val: "main",
         },
-        input: [],
-        returnT: null,
         tag: "STMT",
         stmtType: "FUNC_DECL",
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: {
+              base: "FUNC",
+              inputT: [],
+              returnT: null,
+            },
+          },
+          input: [],
+          body: {
+            stmts: [
+              {
+                expr: {
+                  args: [
+                    {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "STR",
+                        },
+                      },
+                      val: "Hello, World!",
+                    },
+                  ],
+                  func: {
+                    tag: "IDENT",
+                    val: "Println",
+                  },
+                  tag: "CALL",
+                },
+                stmtType: "EXPR",
+                tag: "STMT",
+              },
+              {
+                expr: {
+                  args: [
+                    {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "INT",
+                        },
+                      },
+                      val: 1,
+                    },
+                    {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "STR",
+                        },
+                      },
+                      val: "!",
+                    },
+                  ],
+                  func: {
+                    tag: "IDENT",
+                    val: "foo",
+                  },
+                  tag: "CALL",
+                },
+                stmtType: "EXPR",
+                tag: "STMT",
+              },
+              {
+                expr: {
+                  args: [
+                    {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "INT",
+                        },
+                      },
+                      val: 1,
+                    },
+                    {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "STR",
+                        },
+                      },
+                      val: "!",
+                    },
+                    {
+                      tag: "IDENT",
+                      val: "k",
+                    },
+                  ],
+                  func: {
+                    tag: "IDENT",
+                    val: "bar",
+                  },
+                  tag: "CALL",
+                },
+                stmtType: "EXPR",
+                tag: "STMT",
+              },
+            ],
+            tag: "STMT",
+            stmtType: "BLOCK",
+          },
+        },
       },
     ] satisfies ProgramObj);
   });
@@ -660,25 +705,42 @@ func x() int {
           tag: "IDENT",
           val: "Println",
         },
-        input: [
-          {
-            ident: {
-              tag: "IDENT",
-              val: "x",
-            } satisfies IdentObj,
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
             type: {
-              tag: "TYPE",
-              type: {
-                base: "STR",
-              },
-            } satisfies AnyTypeObj,
+              base: "FUNC",
+              inputT: [
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "STR",
+                  },
+                },
+              ],
+              returnT: null,
+            },
           },
-        ],
-        returnT: null,
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [],
+          input: [
+            {
+              ident: {
+                tag: "IDENT",
+                val: "x",
+              } satisfies IdentObj,
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "STR",
+                },
+              } satisfies AnyTypeObj,
+            },
+          ],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [],
+          },
         },
       },
       {
@@ -688,37 +750,62 @@ func x() int {
           tag: "IDENT",
           val: "Println2",
         },
-        input: [
-          {
-            ident: {
-              tag: "IDENT",
-              val: "x",
-            },
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
             type: {
-              tag: "TYPE",
-              type: {
-                base: "STR",
-              },
+              base: "FUNC",
+
+              inputT: [
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "STR",
+                  },
+                },
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "STR",
+                  },
+                },
+              ],
+              returnT: null,
             },
           },
-          {
-            ident: {
-              tag: "IDENT",
-              val: "y",
-            },
-            type: {
-              tag: "TYPE",
+
+          input: [
+            {
+              ident: {
+                tag: "IDENT",
+                val: "x",
+              },
               type: {
-                base: "STR",
+                tag: "TYPE",
+                type: {
+                  base: "STR",
+                },
               },
             },
+            {
+              ident: {
+                tag: "IDENT",
+                val: "y",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "STR",
+                },
+              },
+            },
+          ],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [],
           },
-        ],
-        returnT: null,
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [],
         },
       },
       {
@@ -728,57 +815,80 @@ func x() int {
           tag: "IDENT",
           val: "foo",
         },
-        input: [
-          {
-            ident: {
-              tag: "IDENT",
-              val: "x",
-            },
-            type: {
-              tag: "TYPE",
-              type: {
-                base: "INT",
-              },
-            },
-          },
-          {
-            ident: {
-              tag: "IDENT",
-              val: "y",
-            },
-            type: {
-              tag: "TYPE",
-              type: {
-                base: "STR",
-              },
-            },
-          },
-        ],
-        returnT: {
-          tag: "TYPE",
+        lit: {
+          tag: "LITERAL",
           type: {
-            base: "BOOL",
-          },
-        },
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [
-            {
-              tag: "STMT",
-              stmtType: "RETURN",
-              expr: {
-                tag: "LITERAL",
-                type: {
+            tag: "TYPE",
+            type: {
+              base: "FUNC",
+              inputT: [
+                {
                   tag: "TYPE",
                   type: {
-                    base: "BOOL",
+                    base: "INT",
                   },
                 },
-                val: true,
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "STR",
+                  },
+                },
+              ],
+              returnT: {
+                tag: "TYPE",
+                type: {
+                  base: "BOOL",
+                },
+              },
+            },
+          },
+          input: [
+            {
+              ident: {
+                tag: "IDENT",
+                val: "x",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "INT",
+                },
+              },
+            },
+            {
+              ident: {
+                tag: "IDENT",
+                val: "y",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "STR",
+                },
               },
             },
           ],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [
+              {
+                tag: "STMT",
+                stmtType: "RETURN",
+                expr: {
+                  tag: "LITERAL",
+                  type: {
+                    tag: "TYPE",
+                    type: {
+                      base: "BOOL",
+                    },
+                  },
+                  val: true,
+                },
+              },
+            ],
+          },
         },
       },
       {
@@ -788,96 +898,138 @@ func x() int {
           tag: "IDENT",
           val: "goo",
         },
-        input: [
-          {
-            ident: {
-              tag: "IDENT",
-              val: "x",
-            },
-            type: {
-              tag: "TYPE",
-              type: {
-                base: "STR",
-              },
-            },
-          },
-          {
-            ident: {
-              tag: "IDENT",
-              val: "k1",
-            },
-            type: {
-              tag: "TYPE",
-              type: {
-                base: "INT",
-              },
-            },
-          },
-          {
-            ident: {
-              tag: "IDENT",
-              val: "k2",
-            },
-            type: {
-              tag: "TYPE",
-              type: {
-                base: "INT",
-              },
-            },
-          },
-          {
-            ident: {
-              tag: "IDENT",
-              val: "c",
-            },
-            type: {
-              tag: "TYPE",
-              type: {
-                base: "CHAN",
-                inner: {
-                  tag: "TYPE",
-                  type: {
-                    base: "INT",
-                  },
-                },
-                mode: "IN",
-              },
-            },
-          },
-        ],
-        returnT: {
-          tag: "TYPE",
+        lit: {
+          tag: "LITERAL",
           type: {
-            base: "CHAN",
-            inner: {
-              tag: "TYPE",
-              type: {
-                base: "CHAN",
-                inner: {
+            tag: "TYPE",
+            type: {
+              base: "FUNC",
+              inputT: [
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "STR",
+                  },
+                },
+                {
                   tag: "TYPE",
                   type: {
                     base: "INT",
                   },
                 },
-                mode: "OUT",
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "INT",
+                  },
+                },
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "CHAN",
+                    inner: {
+                      tag: "TYPE",
+                      type: {
+                        base: "INT",
+                      },
+                    },
+                    mode: "IN",
+                  },
+                },
+              ],
+              returnT: {
+                tag: "TYPE",
+                type: {
+                  base: "CHAN",
+                  inner: {
+                    tag: "TYPE",
+                    type: {
+                      base: "CHAN",
+                      inner: {
+                        tag: "TYPE",
+                        type: {
+                          base: "INT",
+                        },
+                      },
+                      mode: "OUT",
+                    },
+                  },
+                  mode: "OUT",
+                },
               },
             },
-            mode: "OUT",
           },
-        },
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [
+          input: [
             {
-              tag: "STMT",
-              stmtType: "RETURN",
-              expr: {
+              ident: {
                 tag: "IDENT",
-                val: "nil",
+                val: "x",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "STR",
+                },
+              },
+            },
+            {
+              ident: {
+                tag: "IDENT",
+                val: "k1",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "INT",
+                },
+              },
+            },
+            {
+              ident: {
+                tag: "IDENT",
+                val: "k2",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "INT",
+                },
+              },
+            },
+            {
+              ident: {
+                tag: "IDENT",
+                val: "c",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "CHAN",
+                  inner: {
+                    tag: "TYPE",
+                    type: {
+                      base: "INT",
+                    },
+                  },
+                  mode: "IN",
+                },
               },
             },
           ],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [
+              {
+                tag: "STMT",
+                stmtType: "RETURN",
+                expr: {
+                  tag: "IDENT",
+                  val: "nil",
+                },
+              },
+            ],
+          },
         },
       },
     ] satisfies ProgramObj);
@@ -897,61 +1049,67 @@ L1:   for {
 `)
     ).toEqual([
       {
-        body: {
-          stmts: [
-            {
-              body: {
-                stmts: [
-                  {
-                    breakLabel: null,
-                    stmtType: "BREAK",
-                    tag: "STMT",
-                  },
-                  {
-                    breakLabel: {
-                      tag: "IDENT",
-                      val: "L1",
-                    },
-                    stmtType: "BREAK",
-                    tag: "STMT",
-                  },
-                  {
-                    contLabel: null,
-                    stmtType: "CONTINUE",
-                    tag: "STMT",
-                  },
-                  {
-                    contLabel: {
-                      tag: "IDENT",
-                      val: "L1",
-                    },
-                    stmtType: "CONTINUE",
-                    tag: "STMT",
-                  },
-                ],
-                tag: "STMT",
-                stmtType: "BLOCK",
-              },
-              cond: null,
-              label: {
-                tag: "IDENT",
-                val: "L1",
-              },
-              post: null,
-              pre: null,
-              stmtType: "FOR",
-              tag: "STMT",
-            },
-          ],
-          tag: "STMT",
-          stmtType: "BLOCK",
-        },
         ident: {
           tag: "IDENT",
           val: "main",
         },
-        input: [],
-        returnT: null,
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          body: {
+            stmts: [
+              {
+                body: {
+                  stmts: [
+                    {
+                      breakLabel: null,
+                      stmtType: "BREAK",
+                      tag: "STMT",
+                    },
+                    {
+                      breakLabel: {
+                        tag: "IDENT",
+                        val: "L1",
+                      },
+                      stmtType: "BREAK",
+                      tag: "STMT",
+                    },
+                    {
+                      contLabel: null,
+                      stmtType: "CONTINUE",
+                      tag: "STMT",
+                    },
+                    {
+                      contLabel: {
+                        tag: "IDENT",
+                        val: "L1",
+                      },
+                      stmtType: "CONTINUE",
+                      tag: "STMT",
+                    },
+                  ],
+                  tag: "STMT",
+                  stmtType: "BLOCK",
+                },
+                cond: null,
+                label: {
+                  tag: "IDENT",
+                  val: "L1",
+                },
+                post: null,
+                pre: null,
+                stmtType: "FOR",
+                tag: "STMT",
+              },
+            ],
+            tag: "STMT",
+            stmtType: "BLOCK",
+          },
+          input: [],
+        },
         tag: "STMT",
         stmtType: "FUNC_DECL",
       },
@@ -988,209 +1146,215 @@ L1:   for {
           tag: "IDENT",
           val: "main",
         },
-        input: [],
-        returnT: null,
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [
-            {
-              tag: "STMT",
-              stmtType: "SWITCH",
-              pre: null,
-              cond: {
-                tag: "IDENT",
-                val: "t",
-              },
-              cases: [
-                {
-                  tag: "CASE_CLAUSE",
-                  case: {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          input: [],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [
+              {
+                tag: "STMT",
+                stmtType: "SWITCH",
+                pre: null,
+                cond: {
+                  tag: "IDENT",
+                  val: "t",
+                },
+                cases: [
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: {
+                      tag: "LITERAL",
                       type: {
-                        base: "INT",
-                      },
-                    },
-                    val: 2,
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "g",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "CASE_CLAUSE",
-                  case: {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
-                      type: {
-                        base: "INT",
-                      },
-                    },
-                    val: 4,
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "CASE_CLAUSE",
-                  case: {
-                    tag: "IDENT",
-                    val: "d",
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "CASE_CLAUSE",
-                  case: {
-                    tag: "IDENT",
-                    val: "i",
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                    {
-                      tag: "STMT",
-                      stmtType: "DEC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "CASE_CLAUSE",
-                  case: "DEFAULT",
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "ASSIGN",
-                      lhs: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                      rhs: {
-                        tag: "LITERAL",
+                        tag: "TYPE",
                         type: {
-                          tag: "TYPE",
-                          type: {
-                            base: "INT",
-                          },
+                          base: "INT",
                         },
-                        val: 0,
                       },
-                      op: "=",
+                      val: 2,
                     },
-                  ],
-                },
-              ],
-            },
-            {
-              tag: "STMT",
-              stmtType: "SWITCH",
-              pre: null,
-              cond: {
-                tag: "LITERAL",
-                type: { tag: "TYPE", type: { base: "BOOL" } },
-                val: true,
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "g",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: {
+                      tag: "LITERAL",
+                      type: {
+                        tag: "TYPE",
+                        type: {
+                          base: "INT",
+                        },
+                      },
+                      val: 4,
+                    },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: {
+                      tag: "IDENT",
+                      val: "d",
+                    },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: {
+                      tag: "IDENT",
+                      val: "i",
+                    },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                      {
+                        tag: "STMT",
+                        stmtType: "DEC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: "DEFAULT",
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "ASSIGN",
+                        lhs: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                        rhs: {
+                          tag: "LITERAL",
+                          type: {
+                            tag: "TYPE",
+                            type: {
+                              base: "INT",
+                            },
+                          },
+                          val: 0,
+                        },
+                        op: "=",
+                      },
+                    ],
+                  },
+                ],
               },
-              cases: [
-                {
-                  tag: "CASE_CLAUSE",
-                  case: {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
+              {
+                tag: "STMT",
+                stmtType: "SWITCH",
+                pre: null,
+                cond: {
+                  tag: "LITERAL",
+                  type: { tag: "TYPE", type: { base: "BOOL" } },
+                  val: true,
+                },
+                cases: [
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: {
+                      tag: "LITERAL",
                       type: {
-                        base: "BOOL",
+                        tag: "TYPE",
+                        type: {
+                          base: "BOOL",
+                        },
                       },
+                      val: true,
                     },
-                    val: true,
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "g",
+                        },
+                      },
+                    ],
                   },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "g",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "CASE_CLAUSE",
-                  case: {
-                    tag: "LITERAL",
-                    type: {
-                      tag: "TYPE",
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: {
+                      tag: "LITERAL",
                       type: {
-                        base: "BOOL",
+                        tag: "TYPE",
+                        type: {
+                          base: "BOOL",
+                        },
                       },
+                      val: false,
                     },
-                    val: false,
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "DEC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "k",
+                        },
+                      },
+                    ],
                   },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "DEC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "k",
+                  {
+                    tag: "CASE_CLAUSE",
+                    case: "DEFAULT",
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
                       },
-                    },
-                  ],
-                },
-                {
-                  tag: "CASE_CLAUSE",
-                  case: "DEFAULT",
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         },
       },
     ] satisfies ProgramObj);
@@ -1220,170 +1384,176 @@ L1:   for {
           tag: "IDENT",
           val: "main",
         },
-        input: [],
-        returnT: null,
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [
-            {
-              tag: "STMT",
-              stmtType: "SELECT",
-              cases: [
-                {
-                  tag: "SELECT_CASE",
-                  comm: {
-                    sendCh: {
-                      tag: "IDENT",
-                      val: "i",
-                    },
-                    val: {
-                      tag: "IDENT",
-                      val: "k",
-                    },
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "g",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "SELECT_CASE",
-                  comm: {
-                    recvCh: {
-                      tag: "IDENT",
-                      val: "k",
-                    },
-                    to: {
-                      tag: "IDENT",
-                      val: "kk",
-                    },
-                    op: ":=",
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: { base: "FUNC", inputT: [], returnT: null },
+          },
+          input: [],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [
+              {
+                tag: "STMT",
+                stmtType: "SELECT",
+                cases: [
+                  {
+                    tag: "SELECT_CASE",
+                    comm: {
+                      sendCh: {
                         tag: "IDENT",
                         val: "i",
                       },
-                    },
-                  ],
-                },
-                {
-                  tag: "SELECT_CASE",
-                  comm: {
-                    recvCh: {
-                      tag: "IDENT",
-                      val: "k",
-                    },
-                    to: {
-                      tag: "IDENT",
-                      val: "kk",
-                    },
-                    op: ":=",
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
+                      val: {
                         tag: "IDENT",
-                        val: "i",
+                        val: "k",
                       },
                     },
-                  ],
-                },
-                {
-                  tag: "SELECT_CASE",
-                  comm: {
-                    recvCh: {
-                      tag: "IDENT",
-                      val: "k",
-                    },
-                    to: {
-                      tag: "IDENT",
-                      val: "kk",
-                    },
-                    op: ":=",
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "INC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                    {
-                      tag: "STMT",
-                      stmtType: "DEC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "SELECT_CASE",
-                  comm: {
-                    sendCh: {
-                      tag: "IDENT",
-                      val: "k",
-                    },
-                    val: {
-                      tag: "IDENT",
-                      val: "i",
-                    },
-                  },
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "DEC",
-                      expr: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                    },
-                  ],
-                },
-                {
-                  tag: "SELECT_CASE",
-                  comm: "DEFAULT",
-                  body: [
-                    {
-                      tag: "STMT",
-                      stmtType: "ASSIGN",
-                      lhs: {
-                        tag: "IDENT",
-                        val: "i",
-                      },
-                      rhs: {
-                        tag: "LITERAL",
-                        type: {
-                          tag: "TYPE",
-                          type: {
-                            base: "INT",
-                          },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "g",
                         },
-                        val: 0,
                       },
-                      op: "=",
+                    ],
+                  },
+                  {
+                    tag: "SELECT_CASE",
+                    comm: {
+                      recvCh: {
+                        tag: "IDENT",
+                        val: "k",
+                      },
+                      to: {
+                        tag: "IDENT",
+                        val: "kk",
+                      },
+                      op: ":=",
                     },
-                  ],
-                },
-              ],
-            },
-          ],
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "SELECT_CASE",
+                    comm: {
+                      recvCh: {
+                        tag: "IDENT",
+                        val: "k",
+                      },
+                      to: {
+                        tag: "IDENT",
+                        val: "kk",
+                      },
+                      op: ":=",
+                    },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "SELECT_CASE",
+                    comm: {
+                      recvCh: {
+                        tag: "IDENT",
+                        val: "k",
+                      },
+                      to: {
+                        tag: "IDENT",
+                        val: "kk",
+                      },
+                      op: ":=",
+                    },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "INC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                      {
+                        tag: "STMT",
+                        stmtType: "DEC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "SELECT_CASE",
+                    comm: {
+                      sendCh: {
+                        tag: "IDENT",
+                        val: "k",
+                      },
+                      val: {
+                        tag: "IDENT",
+                        val: "i",
+                      },
+                    },
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "DEC",
+                        expr: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "SELECT_CASE",
+                    comm: "DEFAULT",
+                    body: [
+                      {
+                        tag: "STMT",
+                        stmtType: "ASSIGN",
+                        lhs: {
+                          tag: "IDENT",
+                          val: "i",
+                        },
+                        rhs: {
+                          tag: "LITERAL",
+                          type: {
+                            tag: "TYPE",
+                            type: {
+                              base: "INT",
+                            },
+                          },
+                          val: 0,
+                        },
+                        op: "=",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         },
       },
     ] satisfies ProgramObj);

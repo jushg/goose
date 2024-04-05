@@ -13,7 +13,7 @@ func main() {
         baz = 1
     }
     bar = "BAR1"
-    innerFunc()
+    innerFn()
     foo(1)
     bar = "BAR2"
 }

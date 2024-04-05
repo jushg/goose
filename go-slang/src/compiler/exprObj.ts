@@ -1,14 +1,21 @@
 import { CompiledFile } from "../common/compileFile";
 import {
+  InstrAddr,
+  OpCode,
+  SysCallInstructionObj,
+  makeAssignInstruction,
   makeCallInstruction,
+  makeEnterScopeInstruction,
+  makeExitScopeInstruction,
+  makeGOTOInstruction,
   makeLdInstruction,
   makeLdcInstruction,
   makeSysCallInstruction,
 } from "../common/instructionObj";
-import { ExprObj } from "../parser";
+import { AnyLiteralObj, AnyTypeObj, ExprObj, FuncLiteralObj } from "../parser";
 import { sysCallLogic } from "../virtual_machine/sysCalls";
 import { compileTagObj } from "./compileFunc";
-import { AnyTagObj, assertTag } from "./utils";
+import { AnyTagObj, assertTag, scanDeclaration } from "./utils";
 
 export function getExprLogic(
   key: ExprObj["tag"]
@@ -31,7 +38,57 @@ export function getExprLogic(
     case "LITERAL":
       return (s, pf) => {
         assertTag("LITERAL", s);
-        pf.instructions.push(makeLdcInstruction(s));
+
+        if (s.type.type.base !== "FUNC")
+          return pf.instructions.push(
+            makeLdcInstruction(s as Exclude<AnyLiteralObj, FuncLiteralObj>)
+          );
+
+        const fnLit = s as FuncLiteralObj;
+
+        pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
+        const gotoPc = pf.instructions.length - 1;
+
+        let argsDecls: [string, AnyTypeObj][] = fnLit.input.map((prm) => [
+          prm.ident.val,
+          prm.type,
+        ]);
+        let bodyDecls = scanDeclaration(fnLit.body.stmts);
+        let decls = argsDecls.concat(bodyDecls);
+
+        pf.instructions.push(makeEnterScopeInstruction(decls));
+
+        fnLit.input.forEach((prm) => {
+          pf.instructions.push(makeLdInstruction(prm.ident.val));
+          pf.instructions.push(makeAssignInstruction());
+        });
+
+        fnLit.body.stmts.forEach((bodyStmt) => {
+          compileTagObj(bodyStmt, pf);
+        });
+
+        pf.instructions.push(makeExitScopeInstruction("CALL"));
+        pf.instructions[gotoPc] = makeGOTOInstruction(
+          new InstrAddr(pf.instructions.length)
+        );
+
+        // Assign symbol to lambda
+        pf.instructions.push(
+          makeLdcInstruction({
+            tag: "LITERAL",
+            val: gotoPc + 1,
+            type: { tag: "TYPE", type: { base: "INT" } },
+          })
+        );
+
+        // Inserts the lambda ptr (the fn "literal" in Gosling runtime)
+        pf.instructions.push({
+          tag: "INSTR",
+          op: OpCode.SYS_CALL,
+          sym: "makeLambda",
+          argCount: 1,
+          type: null,
+        } satisfies SysCallInstructionObj);
       };
 
     case "SELECTOR":
