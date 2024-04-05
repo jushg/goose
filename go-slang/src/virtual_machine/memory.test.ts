@@ -9,7 +9,7 @@ import { InstrAddr } from "../common/instructionObj";
 import { Allocator, HeapAddr, HeapType, createHeapManager } from "../memory";
 import { GoslingMemoryManager } from "./memory";
 
-describe.skip("GoslingMemoryManager", () => {
+describe("GoslingMemoryManager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
     // Return a map of method names to spies
     return methods.reduce(

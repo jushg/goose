@@ -1,6 +1,6 @@
 import { AnyTypeObj, IdentObj, ProgramObj, parse } from ".";
 
-describe.skip("peggy parsing tests", () => {
+describe("peggy parsing tests", () => {
   test("arbitrary parsing test", () => {
     expect(
       parse(`

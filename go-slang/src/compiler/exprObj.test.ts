@@ -1,7 +1,7 @@
 import { compileParsedProgram } from ".";
 import { parse } from "../parser";
 
-describe.skip("compileExpr - Call Statement", () => {
+describe("compileExpr - Call Statement", () => {
   it("should compile call functions", () => {
     const testProgram = parse(`
 

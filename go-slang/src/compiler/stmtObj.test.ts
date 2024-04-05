@@ -1,7 +1,7 @@
 import { compileParsedProgram } from ".";
 import { parse } from "../parser";
 
-describe.skip("compileStmt - If stmt", () => {
+describe("compileStmt - If stmt", () => {
   it("should compile if functions without else", () => {
     const testProgram = parse(`
 
@@ -49,7 +49,7 @@ describe.skip("compileStmt - If stmt", () => {
     });
 });
 
-describe.skip("compileStmt - For stmt", () => {
+describe("compileStmt - For stmt", () => {
   it("should compile For functions without cond", () => {
     const testProgram = parse(`
 
@@ -79,7 +79,7 @@ describe.skip("compileStmt - For stmt", () => {
     });
 });
 
-describe.skip("Declare Statement only", () => {
+describe("Declare Statement only", () => {
   it("should compile empty function", () => {
     const testProgram = parse(`
 
