@@ -37,7 +37,7 @@ describe("basic single threaded program", () => {
   it("should execute correctly", () => {
     const prog = compileParsedProgram(parse(progStr));
     let state = initializeVirtualMachine();
-
+    const getSingleThreadStatus = () => state.jobState.getStatus();
     const getMemory = () => state.machineState.HEAP;
     const getThread = () => state.jobState;
     const getPC = () => state.jobState.getPC().addr;
@@ -59,7 +59,7 @@ describe("basic single threaded program", () => {
       })
     );
 
-    while (getPC() !== prog.instructions.length) {
+    while (getSingleThreadStatus() !== "DONE") {
       if (pcExecutionOrder.length > maxInstrExecutions)
         expect(pcExecutionOrder).toHaveLength(0);
 
