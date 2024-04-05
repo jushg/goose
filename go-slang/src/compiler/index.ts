@@ -40,7 +40,9 @@ function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
   };
 }
 
-export function compile(programTopLevelDeclarations: ProgramObj): CompiledFile {
+export function compileParsedProgram(
+  programTopLevelDeclarations: ProgramObj
+): CompiledFile {
   let pf: CompiledFile = {
     instructions: new Array<AnyInstructionObj>(),
     labelMap: {},

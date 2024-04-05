@@ -4,7 +4,7 @@ import {
   HEAP_NODE_BYTE_TOTAL_SIZE,
   MAX_INT,
   MIN_INT,
-} from "./";
+} from ".";
 
 export class HeapAddr {
   _a: string;

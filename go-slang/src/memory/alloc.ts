@@ -1,4 +1,4 @@
-import { HEAP_NODE_BYTE_SIZE, IUntypedAllocator } from "./";
+import { HEAP_NODE_BYTE_SIZE, IUntypedAllocator } from ".";
 import { GcFlag, HeapAddr, HeapInBytes, HeapType } from "./node";
 
 export class Allocator {

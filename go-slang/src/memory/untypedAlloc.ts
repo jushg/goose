@@ -4,7 +4,7 @@ import {
   IHeap,
   IUntypedAllocator,
   validateHeap,
-} from "./";
+} from ".";
 import { HeapAddr } from "./node";
 
 export class SimpleMemoryAllocator implements IUntypedAllocator {

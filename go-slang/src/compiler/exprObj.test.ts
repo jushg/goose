@@ -1,4 +1,4 @@
-import { compile } from ".";
+import { compileParsedProgram } from ".";
 import { parse } from "../parser";
 
 describe("compileExpr - Call Statement", () => {
@@ -15,6 +15,6 @@ describe("compileExpr - Call Statement", () => {
         }  
           `);
 
-    let pf = compile(testProgram);
+    let pf = compileParsedProgram(testProgram);
   });
 });
