@@ -204,19 +204,14 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     try {
       return this.memory.getHeapValue(addr).toHeapValue();
     } catch (e) {
-      const bytes = this.memory.getHeapValueInBytes(addr);
-      throw new Error(`Invalid heap value at ${addr}: [ ${bytes} ]`);
+      throw new Error(`Invalid heap value at ${addr}: ${e}`);
     }
   }
 
-  allocNewFrame(
-    prev: GoslingScopeObj,
-    symbolAndValues: Record<string, Literal<AnyGoslingObject>>
-  ): GoslingScopeObj {
-    const envKeyValueList = Object.keys(symbolAndValues).flatMap((s) => {
+  allocNewFrame(prev: GoslingScopeObj, symbols: string[]): GoslingScopeObj {
+    const envKeyValueList = symbols.flatMap((s) => {
       const symbolStr = this.alloc({ type: HeapType.String, data: s });
-      const value = this.alloc(symbolAndValues[s]);
-      return [symbolStr.addr, value.addr];
+      return [symbolStr.addr, HeapAddr.getNull()];
     });
 
     const envAddr =
@@ -230,7 +225,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     pc: InstrAddr,
     rts: GoslingScopeObj,
     label: SpecialFrameLabels,
-    newFrame: HeapAddr
+    baseOfNewFrameAddr: HeapAddr
   ): GoslingScopeObj {
     const pcObj = { type: HeapType.Int, data: pc.addr } as const;
     const ptrToRts = {
@@ -241,12 +236,16 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     const symbolAndValues: Record<string, Literal<AnyGoslingObject>> = {};
     symbolAndValues["__pc"] = pcObj;
     symbolAndValues["__ptrToRts"] = ptrToRts;
-    symbolAndValues["__label"] = this.alloc({
-      type: HeapType.String,
-      data: label,
-    });
-    const newFrameObj = this.getEnvs(newFrame);
-    return this.allocNewFrame(newFrameObj, symbolAndValues);
+    symbolAndValues["__label"] = { type: HeapType.String, data: label };
+    const baseOfNewFrame = this.getEnvs(baseOfNewFrameAddr);
+    const newSpecialFrame: GoslingScopeObj = this.allocNewFrame(
+      baseOfNewFrame,
+      Object.keys(symbolAndValues)
+    );
+    for (const [symbol, value] of Object.entries(symbolAndValues)) {
+      newSpecialFrame.assign(symbol, value);
+    }
+    return newSpecialFrame;
   }
 
   allocNewCallFrame(

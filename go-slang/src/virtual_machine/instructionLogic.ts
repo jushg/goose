@@ -38,18 +38,6 @@ function getInstructionLogic(
       return (ins, es) => {
         assertOpType(OpCode.DECL, ins);
         es.jobState.getRTS().assign(ins.symbol, getDefaultTypeValue(ins.val));
-
-        if (ins.val.type.base === "FUNC") {
-          const funcLambdaAddr = es.machineState.HEAP.allocLambda(
-            es.jobState.getRTS().getTopScopeAddr(), // main's enclosing rts
-            InstrAddr.fromNum(es.jobState.getPC().addr + 2) // main pc
-          );
-          const funcLambda = es.machineState.HEAP.get(funcLambdaAddr);
-          if (funcLambda === null) {
-            throw new Error("Lambda not assigned properly in memory");
-          }
-          es.jobState.getRTS().assign(ins.symbol, funcLambda);
-        }
         es.jobState.incrPC();
       };
 
@@ -82,15 +70,8 @@ function getInstructionLogic(
     case OpCode.ENTER_SCOPE:
       return (ins, es) => {
         assertOpType(OpCode.ENTER_SCOPE, ins);
-        let decls: Record<string, Literal<AnyGoslingObject>> = {};
-        ins.scopeDecls.forEach(([symbol, val]) => {
-          decls[symbol] = getDefaultTypeValue(val);
-        });
-        if (ins.label === "FOR") {
-          es.jobState.execFor();
-        }
-        es.jobState.addFrame(decls);
-
+        if (ins.label === "FOR") es.jobState.execFor();
+        es.jobState.addFrame(ins.scopeDecls.map(([sym, _type]) => sym));
         es.jobState.incrPC();
       };
 
@@ -110,7 +91,7 @@ function getInstructionLogic(
         if (val === null) {
           throw new Error(`Symbol ${ins.symbol} not found in envs`);
         }
-        es.jobState.getOS().push(val);
+        es.jobState.getOS().push(val.addr);
         es.jobState.incrPC();
       };
 
@@ -118,6 +99,7 @@ function getInstructionLogic(
       return (ins, es) => {
         let lhs = es.jobState.getOS().pop();
         let rhs = es.jobState.getOS().pop();
+
 
         // Assign with value and address
         assertGoslingObject(lhs);

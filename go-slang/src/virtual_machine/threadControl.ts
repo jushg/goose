@@ -14,7 +14,7 @@ export type ThreadControlObject = {
   setPC(pc: InstrAddr): void;
   incrPC(): void;
 
-  addFrame(decl: Record<string, Literal<AnyGoslingObject>>): void;
+  addFrame(decl: string[]): void;
   execFn(obj: GoslingLambdaObj): void;
   execFor(): void;
 
@@ -58,8 +58,8 @@ export function createThreadControlObject(
     },
     pop: () => {
       const val = os.peek();
-      _os.pop();
-      return val;
+      _os = memory.getList(_os.at(1)?.nodeAddr || HeapAddr.getNull());
+      return memory.get(val.addr)!;
     },
     peek: () => {
       _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
@@ -67,7 +67,7 @@ export function createThreadControlObject(
 
       const val = _os.at(0)!.value;
       if (val === null) throw new Error("Operand stack .top is null");
-      return val;
+      return memory.get(val.addr)!;
     },
     length: () => {
       _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
@@ -88,7 +88,7 @@ export function createThreadControlObject(
   const t: ThreadControlObject = {
     getId: () => id,
     getOS: () => os,
-    getRTS: () => rts,
+    getRTS: () => (rts = memory.getEnvs(rts.getTopScopeAddr())),
     getPC: () => pc,
     setPC: (newPC: InstrAddr) => (pc = newPC),
     incrPC: () => (pc = InstrAddr.fromNum(pc.addr + 1)),
