@@ -136,7 +136,7 @@ export type BoolLiteralObj = {
   type: BoolTypeObj;
   val: boolean;
 };
-function makeBoolLiteral(val: boolean): BoolLiteralObj {
+export function makeBoolLiteral(val: boolean): BoolLiteralObj {
   return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
 }
 

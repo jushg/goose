@@ -19,6 +19,7 @@ import {
   NilTypeObj,
   StmtObj,
   makeAssignmentStmt,
+  makeBoolLiteral,
   makeFunctionType,
   makeUnaryExpr,
   makeVarDecl,
@@ -181,14 +182,24 @@ export function getStmtLogic(
       return (s, pf) => {
         assertStmt("FOR", s);
         let predJofPc = -1;
+        let endJofPc = -1;
 
         // Note that the body has its own block to allow for redeclaration.
+
+        // Logic to exit the loop properly
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(true)));
+
         let decls = scanDeclaration(
           [s.pre, s.post].filter((x: StmtObj | null) => x !== null) as StmtObj[]
         );
 
         addLabelIfExist(pf.instructions.length, s.label, pf);
         pf.instructions.push(makeEnterScopeInstruction(decls, "FOR"));
+
+        // Logic to exit the loop properly
+        pf.instructions.push(makeJOFInstruction(new InstrAddr(0)));
+        endJofPc = pf.instructions.length - 1;
+
         if (s.pre !== null) {
           compileTagObj(s.pre, pf);
         }
@@ -214,18 +225,25 @@ export function getStmtLogic(
           );
         }
 
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(false))); // False to let JOF break
         pf.instructions.push(makeExitScopeInstruction("FOR"));
+
+        pf.instructions[endJofPc] = makeJOFInstruction(
+          new InstrAddr(pf.instructions.length)
+        );
       };
 
     case "BREAK":
       return (s, pf) => {
         assertStmt("BREAK", s);
-        throw new Error("BREAK not implemented");
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(false))); // False to break
+        pf.instructions.push(makeExitScopeInstruction("FOR"));
       };
 
     case "CONTINUE":
       return (s, pf) => {
         assertStmt("CONTINUE", s);
+        pf.instructions.push(makeLdcInstruction(makeBoolLiteral(true))); // True to continue
         pf.instructions.push(makeExitScopeInstruction("FOR"));
       };
 
