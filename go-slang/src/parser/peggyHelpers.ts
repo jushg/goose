@@ -115,9 +115,7 @@ export type FuncDeclObj = {
   tag: "STMT";
   stmtType: "FUNC_DECL";
   ident: IdentObj;
-  input: { ident: IdentObj; type: AnyTypeObj }[];
-  returnT: AnyTypeObj | null;
-  body: BlockObj;
+  lit: FuncLiteralObj;
 };
 function makeFuncDecl(
   ident: IdentObj,
@@ -125,7 +123,12 @@ function makeFuncDecl(
   returnT: AnyTypeObj | null,
   body: BlockObj
 ): FuncDeclObj {
-  return { tag: "STMT", stmtType: "FUNC_DECL", ident, input, returnT, body };
+  return {
+    tag: "STMT",
+    stmtType: "FUNC_DECL",
+    ident,
+    lit: makeFuncLiteral(input, returnT, body),
+  };
 }
 
 export type BoolLiteralObj = {
@@ -155,14 +158,23 @@ function makeNilLiteralObj(): NilLiteralObj {
 export type FuncLiteralObj = {
   tag: "LITERAL";
   type: FuncTypeObj<AnyTypeObj[], AnyTypeObj | null>;
+  input: { ident: IdentObj; type: AnyTypeObj }[];
   body: BlockObj;
 };
 function makeFuncLiteral(
-  inputT: AnyTypeObj[],
+  input: { ident: IdentObj; type: AnyTypeObj }[],
   returnT: AnyTypeObj | null,
   body: BlockObj
 ): FuncLiteralObj {
-  return { tag: "LITERAL", type: makeFunctionType(inputT, returnT), body };
+  return {
+    tag: "LITERAL",
+    type: makeFunctionType(
+      input.map(({ type }) => type),
+      returnT
+    ),
+    input,
+    body,
+  };
 }
 
 export type AnyLiteralObj =

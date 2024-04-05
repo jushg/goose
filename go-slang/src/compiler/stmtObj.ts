@@ -15,6 +15,7 @@ import {
 import {
   AnyLiteralObj,
   AnyTypeObj,
+  FuncLiteralObj,
   NilTypeObj,
   StmtObj,
   makeAssignmentStmt,
@@ -261,57 +262,9 @@ export function getStmtLogic(
     case "FUNC_DECL":
       return (s, pf) => {
         assertStmt("FUNC_DECL", s);
-        pf.instructions.push(
-          makeDeclareInstruction(
-            s.ident.val,
-            makeFunctionType(
-              s.input.map((prm) => prm.type),
-              s.returnT
-            )
-          )
-        );
-        pf.instructions.push(makeGOTOInstruction(new InstrAddr(0)));
-        const gotoPc = pf.instructions.length - 1;
+        pf.instructions.push(makeDeclareInstruction(s.ident.val, s.lit.type));
 
-        let argsDecls: [string, AnyTypeObj][] = s.input.map((prm) => [
-          prm.ident.val,
-          prm.type,
-        ]);
-        let bodyDecls = scanDeclaration(s.body.stmts);
-        let decls = argsDecls.concat(bodyDecls);
-
-        pf.instructions.push(makeEnterScopeInstruction(decls));
-
-        s.input.forEach((prm) => {
-          pf.instructions.push(makeLdInstruction(prm.ident.val));
-          pf.instructions.push(makeAssignInstruction());
-        });
-
-        s.body.stmts.forEach((bodyStmt) => {
-          compileTagObj(bodyStmt, pf);
-        });
-
-        pf.instructions.push(makeExitScopeInstruction("CALL"));
-        pf.instructions[gotoPc] = makeGOTOInstruction(
-          new InstrAddr(pf.instructions.length)
-        );
-
-        // Assign symbol to lambda
-        pf.instructions.push(
-          makeLdcInstruction({
-            tag: "LITERAL",
-            val: gotoPc + 1,
-            type: { tag: "TYPE", type: { base: "INT" } },
-          })
-        );
-        pf.instructions.push({
-          tag: "INSTR",
-          op: OpCode.SYS_CALL,
-          sym: "makeLambda",
-          argCount: 1,
-          type: null,
-        } satisfies SysCallInstructionObj);
-
+        compileTagObj(s.lit satisfies FuncLiteralObj, pf);
         pf.instructions.push(makeLdInstruction(s.ident.val));
         pf.instructions.push(makeAssignInstruction());
       };

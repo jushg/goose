@@ -241,8 +241,8 @@ IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT
 StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
   { return makeStrLiteralObj(content.join('')) }
 
-FunctionLit     "function literal"              = "func" inputT:FnParamListType WS? returnT:(Type?) WS? body:Block
-  { return makeFuncLiteral(inputT, returnT, body ) }
+FunctionLit     "function literal"              = "func" input:FnParamList WS? returnT:(Type?) WS? body:Block
+  { return makeFuncLiteral(input, returnT, body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
 

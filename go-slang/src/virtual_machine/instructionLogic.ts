@@ -7,7 +7,7 @@ import {
 } from "../common/instructionObj";
 import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
-import { AnyLiteralObj, AnyTypeObj } from "../parser";
+import { AnyLiteralObj, AnyTypeObj, FuncLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 import { assertGoslingObject, isGoslingObject } from "./threadControl";
 
@@ -99,7 +99,6 @@ function getInstructionLogic(
       return (ins, es) => {
         let lhs = es.jobState.getOS().pop();
         let rhs = es.jobState.getOS().pop();
-
 
         // Assign with value and address
         assertGoslingObject(lhs);
@@ -203,7 +202,9 @@ function getDefaultTypeValue(x: AnyTypeObj): Literal<AnyGoslingObject> {
   }
 }
 
-function getHeapNodeFromLiteral(x: AnyLiteralObj): Literal<AnyGoslingObject> {
+function getHeapNodeFromLiteral(
+  x: Exclude<AnyLiteralObj, FuncLiteralObj>
+): Literal<AnyGoslingObject> {
   switch (x.type.type.base) {
     case "BOOL":
       assertLiteral("BOOL", x);
@@ -225,13 +226,6 @@ function getHeapNodeFromLiteral(x: AnyLiteralObj): Literal<AnyGoslingObject> {
       };
     case "NIL":
       assertLiteral("NIL", x);
-      return {
-        type: HeapType.BinaryPtr,
-        child1: HeapAddr.getNull(),
-        child2: HeapAddr.getNull(),
-      };
-    case "FUNC":
-      assertLiteral("FUNC", x);
       return {
         type: HeapType.BinaryPtr,
         child1: HeapAddr.getNull(),

@@ -69,13 +69,14 @@ export function scanDeclaration(stmts: StmtObj[]): [string, AnyTypeObj][] {
       decls.push([stmt.ident.val, type]);
     } else if (stmt.stmtType === "FUNC_DECL") {
       assertStmt("FUNC_DECL", stmt);
-      let type = makeFunctionType(
-        stmt.input.map((x) => x.type),
-        stmt.returnT
-      );
-      decls.push([stmt.ident.val, type]);
+      decls.push([stmt.ident.val, stmt.lit.type]);
     } else if (stmt.stmtType === "ASSIGN") {
-      //TODO: handle assignment
+      assertStmt("ASSIGN", stmt);
+      if (stmt.op === "=") return;
+
+      const lhs = stmt.lhs;
+      assertTag("IDENT", lhs);
+      decls.push([lhs.val, { tag: "TYPE", type: { base: "NIL" } }]);
     }
   });
   return decls;
