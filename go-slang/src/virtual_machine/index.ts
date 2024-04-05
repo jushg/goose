@@ -19,7 +19,7 @@ export function initializeVirtualMachine(): ExecutionState {
   );
 
   const startingMachineState: MachineState = {
-    HEAP: new GoslingMemoryManager(createHeapManager(/* nodeCount = */ 2 ** 8)),
+    HEAP: memory,
     JOB_QUEUE: new JobQueue(),
     IS_RUNNING: true,
     TIME_SLICE: STANDARD_TIME_SLICE,
