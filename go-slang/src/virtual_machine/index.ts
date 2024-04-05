@@ -84,17 +84,18 @@ export function runProgram(prog: CompiledFile) {
 }
 export function isGoslingType<T extends HeapType>(
   val: T,
-  obj: AnyGoslingObject
+  obj: AnyGoslingObject | null
 ): obj is GoslingObject<T> {
-  return obj.type === val;
+  return obj !== null && obj.type === val;
 }
 export function assertGoslingType<T extends HeapType>(
   val: T,
-  obj: AnyGoslingObject
+  obj: AnyGoslingObject | null
 ): asserts obj is GoslingObject<T> {
-  if (!isGoslingType(val, obj)) {
+  if (obj === null)
+    throw new Error(`Expected GoslingObj type ${val}, got null`);
+  if (!isGoslingType(val, obj))
     throw new Error(`Expected GoslingObj type ${val}, got ${obj.type}`);
-  }
 }
 export type AnyGoslingObject =
   | GoslingBinaryPtrObj

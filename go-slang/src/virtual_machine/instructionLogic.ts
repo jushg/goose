@@ -70,15 +70,8 @@ function getInstructionLogic(
     case OpCode.ENTER_SCOPE:
       return (ins, es) => {
         assertOpType(OpCode.ENTER_SCOPE, ins);
-        let decls: Record<string, Literal<AnyGoslingObject>> = {};
-        ins.scopeDecls.forEach(([symbol, val]) => {
-          decls[symbol] = getDefaultTypeValue(val);
-        });
-        if (ins.label === "FOR") {
-          es.jobState.execFor();
-        }
-        es.jobState.addFrame(decls);
-
+        if (ins.label === "FOR") es.jobState.execFor();
+        es.jobState.addFrame(ins.scopeDecls.map(([sym, _type]) => sym));
         es.jobState.incrPC();
       };
 

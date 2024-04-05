@@ -290,10 +290,13 @@ describe("GoslingMemoryManager", () => {
       let scopeObj = memoryManager.getEnvs(HeapAddr.getNull());
       expect(scopeObj.getTopScopeAddr().isNull()).toBeTruthy();
 
-      scopeObj = memoryManager.allocNewFrame(scopeObj, {
-        g: { type: HeapType.Int, data: 1 },
-      });
+      scopeObj = memoryManager.allocNewFrame(scopeObj, ["g"]);
       expect(scopeObj.getTopScopeAddr().isNull()).toBeFalsy();
+      {
+        const x = scopeObj.lookup("g")!;
+        expect(x).toBeNull();
+      }
+      scopeObj.assign("g", { type: HeapType.Int, data: 1 });
       {
         const x = scopeObj.lookup("g")!;
         assertGoslingType(HeapType.Int, x);
@@ -315,9 +318,14 @@ describe("GoslingMemoryManager", () => {
 
       const caller1PC = InstrAddr.fromNum(100);
       const caller1RTS = scopeObj.getTopScopeAddr();
-      const f1Addr = memoryManager
-        .allocNewFrame(scopeObj, f1)
-        .getTopScopeAddr();
+      const f1Addr = (() => {
+        const f1Frame = memoryManager.allocNewFrame(scopeObj, Object.keys(f1));
+        for (const [key, val] of Object.entries(f1)) {
+          f1Frame.assign(key, val);
+        }
+        return f1Frame;
+      })().getTopScopeAddr();
+
       scopeObj = memoryManager.allocNewCallFrame(caller1PC, scopeObj, f1Addr);
       expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
         "CALL"
@@ -373,7 +381,13 @@ describe("GoslingMemoryManager", () => {
       } as const;
 
       const preF2Addr = scopeObj.getTopScopeAddr();
-      scopeObj = memoryManager.allocNewFrame(scopeObj, f2);
+      scopeObj = (() => {
+        const f2Frame = memoryManager.allocNewFrame(scopeObj, Object.keys(f2));
+        for (const [key, val] of Object.entries(f2)) {
+          f2Frame.assign(key, val);
+        }
+        return f2Frame;
+      })();
       const f2Addr = scopeObj.getTopScopeAddr();
       expect(f2Addr.toNum()).not.toBe(f1Addr.toNum());
 

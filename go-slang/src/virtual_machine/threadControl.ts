@@ -14,7 +14,7 @@ export type ThreadControlObject = {
   setPC(pc: InstrAddr): void;
   incrPC(): void;
 
-  addFrame(decl: Record<string, Literal<AnyGoslingObject>>): void;
+  addFrame(decl: string[]): void;
   execFn(obj: GoslingLambdaObj): void;
   execFor(): void;
 

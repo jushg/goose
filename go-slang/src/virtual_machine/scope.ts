@@ -22,7 +22,7 @@ export type GoslingScopeData = (GoslingListObj[number] & {
     {
       symbolListPtr: HeapAddr;
       valueListPtr: HeapAddr;
-      valueObj: AnyGoslingObject;
+      valueObj: AnyGoslingObject | null;
     }
   >;
 })[];
@@ -83,7 +83,7 @@ export function getScopeObj(
           env[symbol].valueObj = memory.alloc(val);
           memory.set(valueListItem.addr, {
             ...valueListItem,
-            child2: env[symbol].valueObj.addr,
+            child2: env[symbol].valueObj!.addr,
           });
 
           return;
@@ -103,7 +103,7 @@ function getEnv(addr: HeapAddr, memory: GoslingMemoryManager) {
     {
       symbolListPtr: HeapAddr;
       valueListPtr: HeapAddr;
-      valueObj: AnyGoslingObject;
+      valueObj: AnyGoslingObject | null;
     }
   > = {};
   if (list.length % 2 !== 0) {
@@ -117,9 +117,6 @@ function getEnv(addr: HeapAddr, memory: GoslingMemoryManager) {
 
     if (key === null) throw new Error(`Invalid key at ${i / 2} in env ${addr}`);
     assertGoslingType(HeapType.String, key);
-
-    if (valListItem.value === null)
-      throw new Error(`Invalid value at ${i / 2} in env ${addr}`);
 
     env[key.data] = {
       symbolListPtr: keyListItem.nodeAddr,

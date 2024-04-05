@@ -66,7 +66,10 @@ describe("Test memory manager and thread control object", () => {
             child2: HeapAddr.getNull(),
           },
         } satisfies Record<string, Literal<AnyGoslingObject>>;
-        t.addFrame(staticDeclarations);
+        t.addFrame(Object.keys(staticDeclarations));
+        for (const [key, defaultValues] of Object.entries(staticDeclarations)) {
+          t.getRTS().assign(key, defaultValues);
+        }
         t.incrPC();
 
         expect(t.getRTS().getScopeData()).toMatchObject([
@@ -91,7 +94,7 @@ describe("Test memory manager and thread control object", () => {
       },
 
       2: (m, t) => {
-        const mainDeclarations: any = {
+        const mainDeclarations = {
           bar: { type: HeapType.String, data: "" },
           baz: { type: HeapType.Int, data: 0 },
           innerFn: {
@@ -100,7 +103,10 @@ describe("Test memory manager and thread control object", () => {
             child2: HeapAddr.getNull(),
           },
         } satisfies Record<string, Literal<AnyGoslingObject>>;
-        t.addFrame(mainDeclarations);
+        t.addFrame(Object.keys(mainDeclarations));
+        for (const [key, defaultValues] of Object.entries(mainDeclarations)) {
+          t.getRTS().assign(key, defaultValues);
+        }
         t.incrPC();
       },
 
@@ -117,7 +123,7 @@ describe("Test memory manager and thread control object", () => {
 
       4: (m, t) => {
         // inside braces of innerFn
-        t.addFrame({});
+        t.addFrame([]);
         t.incrPC();
       },
 
@@ -189,8 +195,9 @@ describe("Test memory manager and thread control object", () => {
         } satisfies Record<string, Literal<AnyGoslingObject>>;
 
         // inside braces of innerFn
-        t.addFrame(fooDeclarations);
-        t.getRTS().assign("y", t.getOS().pop()); // set fn call parameter.
+        t.addFrame(Object.keys(fooDeclarations));
+        t.getRTS().assign("y", { type: HeapType.Int, data: 0 }); // set default value on DECLARE
+        m.set(t.getRTS().lookup("y")!.addr, t.getOS().pop()); // set fn call parameter.
         t.incrPC();
       },
 
@@ -214,7 +221,7 @@ describe("Test memory manager and thread control object", () => {
       15: (m, t) => {
         const scope = t.getRTS();
         const x = scope.lookup("x")!;
-        t.addFrame({}); // Add frame for if braces. Undone in 17
+        t.addFrame([]); // Add frame for if braces. Undone in 17
 
         expect(x?.type).toBe(HeapType.Int);
         assertGoslingType(HeapType.Int, x);
