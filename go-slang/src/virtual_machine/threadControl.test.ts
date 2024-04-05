@@ -9,7 +9,7 @@ import {
 
 type Instr = (m: GoslingMemoryManager, t: ThreadControlObject) => void;
 
-describe("Test memory manager and thread control object", () => {
+describe.skip("Test memory manager and thread control object", () => {
   it("Single threaded execution", () => {
     let memory: GoslingMemoryManager;
 

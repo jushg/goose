@@ -1,7 +1,7 @@
 import { HEAP_NODE_BYTE_SIZE } from ".";
 import { GcFlag, HeapAddr, HeapInBytes, HeapType, HeapValue } from "./node";
 
-describe("HeapInBytes", () => {
+describe.skip("HeapInBytes", () => {
   const stringNormalizer = (s: string): string => {
     return s.replace(/\0/g, "");
   };

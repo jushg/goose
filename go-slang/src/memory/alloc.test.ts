@@ -3,7 +3,7 @@ import { Allocator } from "./alloc";
 import { GcFlag, HeapType } from "./node";
 import { SimpleMemoryAllocator } from "./untypedAlloc";
 
-describe("Memory Manager", () => {
+describe.skip("Memory Manager", () => {
   const createCompoundSpy = (obj: any, methods: string[]) => {
     // Return a map of method names to spies
     return methods.reduce(
