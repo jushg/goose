@@ -804,8 +804,8 @@ export function* evalCode(
   const currentStep: number = needUpdateCse
     ? -1
     : correctWorkspace
-    ? yield select((state: OverallState) => state.workspaces[workspaceLocation].currentStep)
-    : -1;
+      ? yield select((state: OverallState) => state.workspaces[workspaceLocation].currentStep)
+      : -1;
 
   const isFolderModeEnabled: boolean = yield select(
     (state: OverallState) => state.workspaces[workspaceLocation].isFolderModeEnabled

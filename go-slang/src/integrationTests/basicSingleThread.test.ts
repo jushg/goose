@@ -1,3 +1,4 @@
+import { OpCode } from "../common/instructionObj";
 import { compileParsedProgram } from "../compiler";
 import { parse } from "../parser";
 import { executeStep, initializeVirtualMachine } from "../virtual_machine";
@@ -28,25 +29,55 @@ func foo(y int) {
 `;
 
 describe("basic single threaded program", () => {
-  it.skip("should execute correctly", () => {
+  it("should execute correctly", () => {
     const prog = compileParsedProgram(parse(progStr));
     let state = initializeVirtualMachine();
 
     const getMemory = () => state.machineState.HEAP;
     const getThread = () => state.jobState;
     const getPC = () => state.jobState.getPC().addr;
+    const printRts = () =>
+      console.dir(
+        getThread()
+          .getRTS()
+          .getScopeData()
+          .map(({ env }) => env),
+        { depth: null }
+      );
 
     const pcExecutionOrder: number[] = [];
     const maxInstrExecutions = 100;
 
-    console.dir(prog.instructions, { depth: null });
+    console.dir(
+      prog.instructions.map((a, idx) => {
+        return { idx, ...a };
+      })
+    );
 
     while (getPC() !== prog.instructions.length) {
       if (pcExecutionOrder.length > maxInstrExecutions)
         expect(pcExecutionOrder).toHaveLength(0);
 
       pcExecutionOrder.push(getPC());
-      state = executeStep(state, prog.instructions);
+      if (
+        prog.instructions[getPC()].op === OpCode.ENTER_SCOPE ||
+        prog.instructions[getPC()].op === OpCode.EXIT_SCOPE
+      ) {
+        printRts();
+      }
+
+      try {
+        state = executeStep(state, prog.instructions);
+      } catch (e) {
+        console.dir(
+          pcExecutionOrder.map((instrIdx, stepIdx) => {
+            return { stepIdx, instrIdx, ...prog.instructions[instrIdx] };
+          })
+        );
+        printRts();
+        console.dir(pcExecutionOrder);
+        throw e;
+      }
     }
   });
 });

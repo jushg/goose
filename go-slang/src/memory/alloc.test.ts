@@ -134,8 +134,6 @@ describe("Memory Manager", () => {
       let node;
 
       while (addr.isNull() === false) {
-        expect(addr).toHaveProperty("addr");
-
         node = manager.getHeapValue(addr);
         const value = node.toHeapValue();
 

@@ -103,7 +103,7 @@ const makeCompResult = (op: string, es: ExecutionState) => {
       if (_1.type === HeapType.Bool && _2.type === HeapType.Bool)
         return [_1.data, _2.data];
       if (_1.type === HeapType.BinaryPtr && _2.type === HeapType.BinaryPtr)
-        return [_1.child1.addr, _2.child1.addr];
+        return [_1.child1.toNum(), _2.child1.toNum()];
 
       throw new Error(`Bad types for binary op ${op}: ${_1.type}, ${_2.type}`);
     })();

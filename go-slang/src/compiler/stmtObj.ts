@@ -1,12 +1,16 @@
 import {
   InstrAddr,
+  OpCode,
+  SysCallInstructionObj,
   makeAssignInstruction,
+  makeCallInstruction,
   makeDeclareInstruction,
   makeEnterScopeInstruction,
   makeExitScopeInstruction,
   makeGOTOInstruction,
   makeJOFInstruction,
   makeLdInstruction,
+  makeLdcInstruction,
 } from "../common/instructionObj";
 import {
   AnyLiteralObj,
@@ -292,7 +296,24 @@ export function getStmtLogic(
           new InstrAddr(pf.instructions.length)
         );
 
-        // TODO: Create closure object here
+        // Assign symbol to lambda
+        pf.instructions.push(makeLdInstruction(s.ident.val));
+        pf.instructions.push(
+          makeLdcInstruction({
+            tag: "LITERAL",
+            val: gotoPc + 1,
+            type: { tag: "TYPE", type: { base: "INT" } },
+          })
+        );
+        pf.instructions.push({
+          tag: "INSTR",
+          op: OpCode.SYS_CALL,
+          sym: "makeLambda",
+          argCount: 1,
+          type: null,
+        } satisfies SysCallInstructionObj);
+
+        pf.instructions.push(makeAssignInstruction());
       };
 
     case "VAR_DECL":
