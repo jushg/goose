@@ -101,4 +101,8 @@ export class Allocator {
     this.setHeapValue(newAddr, h);
     return newAddr;
   }
+
+  reset(): void {
+    this.alloc.reset();
+  }
 }

@@ -6,14 +6,16 @@ import {
   MachineState,
   STANDARD_TIME_SLICE,
 } from "../common/state";
-import { HeapAddr, HeapType, createHeapManager } from "../memory";
+import { HeapAddr, HeapType } from "../memory";
 import { executeInstruction } from "./instructionLogic";
-import { GoslingMemoryManager } from "./memory";
+import { createGoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
 
-export function initializeVirtualMachine(): ExecutionState {
-  let memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
+export function initializeVirtualMachine(
+  memorySize: number = 2 ** 10
+): ExecutionState {
+  let memory = createGoslingMemoryManager(memorySize);
   let mainJobState = createThreadControlObject(memory, (threadId, s) =>
     console.log(`Thread ${threadId}: ${s}`)
   );

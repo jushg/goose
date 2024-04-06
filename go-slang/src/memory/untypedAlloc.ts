@@ -83,4 +83,8 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
       HEAP_NODE_BYTE_TOTAL_SIZE
     );
   }
+
+  reset(): void {
+    this.FREE_PTR = 1;
+  }
 }

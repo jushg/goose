@@ -51,6 +51,7 @@ export type IUntypedAllocator = {
   getHeapValueInBytes(addr: HeapAddr): number[];
   printHeap(): string[];
   getNodeCount(): number;
+  reset(): void;
 };
 
 export function createHeapManager(heapNodeCount: number): Allocator {

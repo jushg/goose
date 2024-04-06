@@ -12,7 +12,7 @@ import { GoslingMemoryManager } from "../virtual_machine/memory";
 function getMemResidency(memory: GoslingMemoryManager) {
   if (memory === undefined) throw new Error("Memory is undefined");
 
-  const visited: HeapAddr["_a"][] = [];
+  const visited: HeapAddr[] = [];
   const roots = memory
     .getMemoryRoots()
     .filter((r) => !r.isNull())
@@ -21,7 +21,7 @@ function getMemResidency(memory: GoslingMemoryManager) {
 
   while (roots.length > 0) {
     const root = roots.pop()!;
-    visited.push(root.addr._a);
+    visited.push(root.addr);
 
     const newAdd: HeapAddr[] = [];
 
@@ -48,7 +48,7 @@ function getMemResidency(memory: GoslingMemoryManager) {
     }
 
     newAdd.forEach((addr) => {
-      if (!addr.isNull() && !visited.includes(addr._a)) {
+      if (!addr.isNull() && !visited.find((a) => a.equals(addr))) {
         const node = memory.get(addr);
         if (node) roots.push(node);
       }
@@ -94,7 +94,7 @@ func foo(y int) {
 describe("basic single threaded program", () => {
   it("should execute correctly", () => {
     const prog = compileParsedProgram(parse(progStr));
-    let state = initializeVirtualMachine();
+    let state = initializeVirtualMachine(2 ** 8);
 
     const log: string[] = [];
     state.jobState.print = (s) => log.push(s);
@@ -127,8 +127,8 @@ describe("basic single threaded program", () => {
         throw e;
       }
 
-      const _memUsage = `${(getMemory().memory.alloc as any).FREE_PTR} / ${(getMemory().memory.alloc as any).memory.nodeCount}`;
-      const _memResidency = `${getMemResidency(getMemory())} / ${(getMemory().memory.alloc as any).memory.nodeCount}`;
+      // const _memUsage = `${(getMemory().memory.alloc as any).FREE_PTR} / ${(getMemory().memory.alloc as any).memory.nodeCount}`;
+      // const _memResidency = `${getMemResidency(getMemory())} / ${(getMemory().memory.alloc as any).memory.nodeCount}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
