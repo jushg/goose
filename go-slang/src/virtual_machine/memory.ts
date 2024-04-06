@@ -210,33 +210,44 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject {
     if ("addr" in data) delete data.addr;
 
-    switch (data.type) {
-      case HeapType.Bool: {
-        const d = data as Literal<GoslingObject<HeapType.Bool>>;
-        const addr = this.memory.allocBool(d.data);
-        return { ...d, addr };
+    try {
+      switch (data.type) {
+        case HeapType.Bool: {
+          const d = data as Literal<GoslingObject<HeapType.Bool>>;
+          const addr = this.memory.allocBool(d.data);
+          return { ...d, addr };
+        }
+        case HeapType.Int: {
+          const d = data as Literal<GoslingObject<HeapType.Int>>;
+          const addr = this.memory.allocInt(d.data);
+          return { ...d, addr };
+        }
+        case HeapType.String: {
+          const d = data as Literal<GoslingObject<HeapType.String>>;
+          const addr = this.memory.allocString(d.data);
+          return { ...d, addr };
+        }
+        case HeapType.BinaryPtr: {
+          const { child1, child2 } = data as Literal<
+            GoslingObject<HeapType.BinaryPtr>
+          >;
+          const addr = this.memory.allocBinaryPtr(child1, child2);
+          return { type: HeapType.BinaryPtr, child1, child2, addr };
+        }
+        default: {
+          const _: never = data;
+          throw new Error(`Invalid data: ${data}`);
+        }
       }
-      case HeapType.Int: {
-        const d = data as Literal<GoslingObject<HeapType.Int>>;
-        const addr = this.memory.allocInt(d.data);
-        return { ...d, addr };
+    } catch (e) {
+      if (!(e instanceof Error) || !e.message.includes("Heap overflow")) {
+        throw e;
       }
-      case HeapType.String: {
-        const d = data as Literal<GoslingObject<HeapType.String>>;
-        const addr = this.memory.allocString(d.data);
-        return { ...d, addr };
-      }
-      case HeapType.BinaryPtr: {
-        const { child1, child2 } = data as Literal<
-          GoslingObject<HeapType.BinaryPtr>
-        >;
-        const addr = this.memory.allocBinaryPtr(child1, child2);
-        return { type: HeapType.BinaryPtr, child1, child2, addr };
-      }
-      default: {
-        const _: never = data;
-        throw new Error(`Invalid data: ${data}`);
-      }
+
+      // TODO: for now, this alloc performs no GC, just fails if heap is full.
+      throw new Error(
+        `Heap overflow not corrected in GoslingMemoryManager: ${e}`
+      );
     }
   }
 
