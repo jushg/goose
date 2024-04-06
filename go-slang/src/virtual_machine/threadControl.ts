@@ -1,9 +1,15 @@
-import { AnyGoslingObject, GoslingLambdaObj, GoslingObject, Literal } from ".";
+import {
+  AnyGoslingObject,
+  GoslingLambdaObj,
+  GoslingListObj,
+  GoslingObject,
+  Literal,
+} from ".";
 import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../common/instructionObj";
 import { HeapAddr, HeapType } from "../memory";
-import { GoslingMemoryManager, SpecialFrameLabels } from "./memory";
+import { GoslingMemoryManager, SpecialFrameLabels, ThreadData } from "./memory";
 
 export type ThreadStatus =
   | "DONE"
@@ -35,40 +41,59 @@ export type ThreadControlObject = {
 
 let _id = 0;
 
+function getOsAddr(l: GoslingListObj): HeapAddr {
+  return l.at(0)?.nodeAddr || HeapAddr.getNull();
+}
+
 export function createThreadControlObject(
   memory: GoslingMemoryManager,
   printer: (threadId: string, s: string) => void,
   caller?: { call: GoslingLambdaObj; args: Literal<AnyGoslingObject>[] }
 ): ThreadControlObject {
   const id = `${++_id}_` + Math.random().toString(36).substring(7);
-  let pc = InstrAddr.fromNum(0);
-  let rts = memory.getEnvs(HeapAddr.getNull());
-  let _os = memory.allocList([]);
-  let _status: ThreadStatus = "RUNNABLE";
+  const initData: ThreadData =
+    caller === undefined
+      ? {
+          pc: InstrAddr.fromNum(0),
+          rts: HeapAddr.getNull(),
+          os: HeapAddr.getNull(),
+          status: "RUNNABLE",
+        }
+      : {
+          pc: caller.call.pcAddr,
+          rts: caller.call.closure.getTopScopeAddr(),
+          os: getOsAddr(
+            memory.allocList(caller.args.map((arg) => memory.alloc(arg).addr))
+          ),
+          status: "RUNNABLE",
+        };
 
-  if (caller) {
-    pc = caller.call.pcAddr;
-    rts = caller.call.closure;
-    _os = memory.allocList(caller.args.map((arg) => memory.alloc(arg).addr));
-  }
+  memory.allocThreadData(id, initData);
+
+  const getOS = () => memory.getList(memory.getThreadData(id).os);
+  const getRTS = () => memory.getEnvs(memory.getThreadData(id).rts);
+  const getPC = () => memory.getThreadData(id).pc;
+  const getStatus = () => memory.getThreadData(id).status;
 
   const os: GoslingOperandStackObj = {
     push: (val: Literal<AnyGoslingObject> | HeapAddr) => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      let _os = getOS();
       const valueObj =
         val instanceof HeapAddr ? memory.get(val) : memory.alloc(val);
 
       if (valueObj === null)
         throw new Error("Value object for os.push() is null");
       _os = memory.allocList([valueObj.addr], _os);
+      memory.setThreadData(id, { os: getOsAddr(_os) });
     },
     pop: () => {
       const val = os.peek();
-      _os = memory.getList(_os.at(1)?.nodeAddr || HeapAddr.getNull());
+      const _os = getOS();
+      memory.setThreadData(id, { os: getOsAddr(_os.slice(1)) });
       return memory.get(val.addr)!;
     },
     peek: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      const _os = getOS();
       if (_os.length === 0) throw new Error("Operand stack is empty");
 
       const val = _os.at(0)!.value;
@@ -76,11 +101,11 @@ export function createThreadControlObject(
       return memory.get(val.addr)!;
     },
     length: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      const _os = getOS();
       return _os.length;
     },
     toString: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+      const _os = getOS();
       return (
         `OS(${_os.length}): [\n` +
         `${_os
@@ -94,34 +119,43 @@ export function createThreadControlObject(
   const t: ThreadControlObject = {
     getId: () => id,
     getOS: () => os,
-    getRTS: () => (rts = memory.getEnvs(rts.getTopScopeAddr())),
-    getPC: () => pc,
-    setPC: (newPC: InstrAddr) => (pc = newPC),
-    incrPC: () => (pc = InstrAddr.fromNum(pc.addr + 1)),
-    addFrame: (f) => (rts = memory.allocNewFrame(rts, f)),
+    getRTS,
+    getPC,
+    setPC: (newPC: InstrAddr) => memory.setThreadData(id, { pc: newPC }),
+    incrPC: () => {
+      const pc = getPC();
+      memory.setThreadData(id, { pc: InstrAddr.fromNum(pc.addr + 1) });
+    },
+    addFrame: (f) =>
+      memory.setThreadData(id, {
+        rts: memory.allocNewFrame(getRTS(), f).getTopScopeAddr(),
+      }),
     execFn: (f) => {
-      rts = memory.allocNewCallFrame(pc, rts, f.closure.getTopScopeAddr());
-      t.setPC(f.pcAddr);
+      let rts = getRTS();
+      rts = memory.allocNewCallFrame(getPC(), rts, f.closure.getTopScopeAddr());
+      memory.setThreadData(id, { rts: rts.getTopScopeAddr(), pc: f.pcAddr });
     },
     execFor: () => {
+      let rts = getRTS();
       rts = memory.allocNewSpecialFrame(
         t.getPC(),
         rts,
         "FOR",
         rts.getTopScopeAddr()
       );
+      memory.setThreadData(id, { rts: rts.getTopScopeAddr() });
     },
     exitFrame: () => {
-      const enclosing = memory.getEnclosingFrame(rts);
-      rts = enclosing;
+      const enclosing = memory.getEnclosingFrame(getRTS());
+      memory.setThreadData(id, { rts: enclosing.getTopScopeAddr() });
     },
     exitSpecialFrame: (label) => {
+      let rts = getRTS();
       const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(rts, label);
-      t.setPC(pc);
-      rts = newRTS;
+      memory.setThreadData(id, { rts: newRTS.getTopScopeAddr(), pc });
     },
-    setStatus: (status) => (_status = status),
-    getStatus: () => _status,
+    setStatus: (status) => memory.setThreadData(id, { status }),
+    getStatus,
     print: (s) => printer(id, s),
   };
   return t;

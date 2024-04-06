@@ -13,14 +13,54 @@ import { InstrAddr } from "../common/instructionObj";
 import { Allocator, HeapAddr, HeapType } from "../memory";
 import { HeapInBytes, assertHeapType } from "../memory/node";
 import { GoslingScopeObj, getScopeObj, readScopeData } from "./scope";
+import { ThreadStatus } from "./threadControl";
 
 export type SpecialFrameLabels = "CALL" | "FOR";
+export type ThreadData = {
+  pc: InstrAddr;
+  rts: HeapAddr;
+  os: HeapAddr;
+  status: ThreadStatus;
+};
 
 export class GoslingMemoryManager implements IGoslingMemoryManager {
   memory: Allocator;
+  threadDataMap: Map<string, ThreadData>;
 
   constructor(memory: Allocator) {
     this.memory = memory;
+    this.threadDataMap = new Map();
+  }
+
+  allocThreadData(id: string, data: ThreadData) {
+    this.threadDataMap.set(id, data);
+    return id;
+  }
+
+  setThreadData(id: string, update: Partial<ThreadData>) {
+    if (!this.threadDataMap.has(id))
+      throw new Error(`Thread with id ${id} not found`);
+
+    const threadData = this.threadDataMap.get(id)!;
+    this.threadDataMap.set(id, {
+      pc: update.pc ?? threadData.pc,
+      rts: update.rts ?? threadData.rts,
+      os: update.os ?? threadData.os,
+      status: update.status ?? threadData.status,
+    });
+  }
+
+  getThreadData(id: string): ThreadData {
+    if (!this.threadDataMap.has(id))
+      throw new Error(`Thread with id ${id} not found`);
+    return this.threadDataMap.get(id)!;
+  }
+
+  getMemoryRoots(): HeapAddr[] {
+    return Array.from(this.threadDataMap.values()).flatMap(({ rts, os }) => [
+      rts,
+      os,
+    ]);
   }
 
   get(addr: HeapAddr): AnyGoslingObject | null {
