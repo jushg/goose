@@ -38,7 +38,7 @@ export type CodeLocation = {
 };
 
 // any and all errors ultimately implement this interface. as such, changes to this will affect every type of error.
-export interface GoslangError {
+export interface GooseError {
   type: ErrorType;
   severity: ErrorSeverity;
   location: CodeLocation;
@@ -49,7 +49,7 @@ export interface GoslangError {
 export interface Rule<T extends Node> {
   name: string;
   checkers: {
-    [name: string]: (node: T, ancestors: Node[]) => GoslangError[];
+    [name: string]: (node: T, ancestors: Node[]) => GooseError[];
   };
 }
 
@@ -74,7 +74,7 @@ export interface Context<T = any> {
   externalSymbols: string[];
 
   /** All the errors gathered */
-  errors: GoslangError[];
+  errors: GooseError[];
 
   /** Runtime Specific state */
   runtime: {

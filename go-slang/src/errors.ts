@@ -1,7 +1,7 @@
 import { UNKNOWN_LOCATION } from "./constants";
-import { ErrorSeverity, ErrorType, GoslangError, CodeLocation } from "./types";
+import { ErrorSeverity, ErrorType, GooseError, CodeLocation } from "./types";
 
-export class RuntimeGooseError implements GoslangError {
+export class RuntimeGooseError implements GooseError {
   public type = ErrorType.RUNTIME;
   public severity = ErrorSeverity.ERROR;
   public location: CodeLocation;

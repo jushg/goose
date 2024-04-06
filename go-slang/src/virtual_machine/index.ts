@@ -9,6 +9,7 @@ import {
 import { HeapAddr, HeapType, createHeapManager } from "../memory";
 import { executeInstruction } from "./instructionLogic";
 import { GoslingMemoryManager } from "./memory";
+import { GoslingOperandStackObj } from "./operandStack";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
 
@@ -154,4 +155,11 @@ export type IGoslingMemoryManager = {
   getLambda(lambdaPtr: GoslingBinaryPtrObj): GoslingLambdaObj;
   allocLambda(closureAddr: HeapAddr, pcAddr: InstrAddr): HeapAddr;
   getEnvs(addr: HeapAddr): GoslingScopeObj;
+  setRTS(addr: HeapAddr, topFrameAddr: HeapAddr): void;
+  getRTS(addr: HeapAddr): GoslingScopeObj;
+  getOS(addr: HeapAddr): GoslingOperandStackObj;
+  allocThreadMemory(caller?: {
+    call: GoslingLambdaObj;
+    args: Literal<AnyGoslingObject>[];
+  }): HeapAddr;
 };

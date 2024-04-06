@@ -12,6 +12,7 @@ import {
 import { InstrAddr } from "../common/instructionObj";
 import { Allocator, HeapAddr, HeapType } from "../memory";
 import { HeapInBytes, assertHeapType } from "../memory/node";
+import { GoslingOperandStackObj } from "./operandStack";
 import { GoslingScopeObj, getScopeObj, readScopeData } from "./scope";
 
 export type SpecialFrameLabels = "CALL" | "FOR";
@@ -311,5 +312,119 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     assertGoslingType(HeapType.BinaryPtr, rtsPtr);
 
     return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
+  }
+
+  setRTS(addr: HeapAddr, topFrameAddr: HeapAddr): void {
+    let threadMemory = this.get(addr);
+    if (
+      threadMemory === null ||
+      !isGoslingType(HeapType.BinaryPtr, threadMemory)
+    ) {
+      throw new Error(`Invalid thread memory at ${addr}`);
+    }
+    threadMemory.child1 = topFrameAddr;
+
+    this.set(addr, threadMemory);
+  }
+
+  setOS(addr: HeapAddr, osAddr: HeapAddr): void {
+    let threadMemory = this.get(addr);
+    if (
+      threadMemory === null ||
+      !isGoslingType(HeapType.BinaryPtr, threadMemory)
+    ) {
+      throw new Error(`Invalid thread memory at ${addr}`);
+    }
+    threadMemory.child2 = osAddr;
+
+    this.set(addr, threadMemory);
+  }
+
+  getRTS(addr: HeapAddr): GoslingScopeObj {
+    let threadMemory = this.get(addr);
+    if (
+      threadMemory === null ||
+      !isGoslingType(HeapType.BinaryPtr, threadMemory)
+    ) {
+      throw new Error(`Invalid thread memory at ${addr}`);
+    }
+
+    return this.getEnvs(threadMemory.child1);
+  }
+
+  getOS(addr: HeapAddr): GoslingOperandStackObj {
+    let threadMemory = this.get(addr);
+    if (
+      threadMemory === null ||
+      !isGoslingType(HeapType.BinaryPtr, threadMemory)
+    ) {
+      throw new Error(`Invalid thread memory at ${addr}`);
+    }
+
+    let _os = this.getList(threadMemory.child2);
+
+    const os: GoslingOperandStackObj = {
+      push: (val: Literal<AnyGoslingObject> | HeapAddr) => {
+        _os = this.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+        this.setOS(addr, _os.at(0)?.nodeAddr || HeapAddr.getNull());
+        const valueObj =
+          val instanceof HeapAddr ? this.get(val) : this.alloc(val);
+
+        if (valueObj === null)
+          throw new Error("Value object for os.push() is null");
+        _os = this.allocList([valueObj.addr], _os);
+        this.setOS(addr, _os.at(0)?.nodeAddr || HeapAddr.getNull());
+      },
+      pop: () => {
+        const val = os.peek();
+        _os = this.getList(_os.at(1)?.nodeAddr || HeapAddr.getNull());
+        this.setOS(addr, _os.at(0)?.nodeAddr || HeapAddr.getNull());
+        return this.get(val.addr)!;
+      },
+      peek: () => {
+        _os = this.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+        if (_os.length === 0) throw new Error("Operand stack is empty");
+
+        const val = _os.at(0)!.value;
+        if (val === null) throw new Error("Operand stack .top is null");
+        return this.get(val.addr)!;
+      },
+      length: () => {
+        _os = this.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+        return _os.length;
+      },
+      toString: () => {
+        _os = this.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
+        return (
+          `OS(${_os.length}): [\n` +
+          `${_os
+            .map((n) => JSON.stringify(n.value, undefined, "  "))
+            .join(", ")}` +
+          `\n]`
+        );
+      },
+    };
+    return os;
+  }
+
+  allocThreadMemory(caller?: {
+    call: GoslingLambdaObj;
+    args: Literal<AnyGoslingObject>[];
+  }): HeapAddr {
+    let rts = this.getEnvs(HeapAddr.getNull());
+    let _os = this.allocList([]);
+
+    if (caller) {
+      rts = caller.call.closure;
+      _os = this.allocList(caller.args.map((arg) => this.alloc(arg).addr));
+    }
+
+    let threadMemory: Literal<GoslingBinaryPtrObj> = {
+      type: HeapType.BinaryPtr,
+      child1: rts.getTopScopeAddr(),
+      child2: _os.at(0)?.nodeAddr || HeapAddr.getNull(),
+    };
+
+    return this.alloc(threadMemory).addr;
   }
 }

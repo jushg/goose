@@ -2,8 +2,9 @@ import { AnyGoslingObject, GoslingLambdaObj, GoslingObject, Literal } from ".";
 import { GoslingScopeObj } from "./scope";
 
 import { InstrAddr } from "../common/instructionObj";
-import { HeapAddr, HeapType } from "../memory";
+import { HeapType } from "../memory";
 import { GoslingMemoryManager, SpecialFrameLabels } from "./memory";
+import { GoslingOperandStackObj } from "./operandStack";
 
 export type ThreadStatus =
   | "DONE"
@@ -42,83 +43,60 @@ export function createThreadControlObject(
 ): ThreadControlObject {
   const id = `${++_id}_` + Math.random().toString(36).substring(7);
   let pc = InstrAddr.fromNum(0);
-  let rts = memory.getEnvs(HeapAddr.getNull());
-  let _os = memory.allocList([]);
-  let _status: ThreadStatus = "RUNNABLE";
-
   if (caller) {
     pc = caller.call.pcAddr;
-    rts = caller.call.closure;
-    _os = memory.allocList(caller.args.map((arg) => memory.alloc(arg).addr));
   }
 
-  const os: GoslingOperandStackObj = {
-    push: (val: Literal<AnyGoslingObject> | HeapAddr) => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
-      const valueObj =
-        val instanceof HeapAddr ? memory.get(val) : memory.alloc(val);
-
-      if (valueObj === null)
-        throw new Error("Value object for os.push() is null");
-      _os = memory.allocList([valueObj.addr], _os);
-    },
-    pop: () => {
-      const val = os.peek();
-      _os = memory.getList(_os.at(1)?.nodeAddr || HeapAddr.getNull());
-      return memory.get(val.addr)!;
-    },
-    peek: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
-      if (_os.length === 0) throw new Error("Operand stack is empty");
-
-      const val = _os.at(0)!.value;
-      if (val === null) throw new Error("Operand stack .top is null");
-      return memory.get(val.addr)!;
-    },
-    length: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
-      return _os.length;
-    },
-    toString: () => {
-      _os = memory.getList(_os.at(0)?.nodeAddr || HeapAddr.getNull());
-      return (
-        `OS(${_os.length}): [\n` +
-        `${_os
-          .map((n) => JSON.stringify(n.value, undefined, "  "))
-          .join(", ")}` +
-        `\n]`
-      );
-    },
+  let threadMemoryAddr = memory.allocThreadMemory(caller);
+  let getMemoryRTS = () => {
+    return memory.getRTS(threadMemoryAddr);
   };
+  let getMemoryOS = () => {
+    return memory.getOS(threadMemoryAddr);
+  };
+
+  let _status: ThreadStatus = "RUNNABLE";
 
   const t: ThreadControlObject = {
     getId: () => id,
-    getOS: () => os,
-    getRTS: () => (rts = memory.getEnvs(rts.getTopScopeAddr())),
+    getOS: () => getMemoryOS(),
+    getRTS: () => getMemoryRTS(),
     getPC: () => pc,
     setPC: (newPC: InstrAddr) => (pc = newPC),
     incrPC: () => (pc = InstrAddr.fromNum(pc.addr + 1)),
-    addFrame: (f) => (rts = memory.allocNewFrame(rts, f)),
+    addFrame: (f) => {
+      let newFrame = memory.allocNewFrame(getMemoryRTS(), f);
+      memory.setRTS(threadMemoryAddr, newFrame.getTopScopeAddr());
+    },
     execFn: (f) => {
-      rts = memory.allocNewCallFrame(pc, rts, f.closure.getTopScopeAddr());
+      let newFrame = memory.allocNewCallFrame(
+        pc,
+        getMemoryRTS(),
+        f.closure.getTopScopeAddr()
+      );
+      memory.setRTS(threadMemoryAddr, newFrame.getTopScopeAddr());
       t.setPC(f.pcAddr);
     },
     execFor: () => {
-      rts = memory.allocNewSpecialFrame(
+      let newFrame = memory.allocNewSpecialFrame(
         t.getPC(),
-        rts,
+        getMemoryRTS(),
         "FOR",
-        rts.getTopScopeAddr()
+        getMemoryRTS().getTopScopeAddr()
       );
+      memory.setRTS(threadMemoryAddr, newFrame.getTopScopeAddr());
     },
     exitFrame: () => {
-      const enclosing = memory.getEnclosingFrame(rts);
-      rts = enclosing;
+      const enclosing = memory.getEnclosingFrame(getMemoryRTS());
+      memory.setRTS(threadMemoryAddr, enclosing.getTopScopeAddr());
     },
     exitSpecialFrame: (label) => {
-      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(rts, label);
+      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(
+        getMemoryRTS(),
+        label
+      );
       t.setPC(pc);
-      rts = newRTS;
+      memory.setRTS(threadMemoryAddr, newRTS.getTopScopeAddr());
     },
     setStatus: (status) => (_status = status),
     getStatus: () => _status,
@@ -144,11 +122,3 @@ export function assertGoslingObject<T extends HeapType = HeapType>(
     throw new Error(`Expected gosling obj, but not: ${obj}`);
   }
 }
-
-export type GoslingOperandStackObj = {
-  push(val: Literal<AnyGoslingObject> | HeapAddr): void;
-  pop(): AnyGoslingObject;
-  peek(): AnyGoslingObject;
-  toString(): string;
-  length(): number;
-};
