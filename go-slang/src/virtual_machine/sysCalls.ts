@@ -20,13 +20,21 @@ type SysCall = ({
   thread: ThreadControlObject;
 }) => void;
 
-const printOsTop: SysCall = ({ memory, thread }) => {
-  const arg: AnyGoslingObject = thread.getOS().peek();
-  const inner = Object.keys(arg)
-    .filter((key) => !(key === "type" || key === "addr"))
-    .map((key) => `${key}: ${(arg as any)[key]}`)
-    .join(", ");
-  thread.print(`${arg.type} @ ${arg.addr.toString()}: { ${inner} }`);
+const print: SysCall = ({ thread }) => {
+  const arg: AnyGoslingObject = thread.getOS().pop();
+  if (arg.type === HeapType.String) {
+    thread.print(`'${arg.data}'`);
+    return;
+  } else if (arg.type === HeapType.Int) {
+    thread.print(`${arg.data}`);
+    return;
+  } else if (arg.type === HeapType.Bool) {
+    thread.print(`${arg.data}`);
+    return;
+  } else if (arg.type === HeapType.BinaryPtr) {
+    thread.print(`${arg.child1.toString().slice(3)}`);
+    return;
+  }
 };
 
 const printOS: SysCall = ({ thread }) => {
@@ -109,9 +117,10 @@ const makeLambda: SysCall = ({ ins, memory, thread }) => {
 export const sysCallLogic = {
   make,
   done,
+  new: new_,
+  makeLambda,
   printOS,
   printHeap,
   triggerBreakpoint,
-  new: new_,
-  makeLambda,
+  print,
 } satisfies { [key in SysCallInstructionObj["sym"]]: SysCall };
