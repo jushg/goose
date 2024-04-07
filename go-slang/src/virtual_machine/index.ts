@@ -15,12 +15,16 @@ import { createThreadControlObject } from "./threadControl";
 const PERCENT_TO_TRIGGER_GC = 0.7;
 
 export function initializeVirtualMachine(
-  memorySize: number = (2 ** 8) ** 2
+  program: CompiledFile,
+  memorySize: number = (2 ** 8) ** 2,
+  vmPrinter: (
+    ctx: { threadId: string } | { component: string },
+    s: string
+  ) => void = console.dir,
+  gcTriggerMemoryUsageThreshold = PERCENT_TO_TRIGGER_GC
 ): ExecutionState {
   let memory = createGoslingMemoryManager(memorySize);
-  let mainJobState = createThreadControlObject(memory, (threadId, s) =>
-    console.log(`Thread ${threadId}: ${s}`)
-  );
+  let mainJobState = createThreadControlObject(memory, vmPrinter);
 
   const startingMachineState: MachineState = {
     HEAP: memory,
@@ -32,55 +36,63 @@ export function initializeVirtualMachine(
   return {
     jobState: mainJobState,
     machineState: startingMachineState,
+    gcTriggerMemoryUsageThreshold,
+    vmPrinter,
+    program,
   };
 }
 
-function cannotExecute(curState: ExecutionState): boolean {
-  // Check if curJobState is block by another thread
-  return curState.jobState.getStatus() !== "RUNNABLE";
-}
-
-function isTimeout(curState: ExecutionState): boolean {
-  return curState.machineState.TIME_SLICE === 0;
-}
-
-function needMemoryCleanup(curState: ExecutionState): boolean {
+function needMemoryCleanup(currState: ExecutionState): boolean {
   return (
-    curState.machineState.HEAP.getMemoryUsed() >
-    PERCENT_TO_TRIGGER_GC * curState.machineState.HEAP.getMemorySize()
+    currState.machineState.HEAP.getMemoryUsed() >
+    currState.gcTriggerMemoryUsageThreshold *
+      currState.machineState.HEAP.getMemorySize()
   );
 }
 
-export function executeStep(
-  curState: ExecutionState,
-  instructions: Array<AnyInstructionObj>
-) {
-  if (cannotExecute(curState) || isTimeout(curState)) {
-    let nextJob = curState.machineState.JOB_QUEUE.dequeue();
-    let curJob = curState.jobState;
-    if (nextJob) {
-      curState.machineState.JOB_QUEUE.enqueue(curJob);
-      curState.jobState = nextJob;
-      return curState;
-    }
+export function executeStep(currState: ExecutionState) {
+  const instructions: Array<AnyInstructionObj> = currState.program.instructions;
+  const { jobState: currJob, machineState } = currState;
+  if (needMemoryCleanup(currState)) {
+    const memUsage = currState.machineState.HEAP.getMemoryUsed();
+    machineState.HEAP.runGarbageCollection();
+    const newMemUsage = currState.machineState.HEAP.getMemoryUsed();
+    currState.vmPrinter(
+      { component: "GC" },
+      `Compressed ${100 - Math.floor((newMemUsage / memUsage) * 100)}% -> ${memUsage} -> ${newMemUsage}`
+    );
   }
 
-  if (needMemoryCleanup(curState)) {
-    curState.machineState.HEAP.runGarbageCollection();
+  let nextPCIndx = currJob.getPC().addr;
+  machineState.TIME_SLICE--;
+  executeInstruction(instructions[nextPCIndx], currState);
+
+  if (machineState.TIME_SLICE === 0) {
+    if (currJob.getStatus() === "RUNNABLE")
+      currJob.setStatus("TIME_SLICE_EXCEEDED");
+    machineState.TIME_SLICE = STANDARD_TIME_SLICE;
   }
 
-  let nextPCIndx = curState.jobState.getPC().addr;
-  curState.machineState.TIME_SLICE--;
-  executeInstruction(instructions[nextPCIndx], curState);
-  return curState;
+  if (currJob.getStatus() === "RUNNABLE") return currState;
+
+  if (currJob.getStatus() === "TIME_SLICE_EXCEEDED")
+    currJob.setStatus("RUNNABLE");
+  if (currJob.getStatus() !== "DONE") machineState.JOB_QUEUE.enqueue(currJob);
+
+  let nextJob = machineState.JOB_QUEUE.dequeue();
+  if (nextJob) {
+    currState.jobState = nextJob;
+    return currState;
+  } else {
+    return null;
+  }
 }
 
 export function runProgram(prog: CompiledFile) {
   const startTime = Date.now();
   const maxTimeDuration = /* 10 seconds */ 1000 * 10;
 
-  let curState = initializeVirtualMachine();
-  let instructions = prog.instructions;
+  let curState = initializeVirtualMachine(prog);
 
   while (curState.machineState.IS_RUNNING) {
     // infinite loop protection
@@ -90,7 +102,9 @@ export function runProgram(prog: CompiledFile) {
       // throw new PotentialInfiniteLoopError(locationDummyNode(-1, -1, null), MAX_TIME)
     }
 
-    curState = executeStep(curState, instructions);
+    const newState = executeStep(curState);
+    if (newState === null) break;
+    curState = newState;
   }
 
   // Clear up memory

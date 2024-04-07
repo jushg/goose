@@ -298,7 +298,12 @@ COMMENT_MULTI     "multiline-comment"           = "/*" content:( !"*/" . )* "*/"
 
 // # Identifiers ============================
 
-IDENT          "identifier"              = x:LETTER y:( LETTER / DIGIT / UBAR )*
+RESERVED = (
+  ("func" / "new" / "make" / "case" / "select" / "switch" / "if" / "else" / "for" / "go" / "var" / "const" / "int" / "string" / "chan")
+  !( LETTER / DIGIT / UBAR ) // Excludes possible identifiers that start with a reserved keyword (e.g. `forCounter`)
+)
+
+IDENT          "identifier"              = !RESERVED x:LETTER y:( LETTER / DIGIT / UBAR )*
   { return makeIdent(x + y.join('')); }
 
 // # Types ==================================
@@ -335,9 +340,9 @@ ChannelInType     "chan-in type"                  = "chan" WS? ARROW WS? inner:T
 FunctionType      "function type"                 = "func" WS? inputT:FnParamListType WS? returnT:(Type?) WS?
   { return makeFunctionType(inputT, returnT) }
 
-FnParamListType       "function parameter type"   = LPAREN WS? a:Type b:(WS? ',' WS? Type)* WS? RPAREN
-  { return [a, ...(b.map(bb => bb[3]))] }
-                                                  / WS? LPAREN WS? RPAREN
+FnParamListType       "function parameter type"   = LPAREN WS? IDENT? WS? a:Type b:(WS? ',' WS? IDENT? WS? Type)* WS? RPAREN
+  { return [a, ...(b.map(bb => bb[5]))] }
+                                                  / LPAREN WS? RPAREN
   { return []; }
 
 // # Blocks =================================
@@ -415,10 +420,10 @@ PrimaryExpr     "primary expression"            = sym:("make"/"new") LPAREN WS? 
     typeArg = typeArg === "void" ? null : typeArg;
     return makeSysCall(sym, typeArg, []);
   }
-                                                / a:Operand b:((Selector / Index / Arguments)*)
+                                                / a:Operand WS? b:((WS? (Selector / Index / Arguments))*)
   {
     // Note the '*' makes a standalone Operand a valid PrimaryExpr.
-    return b.reduce(primaryExprReduceHelper, a);
+    return b.map(bb => bb[1]).reduce(primaryExprReduceHelper, a);
   }
 
 Selector        "selector in expression"        = DOT ident:IDENT

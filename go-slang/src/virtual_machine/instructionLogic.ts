@@ -1,6 +1,7 @@
-import { AnyGoslingObject, Literal } from ".";
+import { AnyGoslingObject, Literal, assertGoslingType } from ".";
 import {
   AnyInstructionObj,
+  InstrAddr,
   OpCode,
   assertOpType,
 } from "../common/instructionObj";
@@ -8,7 +9,11 @@ import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
 import { AnyLiteralObj, AnyTypeObj, FuncLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
-import { assertGoslingObject, isGoslingObject } from "./threadControl";
+import {
+  assertGoslingObject,
+  createThreadControlObject,
+  isGoslingObject,
+} from "./threadControl";
 import { getBinaryOpLogic, getUnaryOpLogic } from "./alu";
 
 export function executeInstruction(
@@ -139,7 +144,54 @@ function getInstructionLogic(
 
     case OpCode.GOROUTINE:
       return (ins, es) => {
-        throw new Error("Function not implemented.");
+        /* 
+          The form of GOROUTINE is as such:
+
+          - LD A  (or sequence of operations that result in OS.push arg A)
+          - LD B  (or sequence of operations that result in OS.push arg B)
+          ...
+          - LD N  (or sequence of operations that result in OS.push arg N)
+          - LD f  (or sequence of operations that result in OS.push arg f)
+          - GOROUTINE N
+          - CALL N
+          - SYSCALL 'DONE'
+          - rest of program
+
+          By using the OS, we can use function literals or fn arguments that are expressions
+          E.g.:
+          go (getFunction(foo, bar, baz))(getSomeIntParam(), &someGlobalVar)
+          
+          the CALL N and SYSCALL 'DONE' are the next two instructions for the goroutine
+          the rest of the program is the continuation of the main thread (rmbr to remove call args)
+         */
+        assertOpType(OpCode.GOROUTINE, ins);
+
+        // Duplicate the relevant OS items [lambdaPtr, arg1, arg2, ... argN] to protect from OS .pop / .push.
+        const args: AnyGoslingObject[] = [];
+        for (let argIdx = 0; argIdx < ins.args + 1; argIdx++) {
+          const arg = es.jobState.getOS().pop();
+          args.push(es.machineState.HEAP.alloc(arg));
+        }
+
+        const duplicatedOS =
+          es.machineState.HEAP.allocList(args.map((arg) => arg.addr)).at(0)
+            ?.nodeAddr || HeapAddr.getNull();
+
+        const callPC = InstrAddr.fromNum(es.jobState.getPC().addr + 1);
+        const restOfProgramPc = InstrAddr.fromNum(es.jobState.getPC().addr + 3);
+
+        const goroutine = createThreadControlObject(
+          es.machineState.HEAP,
+          es.vmPrinter,
+          {
+            pc: callPC,
+            os: duplicatedOS,
+            status: "RUNNABLE",
+            rts: es.jobState.getRTS().getTopScopeAddr(),
+          }
+        );
+        es.machineState.JOB_QUEUE.enqueue(goroutine);
+        es.jobState.setPC(restOfProgramPc);
       };
 
     case OpCode.SYS_CALL:

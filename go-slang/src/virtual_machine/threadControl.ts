@@ -47,27 +47,15 @@ function getOsAddr(l: GoslingListObj): HeapAddr {
 
 export function createThreadControlObject(
   memory: GoslingMemoryManager,
-  printer: (threadId: string, s: string) => void,
-  caller?: { call: GoslingLambdaObj; args: Literal<AnyGoslingObject>[] }
+  printer: (a: { threadId: string }, s: string) => void,
+  initData: ThreadData = {
+    pc: InstrAddr.fromNum(0),
+    rts: HeapAddr.getNull(),
+    os: HeapAddr.getNull(),
+    status: "RUNNABLE",
+  }
 ): ThreadControlObject {
-  const id = `${++_id}_` + Math.random().toString(36).substring(7);
-  const initData: ThreadData =
-    caller === undefined
-      ? {
-          pc: InstrAddr.fromNum(0),
-          rts: HeapAddr.getNull(),
-          os: HeapAddr.getNull(),
-          status: "RUNNABLE",
-        }
-      : {
-          pc: caller.call.pcAddr,
-          rts: caller.call.closure.getTopScopeAddr(),
-          os: getOsAddr(
-            memory.allocList(caller.args.map((arg) => memory.alloc(arg).addr))
-          ),
-          status: "RUNNABLE",
-        };
-
+  const id = `t_${(++_id).toString(16).padStart(5, "0")}__from${initData.pc.addr.toString().padStart(6, "_")}`;
   memory.allocThreadData(id, initData);
 
   const getOS = () => memory.getList(memory.getThreadData(id).os);
@@ -158,7 +146,7 @@ export function createThreadControlObject(
     },
     setStatus: (status) => memory.setThreadData(id, { status }),
     getStatus,
-    print: (s) => printer(id, s),
+    print: (s) => printer({ threadId: id }, s),
   };
   return t;
 }

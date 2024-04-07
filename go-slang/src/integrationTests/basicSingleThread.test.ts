@@ -42,11 +42,11 @@ func foo(y int) {
 
 describe("basic single threaded program", () => {
   it("should execute correctly", () => {
-    const prog = compileParsedProgram(parse(progStr));
-    let state = initializeVirtualMachine((2 ** 8) ** 2);
-
     const log: string[] = [];
-    state.jobState.print = (s) => log.push(s);
+    const prog = compileParsedProgram(parse(progStr));
+    let state = initializeVirtualMachine(prog, (2 ** 8) ** 2, (ctx, s) =>
+      "threadId" in ctx ? log.push(s) : null
+    );
 
     const getSingleThreadStatus = () => state.jobState.getStatus();
     const getMemory = () => state.machineState.HEAP;
@@ -61,26 +61,39 @@ describe("basic single threaded program", () => {
     const pcExecutionOrder: number[] = [];
     const maxInstrExecutions = 1000;
 
-    while (getSingleThreadStatus() !== "DONE") {
+    let lastHundredInstr: any[] = [];
+    const updateLastHundredInstr = () => {
+      lastHundredInstr = pcExecutionOrder
+        .slice(-100)
+        .map((i) => [i, prog.instructions[i].op]);
+      lastHundredInstr = lastHundredInstr.map(([i, op], idx) => {
+        if (idx < lastHundredInstr.length - 10) return { i, op };
+        return { i, ...prog.instructions[i] };
+      });
+    };
+
+    while (true) {
       if (pcExecutionOrder.length > maxInstrExecutions)
         expect(pcExecutionOrder).toHaveLength(0);
 
       pcExecutionOrder.push(getPC());
+      updateLastHundredInstr();
 
       try {
-        state = executeStep(state, prog.instructions);
+        const newState = executeStep(state);
+        if (newState === null) break;
+        state = newState;
       } catch (e) {
-        const _lastHundredInstr = pcExecutionOrder
-          .slice(-100)
-          .map((i) => [i, prog.instructions[i].op]);
+        // console.dir(lastHundredInstr);
         throw e;
       }
 
       const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
       const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
-      console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
+    // console.dir(lastHundredInstr);
     expect(log).toEqual([
       "1",
       "3",

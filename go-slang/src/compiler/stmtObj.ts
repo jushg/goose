@@ -2,15 +2,18 @@ import {
   InstrAddr,
   OpCode,
   SysCallInstructionObj,
+  assertOpType,
   makeAssignInstruction,
   makeCallInstruction,
   makeDeclareInstruction,
   makeEnterScopeInstruction,
   makeExitScopeInstruction,
   makeGOTOInstruction,
+  makeGoroutineInstruction,
   makeJOFInstruction,
   makeLdInstruction,
   makeLdcInstruction,
+  makeSysCallInstruction,
 } from "../common/instructionObj";
 import {
   AnyLiteralObj,
@@ -264,7 +267,22 @@ export function getStmtLogic(
 
     case "GO":
       return (s, pf) => {
-        throw new Error("GO not implemented");
+        assertStmt("GO", s);
+
+        const { expr } = s;
+        assertTag("CALL", expr);
+        compileTagObj(expr, pf);
+
+        const callInstr = pf.instructions.pop()!;
+        assertOpType(OpCode.CALL, callInstr);
+
+        pf.instructions.push(makeGoroutineInstruction(callInstr.args));
+        // main thread will automatically create new goroutine to continue with callInstr
+        // with a duplicated OS. The main thread will continue with instructions after
+        // skipping 'callInstr' and the sys call 'done'.
+
+        pf.instructions.push(callInstr);
+        pf.instructions.push(makeSysCallInstruction("done", null, 0));
       };
 
     case "RETURN":
