@@ -61,7 +61,7 @@ export function getExprLogic(
 
         pf.instructions.push(makeEnterScopeInstruction(decls));
 
-        fnLit.input.forEach((prm) => {
+        [...fnLit.input].reverse().forEach((prm) => {
           pf.instructions.push(makeDeclareInstruction(prm.ident.val, prm.type));
           pf.instructions.push(makeLdInstruction(prm.ident.val));
           pf.instructions.push(makeAssignInstruction());
