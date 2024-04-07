@@ -4,8 +4,7 @@
 // ##############################################################################################################
 
 // # Source file organization ==============
-
-TOPLEVEL     "source file"             = BD a:( TopLevelDecl BD )* EOF
+TOPLEVEL                                 = BD a:( Declaration BD )* EOF
 	{ return a.map(aa => aa[0]); }
 
 // # Characters =============================
@@ -16,7 +15,7 @@ DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD              "statement delimiter"          = WS* (SEMICOLON / NEWLINE) WS*
+BD                                              = WS* (SEMICOLON / NEWLINE) WS*
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
@@ -193,10 +192,8 @@ StatementList   "statement list"                = v:( Statement BD )*
 
 Declaration     "declaration"                   = ConstDecl
                                                 / VarDecl
-
-TopLevelDecl    "top-level declaration"         = Declaration
                                                 / FunctionDecl
-
+                                                
 // # Constant declarations ==================
 
 ConstDecl       "constant declaration"          = "const" WS ident:IDENT WS? identType:(Type?) WS? EQUAL WS? expr:Expression
