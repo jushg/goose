@@ -373,10 +373,9 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     });
 
     let getNewAddr = (addr: HeapAddr) => {
+      if (addr.isNull()) return HeapAddr.getNull();
       if (!(addr.toString() in nodesMap))
         throw new Error(`Forward space not allocated for ${addr.toString()}`);
-      if (addr.isNull())
-        return HeapAddr.getNull();
       return nodesMap[addr.toString()];
     };
 

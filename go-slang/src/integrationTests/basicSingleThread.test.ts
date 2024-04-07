@@ -47,7 +47,7 @@ describe("basic single threaded program", () => {
     const getMemory = () => state.machineState.HEAP;
     const getThread = () => state.jobState;
     const getPC = () => state.jobState.getPC().addr;
-    const _getRts = () =>
+    const getRts = () =>
       getThread()
         .getRTS()
         .getScopeData()
@@ -68,6 +68,8 @@ describe("basic single threaded program", () => {
         const _lastHundredInstr = pcExecutionOrder
           .slice(-100)
           .map((i) => [i, prog.instructions[i].op]);
+
+        console.dir(getRts());
         throw e;
       }
 
