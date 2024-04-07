@@ -178,10 +178,17 @@ export function makeClearInstruction(): ClearInstructionObj {
   return { tag: "INSTR", op: OpCode.CLEAR };
 }
 
-export type GoroutineInstructionObj = InstructionObj<OpCode.GOROUTINE>;
+export type GoroutineInstructionObj = InstructionObj<
+  OpCode.GOROUTINE,
+  {
+    args: number;
+  }
+>;
 
-export function makeGoroutineInstruction(): GoroutineInstructionObj {
-  return { tag: "INSTR", op: OpCode.GOROUTINE };
+export function makeGoroutineInstruction(
+  args: number
+): GoroutineInstructionObj {
+  return { tag: "INSTR", op: OpCode.GOROUTINE, args };
 }
 
 export type SysCallInstructionObj = InstructionObj<
