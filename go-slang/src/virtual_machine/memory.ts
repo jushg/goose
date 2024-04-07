@@ -380,7 +380,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     };
 
     reachableNodes.forEach((addr) => {
-      this.setStandbyMemory(getNewAddr(addr), getNewAddr);
+      this.setStandbyMemory(addr, getNewAddr);
     });
 
     this.threadDataMap = new Map(
@@ -408,15 +408,15 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   private setStandbyMemory(
-    newAddr: HeapAddr,
+    oldAddr: HeapAddr,
     getNewAddr: (addr: HeapAddr) => HeapAddr
   ) {
-    let oldHeapNode = this.standbyMemory.getHeapValue(newAddr).toHeapValue();
+    let oldHeapNode = this.memory.getHeapValue(oldAddr).toHeapValue();
     switch (oldHeapNode.type) {
       case HeapType.String:
         oldHeapNode.next = getNewAddr(oldHeapNode.next);
         this.standbyMemory.setHeapValue(
-          newAddr,
+          getNewAddr(oldAddr),
           HeapInBytes.fromData(oldHeapNode)
         );
         break;
@@ -424,7 +424,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
         oldHeapNode.child1 = getNewAddr(oldHeapNode.child1);
         oldHeapNode.child2 = getNewAddr(oldHeapNode.child2);
         this.standbyMemory.setHeapValue(
-          newAddr,
+          getNewAddr(oldAddr),
           HeapInBytes.fromData(oldHeapNode)
         );
         break;

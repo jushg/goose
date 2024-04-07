@@ -73,9 +73,9 @@ describe("basic single threaded program", () => {
         throw e;
       }
 
-      const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
-      const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
-      console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
     expect(log).toEqual([
@@ -83,13 +83,13 @@ describe("basic single threaded program", () => {
       "3",
       "false",
       "'BAYBAYBAY'",
-      "0x163",
+      "0x3",
       "false",
       "'BAYBAYBAY'",
-      "0x115",
+      "0x3",
       "false",
       "'BAYBAYBAY'",
-      "0xc7",
+      "0x1f",
     ]);
   });
 });
