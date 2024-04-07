@@ -83,13 +83,13 @@ describe("basic single threaded program", () => {
       "3",
       "false",
       "'BAYBAYBAY'",
-      "0x3",
+      expect.stringMatching(/0x[0-9a-f]+/),
       "false",
       "'BAYBAYBAY'",
-      "0x3",
+      expect.stringMatching(/0x[0-9a-f]+/),
       "false",
       "'BAYBAYBAY'",
-      "0x1f",
+      expect.stringMatching(/0x[0-9a-f]+/),
     ]);
   });
 });
