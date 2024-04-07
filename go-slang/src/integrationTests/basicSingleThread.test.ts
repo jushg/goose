@@ -42,11 +42,11 @@ func foo(y int) {
 
 describe("basic single threaded program", () => {
   it("should execute correctly", () => {
-    const prog = compileParsedProgram(parse(progStr));
-    let state = initializeVirtualMachine((2 ** 8) ** 2);
-
     const log: string[] = [];
-    state.jobState.print = (s) => log.push(s);
+    const prog = compileParsedProgram(parse(progStr));
+    let state = initializeVirtualMachine(prog, (2 ** 8) ** 2, (s) =>
+      log.push(s)
+    );
 
     const getSingleThreadStatus = () => state.jobState.getStatus();
     const getMemory = () => state.machineState.HEAP;
@@ -68,7 +68,7 @@ describe("basic single threaded program", () => {
       pcExecutionOrder.push(getPC());
 
       try {
-        state = executeStep(state, prog.instructions);
+        state = executeStep(state);
       } catch (e) {
         const _lastHundredInstr = pcExecutionOrder
           .slice(-100)
@@ -78,39 +78,39 @@ describe("basic single threaded program", () => {
 
       const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
       const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
-      console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
     expect(log).toEqual([
-      "1",
-      "3",
-      "7",
-      "15",
-      "31",
-      "63",
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      "false",
-      "'BAYBAYBAY'",
-      expect.stringMatching(/0x[0-9a-f]+/),
-      expect.stringMatching(/0x[0-9a-f]+/),
-      expect.stringMatching(/0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: 1",
+      "Thread t_00001__from_____0: 3",
+      "Thread t_00001__from_____0: 7",
+      "Thread t_00001__from_____0: 15",
+      "Thread t_00001__from_____0: 31",
+      "Thread t_00001__from_____0: 63",
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "Thread t_00001__from_____0: false",
+      "Thread t_00001__from_____0: 'BAYBAYBAY'",
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
     ]);
   });
 });

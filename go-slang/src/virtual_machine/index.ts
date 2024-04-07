@@ -15,12 +15,16 @@ import { createThreadControlObject } from "./threadControl";
 const PERCENT_TO_TRIGGER_GC = 0.7;
 
 export function initializeVirtualMachine(
-  memorySize: number = (2 ** 8) ** 2
+  program: CompiledFile,
+  memorySize: number = (2 ** 8) ** 2,
+  log: (s: string) => void = console.log
 ): ExecutionState {
   let memory = createGoslingMemoryManager(memorySize);
-  let mainJobState = createThreadControlObject(memory, (threadId, s) =>
-    console.log(`Thread ${threadId}: ${s}`)
-  );
+  let vmPrinter = (ctx: { threadId: string } | "VM", s: string) => {
+    if (ctx === "VM") log(s);
+    else log(`Thread ${ctx.threadId}: ${s}`);
+  };
+  let mainJobState = createThreadControlObject(memory, vmPrinter);
 
   const startingMachineState: MachineState = {
     HEAP: memory,
@@ -32,6 +36,8 @@ export function initializeVirtualMachine(
   return {
     jobState: mainJobState,
     machineState: startingMachineState,
+    vmPrinter,
+    program,
   };
 }
 
@@ -51,10 +57,8 @@ function needMemoryCleanup(curState: ExecutionState): boolean {
   );
 }
 
-export function executeStep(
-  curState: ExecutionState,
-  instructions: Array<AnyInstructionObj>
-) {
+export function executeStep(curState: ExecutionState) {
+  const instructions: Array<AnyInstructionObj> = curState.program.instructions;
   if (cannotExecute(curState) || isTimeout(curState)) {
     let nextJob = curState.machineState.JOB_QUEUE.dequeue();
     let curJob = curState.jobState;
@@ -79,8 +83,7 @@ export function runProgram(prog: CompiledFile) {
   const startTime = Date.now();
   const maxTimeDuration = /* 10 seconds */ 1000 * 10;
 
-  let curState = initializeVirtualMachine();
-  let instructions = prog.instructions;
+  let curState = initializeVirtualMachine(prog);
 
   while (curState.machineState.IS_RUNNING) {
     // infinite loop protection
@@ -90,7 +93,7 @@ export function runProgram(prog: CompiledFile) {
       // throw new PotentialInfiniteLoopError(locationDummyNode(-1, -1, null), MAX_TIME)
     }
 
-    curState = executeStep(curState, instructions);
+    curState = executeStep(curState);
   }
 
   // Clear up memory
