@@ -150,8 +150,10 @@ export function createThreadControlObject(
       memory.setThreadData(id, { rts: enclosing.getTopScopeAddr() });
     },
     exitSpecialFrame: (label) => {
-      let rts = getRTS();
-      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(rts, label);
+      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(
+        getRTS(),
+        label
+      );
       memory.setThreadData(id, { rts: newRTS.getTopScopeAddr(), pc });
     },
     setStatus: (status) => memory.setThreadData(id, { status }),

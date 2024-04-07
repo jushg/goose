@@ -1,62 +1,6 @@
-import { OpCode } from "../common/instructionObj";
 import { compileParsedProgram } from "../compiler";
-import { HeapAddr, HeapInBytes, HeapType } from "../memory";
 import { parse } from "../parser";
-import {
-  AnyGoslingObject,
-  executeStep,
-  initializeVirtualMachine,
-} from "../virtual_machine";
-import { GoslingMemoryManager } from "../virtual_machine/memory";
-
-function getMemResidency(memory: GoslingMemoryManager) {
-  if (memory === undefined) throw new Error("Memory is undefined");
-
-  const visited: HeapAddr[] = [];
-  const roots = memory
-    .getMemoryRoots()
-    .filter((r) => !r.isNull())
-    .map((a) => memory.get(a))
-    .map((x) => x!);
-
-  while (roots.length > 0) {
-    const root = roots.pop()!;
-    visited.push(root.addr);
-
-    const newAdd: HeapAddr[] = [];
-
-    switch (root.type) {
-      case HeapType.BinaryPtr: {
-        newAdd.push(root.child1);
-        newAdd.push(root.child2);
-        break;
-      }
-      case HeapType.String: {
-        const strAsHeapVal = memory.memory
-          .getHeapValue(root.addr)
-          .toHeapValue();
-        if (strAsHeapVal.type !== HeapType.String)
-          throw new Error("Expected string type in mem residency check");
-        newAdd.push(strAsHeapVal.next);
-      }
-      case HeapType.Int:
-      case HeapType.Bool:
-        break;
-      default:
-        const _: never = root;
-        throw new Error(`Unexpected heap type: ${root}`);
-    }
-
-    newAdd.forEach((addr) => {
-      if (!addr.isNull() && !visited.find((a) => a.equals(addr))) {
-        const node = memory.get(addr);
-        if (node) roots.push(node);
-      }
-    });
-  }
-
-  return visited.length;
-}
+import { executeStep, initializeVirtualMachine } from "../virtual_machine";
 
 const progStr = `
 var x int
@@ -127,9 +71,9 @@ describe("basic single threaded program", () => {
         throw e;
       }
 
-      // const _memUsage = `${(getMemory().memory.alloc as any).FREE_PTR} / ${(getMemory().memory.alloc as any).memory.nodeCount}`;
-      // const _memResidency = `${getMemResidency(getMemory())} / ${(getMemory().memory.alloc as any).memory.nodeCount}`;
-      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+      const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
     expect(log).toEqual([

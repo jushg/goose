@@ -22,6 +22,10 @@ export class Allocator {
     return this.alloc.getNodeCount();
   }
 
+  getUsedNodeCount(): number {
+    return this.alloc.getUsedNodeCount();
+  }
+
   getNewHeapAddress(): HeapAddr {
     return this.alloc.getNewHeapAddress();
   }

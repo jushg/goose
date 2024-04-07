@@ -218,51 +218,36 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     this.memory.setHeapValue(addr, HeapInBytes.getNull());
   }
 
-  alloc(
-    data: Literal<AnyGoslingObject>,
-    canRunGC: boolean = true
-  ): AnyGoslingObject {
+  alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject {
     if ("addr" in data) delete data.addr;
 
-    try {
-      switch (data.type) {
-        case HeapType.Bool: {
-          const d = data as Literal<GoslingObject<HeapType.Bool>>;
-          const addr = this.memory.allocBool(d.data);
-          return { ...d, addr };
-        }
-        case HeapType.Int: {
-          const d = data as Literal<GoslingObject<HeapType.Int>>;
-          const addr = this.memory.allocInt(d.data);
-          return { ...d, addr };
-        }
-        case HeapType.String: {
-          const d = data as Literal<GoslingObject<HeapType.String>>;
-          const addr = this.memory.allocString(d.data);
-          return { ...d, addr };
-        }
-        case HeapType.BinaryPtr: {
-          const { child1, child2 } = data as Literal<
-            GoslingObject<HeapType.BinaryPtr>
-          >;
-          const addr = this.memory.allocBinaryPtr(child1, child2);
-          return { type: HeapType.BinaryPtr, child1, child2, addr };
-        }
-        default: {
-          const _: never = data;
-          throw new Error(`Invalid data: ${data}`);
-        }
+    switch (data.type) {
+      case HeapType.Bool: {
+        const d = data as Literal<GoslingObject<HeapType.Bool>>;
+        const addr = this.memory.allocBool(d.data);
+        return { ...d, addr };
       }
-    } catch (e) {
-      if (!(e instanceof Error) || !e.message.includes("Heap overflow")) {
-        throw e;
+      case HeapType.Int: {
+        const d = data as Literal<GoslingObject<HeapType.Int>>;
+        const addr = this.memory.allocInt(d.data);
+        return { ...d, addr };
       }
-
-      if (!canRunGC) {
-        throw new Error(`Heap overflow: ${e} with garbage collection failed`);
+      case HeapType.String: {
+        const d = data as Literal<GoslingObject<HeapType.String>>;
+        const addr = this.memory.allocString(d.data);
+        return { ...d, addr };
       }
-      this.runGarbageCollection();
-      return this.alloc(data, false);
+      case HeapType.BinaryPtr: {
+        const { child1, child2 } = data as Literal<
+          GoslingObject<HeapType.BinaryPtr>
+        >;
+        const addr = this.memory.allocBinaryPtr(child1, child2);
+        return { type: HeapType.BinaryPtr, child1, child2, addr };
+      }
+      default: {
+        const _: never = data;
+        throw new Error(`Invalid data: ${data}`);
+      }
     }
   }
 
@@ -412,7 +397,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     this.standbyMemory.reset();
   }
 
-  createStandbyCopy(addr: HeapAddr): HeapAddr {
+  private createStandbyCopy(addr: HeapAddr): HeapAddr {
     if (addr.isNull()) return HeapAddr.getNull();
     let oldHeapNode = this.getHeapValue(addr);
     if (oldHeapNode === null) return HeapAddr.getNull();
@@ -421,7 +406,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return newAddr;
   }
 
-  setStandbyMemory(
+  private setStandbyMemory(
     newAddr: HeapAddr,
     getNewAddr: (addr: HeapAddr) => HeapAddr
   ) {
@@ -448,7 +433,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     }
   }
 
-  getAllReachableNodesFromRoot(): HeapAddr[] {
+  private getAllReachableNodesFromRoot(): HeapAddr[] {
     const visited: HeapAddr[] = [];
     const roots = this.getMemoryRoots().filter((r) => !r.isNull());
 
@@ -483,5 +468,17 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       });
     }
     return visited;
+  }
+
+  getMemorySize(): number {
+    return this.memory.getNodeCount();
+  }
+
+  getMemoryUsed(): number {
+    return this.memory.getUsedNodeCount();
+  }
+
+  getMemoryResidency(): number {
+    return this.getAllReachableNodesFromRoot().length;
   }
 }

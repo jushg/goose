@@ -12,6 +12,8 @@ import { createGoslingMemoryManager } from "./memory";
 import { GoslingScopeObj } from "./scope";
 import { createThreadControlObject } from "./threadControl";
 
+const PERCENT_TO_TRIGGER_GC = 0.7;
+
 export function initializeVirtualMachine(
   memorySize: number = 2 ** 10
 ): ExecutionState {
@@ -33,20 +35,27 @@ export function initializeVirtualMachine(
   };
 }
 
-function isBlocked(curState: ExecutionState): boolean {
+function cannotExecute(curState: ExecutionState): boolean {
   // Check if curJobState is block by another thread
-  return false;
+  return curState.jobState.getStatus() !== "RUNNABLE";
 }
 
 function isTimeout(curState: ExecutionState): boolean {
   return curState.machineState.TIME_SLICE === 0;
 }
 
+function needMemoryCleanup(curState: ExecutionState): boolean {
+  return (
+    curState.machineState.HEAP.getMemoryUsed() >
+    PERCENT_TO_TRIGGER_GC * curState.machineState.HEAP.getMemorySize()
+  );
+}
+
 export function executeStep(
   curState: ExecutionState,
   instructions: Array<AnyInstructionObj>
 ) {
-  if (isBlocked(curState) || isTimeout(curState)) {
+  if (cannotExecute(curState) || isTimeout(curState)) {
     let nextJob = curState.machineState.JOB_QUEUE.dequeue();
     let curJob = curState.jobState;
     if (nextJob) {
@@ -54,6 +63,10 @@ export function executeStep(
       curState.jobState = nextJob;
       return curState;
     }
+  }
+
+  if (needMemoryCleanup(curState)) {
+    curState.machineState.HEAP.runGarbageCollection();
   }
 
   let nextPCIndx = curState.jobState.getPC().addr;
