@@ -164,8 +164,7 @@ function makeSysCall(sym, type, args) {
 // ##############################################################################################################
 
 // # Source file organization ==============
-
-TOPLEVEL     "source file"             = BD a:( TopLevelDecl BD )* EOF
+TOPLEVEL                                 = BD a:( Declaration BD )* EOF
 	{ return a.map(aa => aa[0]); }
 
 // # Characters =============================
@@ -176,7 +175,7 @@ DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD              "statement delimiter"          = WS* (SEMICOLON / NEWLINE) WS*
+BD                                              = WS* (SEMICOLON / NEWLINE) WS*
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
@@ -353,10 +352,8 @@ StatementList   "statement list"                = v:( Statement BD )*
 
 Declaration     "declaration"                   = ConstDecl
                                                 / VarDecl
-
-TopLevelDecl    "top-level declaration"         = Declaration
                                                 / FunctionDecl
-
+                                                
 // # Constant declarations ==================
 
 ConstDecl       "constant declaration"          = "const" WS ident:IDENT WS? identType:(Type?) WS? EQUAL WS? expr:Expression
@@ -367,8 +364,8 @@ VarDecl         "variable declaration"          = "var" WS ident:IDENT WS identT
 
 // # Function declarations ==================
 
-FnParamSubList        "function parameters"   = a:IDENT WS? bs:(',' WS? IDENT WS?)* type:Type
-  { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[2], type } }))] }
+FnParamSubList        "function parameters"   = a:IDENT bs:(WS? ',' WS? IDENT)* WS type:Type
+  { return [ { ident: a, type }, ...(bs.map(bb => { return { ident: bb[3], type } }))] }
 
 FnParamList           "function parameters"   = LPAREN WS? a:FnParamSubList WS? b:(',' WS? FnParamSubList WS? )* WS? RPAREN
   { return [a, ...(b.map(bb => bb[2]))].flat() }
@@ -401,7 +398,7 @@ IntegerLit     "integer literal"         = a:("0" /  [1-9] ) b:( ( UBAR )? DIGIT
 StringLit      "string literal"          = '\"' content:([a-z]i / [0-9] / [ \t] / [.,?!_])* '\"'
   { return makeStrLiteralObj(content.join('')) }
 
-FunctionLit     "function literal"              = "func" input:FnParamList WS? returnT:(Type?) WS? body:Block
+FunctionLit     "function literal"              = "func" WS? input:FnParamList WS? returnT:(Type?) WS? body:Block
   { return makeFuncLiteral(input, returnT, body ) }
   
 //////////////////////////STOOPPPEDD HERE STOPPED HERE BOING
