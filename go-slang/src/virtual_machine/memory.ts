@@ -10,8 +10,8 @@ import {
   isGoslingType,
 } from ".";
 import { InstrAddr } from "../common/instructionObj";
-import { Allocator, HeapAddr, HeapType } from "../memory";
-import { HeapInBytes, assertHeapType } from "../memory/node";
+import { Allocator, HeapAddr, HeapType, createHeapManager } from "../memory";
+import { GcFlag, HeapInBytes, assertHeapType } from "../memory/node";
 import { GoslingScopeObj, getScopeObj, readScopeData } from "./scope";
 import { ThreadStatus } from "./threadControl";
 
@@ -23,12 +23,23 @@ export type ThreadData = {
   status: ThreadStatus;
 };
 
+export function createGoslingMemoryManager(
+  nodeCount: number
+): GoslingMemoryManager {
+  return new GoslingMemoryManager(
+    createHeapManager(nodeCount),
+    createHeapManager(nodeCount)
+  );
+}
+
 export class GoslingMemoryManager implements IGoslingMemoryManager {
   memory: Allocator;
+  standbyMemory: Allocator;
   threadDataMap: Map<string, ThreadData>;
 
-  constructor(memory: Allocator) {
+  constructor(memory: Allocator, standbyMemory: Allocator) {
     this.memory = memory;
+    this.standbyMemory = standbyMemory;
     this.threadDataMap = new Map();
   }
 
@@ -210,44 +221,33 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   alloc(data: Literal<AnyGoslingObject>): AnyGoslingObject {
     if ("addr" in data) delete data.addr;
 
-    try {
-      switch (data.type) {
-        case HeapType.Bool: {
-          const d = data as Literal<GoslingObject<HeapType.Bool>>;
-          const addr = this.memory.allocBool(d.data);
-          return { ...d, addr };
-        }
-        case HeapType.Int: {
-          const d = data as Literal<GoslingObject<HeapType.Int>>;
-          const addr = this.memory.allocInt(d.data);
-          return { ...d, addr };
-        }
-        case HeapType.String: {
-          const d = data as Literal<GoslingObject<HeapType.String>>;
-          const addr = this.memory.allocString(d.data);
-          return { ...d, addr };
-        }
-        case HeapType.BinaryPtr: {
-          const { child1, child2 } = data as Literal<
-            GoslingObject<HeapType.BinaryPtr>
-          >;
-          const addr = this.memory.allocBinaryPtr(child1, child2);
-          return { type: HeapType.BinaryPtr, child1, child2, addr };
-        }
-        default: {
-          const _: never = data;
-          throw new Error(`Invalid data: ${data}`);
-        }
+    switch (data.type) {
+      case HeapType.Bool: {
+        const d = data as Literal<GoslingObject<HeapType.Bool>>;
+        const addr = this.memory.allocBool(d.data);
+        return { ...d, addr };
       }
-    } catch (e) {
-      if (!(e instanceof Error) || !e.message.includes("Heap overflow")) {
-        throw e;
+      case HeapType.Int: {
+        const d = data as Literal<GoslingObject<HeapType.Int>>;
+        const addr = this.memory.allocInt(d.data);
+        return { ...d, addr };
       }
-
-      // TODO: for now, this alloc performs no GC, just fails if heap is full.
-      throw new Error(
-        `Heap overflow not corrected in GoslingMemoryManager: ${e}`
-      );
+      case HeapType.String: {
+        const d = data as Literal<GoslingObject<HeapType.String>>;
+        const addr = this.memory.allocString(d.data);
+        return { ...d, addr };
+      }
+      case HeapType.BinaryPtr: {
+        const { child1, child2 } = data as Literal<
+          GoslingObject<HeapType.BinaryPtr>
+        >;
+        const addr = this.memory.allocBinaryPtr(child1, child2);
+        return { type: HeapType.BinaryPtr, child1, child2, addr };
+      }
+      default: {
+        const _: never = data;
+        throw new Error(`Invalid data: ${data}`);
+      }
     }
   }
 
@@ -362,5 +362,124 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     assertGoslingType(HeapType.BinaryPtr, rtsPtr);
 
     return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
+  }
+
+  runGarbageCollection() {
+    let reachableNodes = this.getAllReachableNodesFromRoot();
+    let nodesMap: { [key: string]: HeapAddr } = {};
+
+    reachableNodes.forEach((addr) => {
+      nodesMap[addr.toString()] = this.createStandbyCopy(addr);
+    });
+
+    let getNewAddr = (addr: HeapAddr) => {
+      if (addr.isNull()) return HeapAddr.getNull();
+      if (!(addr.toString() in nodesMap))
+        throw new Error(`Forward space not allocated for ${addr.toString()}`);
+      return nodesMap[addr.toString()];
+    };
+
+    reachableNodes.forEach((addr) => {
+      this.setStandbyMemory(addr, getNewAddr);
+    });
+
+    this.threadDataMap = new Map(
+      [...this.threadDataMap].map(([key, threadData]) => [
+        key,
+        {
+          ...threadData,
+          rts: getNewAddr(threadData.rts),
+          os: getNewAddr(threadData.os),
+        },
+      ])
+    );
+
+    [this.memory, this.standbyMemory] = [this.standbyMemory, this.memory];
+    this.standbyMemory.reset();
+  }
+
+  private createStandbyCopy(addr: HeapAddr): HeapAddr {
+    if (addr.isNull()) return HeapAddr.getNull();
+    let oldHeapNode = this.getHeapValue(addr);
+    if (oldHeapNode === null) return HeapAddr.getNull();
+    let newAddr: HeapAddr = this.standbyMemory.alloc.getNewHeapAddress();
+    this.standbyMemory.setHeapValue(newAddr, HeapInBytes.fromData(oldHeapNode));
+    return newAddr;
+  }
+
+  private setStandbyMemory(
+    oldAddr: HeapAddr,
+    getNewAddr: (addr: HeapAddr) => HeapAddr
+  ) {
+    let oldHeapNode = this.memory.getHeapValue(oldAddr).toHeapValue();
+    switch (oldHeapNode.type) {
+      case HeapType.String:
+        oldHeapNode.next = getNewAddr(oldHeapNode.next);
+        this.standbyMemory.setHeapValue(
+          getNewAddr(oldAddr),
+          HeapInBytes.fromData(oldHeapNode)
+        );
+        break;
+      case HeapType.BinaryPtr:
+        oldHeapNode.child1 = getNewAddr(oldHeapNode.child1);
+        oldHeapNode.child2 = getNewAddr(oldHeapNode.child2);
+        this.standbyMemory.setHeapValue(
+          getNewAddr(oldAddr),
+          HeapInBytes.fromData(oldHeapNode)
+        );
+        break;
+      case HeapType.Bool:
+      case HeapType.Int:
+        break;
+    }
+  }
+
+  private getAllReachableNodesFromRoot(): HeapAddr[] {
+    const visited: HeapAddr[] = [];
+    const roots = this.getMemoryRoots().filter((r) => !r.isNull());
+
+    while (roots.length > 0) {
+      const curAddr = roots.pop()!;
+      visited.push(curAddr);
+      const curHeapNode = this.getHeapValue(curAddr);
+      if (curHeapNode === null) continue;
+
+      const newAdd: HeapAddr[] = [];
+      switch (curHeapNode.type) {
+        case HeapType.BinaryPtr: {
+          newAdd.push(curHeapNode.child1);
+          newAdd.push(curHeapNode.child2);
+          break;
+        }
+        case HeapType.String: {
+          newAdd.push(curHeapNode.next);
+          break;
+        }
+        case HeapType.Int:
+        case HeapType.Bool:
+          break;
+        default:
+          const _: never = curHeapNode;
+          throw new Error(`Unexpected heap type: ${curHeapNode}`);
+      }
+      newAdd.forEach((addr) => {
+        if (!addr.isNull() && !visited.find((a) => a.equals(addr))) {
+          roots.push(addr);
+        }
+      });
+    }
+    return visited;
+  }
+
+  getMemorySize(): number {
+    return this.memory.getNodeCount();
+  }
+
+  getMemoryUsed(): number {
+    return this.memory.getUsedNodeCount();
+  }
+
+  getMemoryResidency(): number {
+    return this.getAllReachableNodesFromRoot().length;
   }
 }

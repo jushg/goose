@@ -22,6 +22,10 @@ export class Allocator {
     return this.alloc.getNodeCount();
   }
 
+  getUsedNodeCount(): number {
+    return this.alloc.getUsedNodeCount();
+  }
+
   getNewHeapAddress(): HeapAddr {
     return this.alloc.getNewHeapAddress();
   }
@@ -100,5 +104,9 @@ export class Allocator {
     const newAddr = this.alloc.getNewHeapAddress();
     this.setHeapValue(newAddr, h);
     return newAddr;
+  }
+
+  reset(): void {
+    this.alloc.reset();
   }
 }

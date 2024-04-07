@@ -35,6 +35,10 @@ export class HeapAddr {
   toString(): string {
     return `H: 0x${this.toNum().toString(16)}`;
   }
+
+  equals(other: HeapAddr): boolean {
+    return this._a === other._a;
+  }
 }
 
 export enum HeapType {

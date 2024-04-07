@@ -65,6 +65,10 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
     return this.memory.nodeCount;
   }
 
+  getUsedNodeCount(): number {
+    return this.FREE_PTR - 1;
+  }
+
   private checkIfFull(): void {
     // TODO: for now, this alloc performs no GC, just fails if heap is full.
     if (this.FREE_PTR >= this.memory.nodeCount) {
@@ -82,5 +86,9 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
       addr.toNum() * HEAP_NODE_BYTE_TOTAL_SIZE,
       HEAP_NODE_BYTE_TOTAL_SIZE
     );
+  }
+
+  reset(): void {
+    this.FREE_PTR = 1;
   }
 }

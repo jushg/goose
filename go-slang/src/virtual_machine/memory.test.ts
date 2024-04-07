@@ -23,11 +23,13 @@ describe("GoslingMemoryManager", () => {
 
   let spy: Record<string, jest.SpyInstance>;
   let allocator: Allocator;
+  let standbyAllocator: Allocator;
   const nodeCount = 1000;
   let memoryManager: GoslingMemoryManager;
 
   beforeEach(() => {
     allocator = createHeapManager(nodeCount);
+    standbyAllocator = createHeapManager(nodeCount);
     spy = createCompoundSpy(allocator, [
       "getNewHeapAddress",
       "getNewHeapAddresses",
@@ -42,7 +44,7 @@ describe("GoslingMemoryManager", () => {
       "allocString",
       "allocBinaryPtr",
     ]);
-    memoryManager = new GoslingMemoryManager(allocator);
+    memoryManager = new GoslingMemoryManager(allocator, standbyAllocator);
   });
 
   describe("alloc and get", () => {

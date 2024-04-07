@@ -1,7 +1,7 @@
 import { AnyGoslingObject, assertGoslingType, Literal } from ".";
 import { InstrAddr } from "../common/instructionObj";
 import { createHeapManager, HeapAddr, HeapType } from "../memory";
-import { GoslingMemoryManager } from "./memory";
+import { createGoslingMemoryManager, GoslingMemoryManager } from "./memory";
 import {
   createThreadControlObject,
   ThreadControlObject,
@@ -268,7 +268,7 @@ describe("Test memory manager and thread control object", () => {
       20: () => (isDone = true),
     };
 
-    memory = new GoslingMemoryManager(createHeapManager(2 ** 10));
+    memory = createGoslingMemoryManager(2 ** 10);
     let threadControlObj = createThreadControlObject(memory, () => {});
 
     while (!isDone) {
