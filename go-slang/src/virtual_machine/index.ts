@@ -15,7 +15,7 @@ import { createThreadControlObject } from "./threadControl";
 const PERCENT_TO_TRIGGER_GC = 0.7;
 
 export function initializeVirtualMachine(
-  memorySize: number = 2 ** 10
+  memorySize: number = (2 ** 8) ** 2
 ): ExecutionState {
   let memory = createGoslingMemoryManager(memorySize);
   let mainJobState = createThreadControlObject(memory, (threadId, s) =>
