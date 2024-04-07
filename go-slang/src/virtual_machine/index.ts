@@ -17,13 +17,13 @@ const PERCENT_TO_TRIGGER_GC = 0.7;
 export function initializeVirtualMachine(
   program: CompiledFile,
   memorySize: number = (2 ** 8) ** 2,
-  log: (s: string) => void = console.log
+  vmPrinter: (
+    ctx: { threadId: string } | { component: string },
+    s: string
+  ) => void = console.dir,
+  gcTriggerMemoryUsageThreshold = PERCENT_TO_TRIGGER_GC
 ): ExecutionState {
   let memory = createGoslingMemoryManager(memorySize);
-  let vmPrinter = (ctx: { threadId: string } | "VM", s: string) => {
-    if (ctx === "VM") log(s);
-    else log(`Thread ${ctx.threadId}: ${s}`);
-  };
   let mainJobState = createThreadControlObject(memory, vmPrinter);
 
   const startingMachineState: MachineState = {
@@ -36,15 +36,17 @@ export function initializeVirtualMachine(
   return {
     jobState: mainJobState,
     machineState: startingMachineState,
+    gcTriggerMemoryUsageThreshold,
     vmPrinter,
     program,
   };
 }
 
-function needMemoryCleanup(curState: ExecutionState): boolean {
+function needMemoryCleanup(currState: ExecutionState): boolean {
   return (
-    curState.machineState.HEAP.getMemoryUsed() >
-    PERCENT_TO_TRIGGER_GC * curState.machineState.HEAP.getMemorySize()
+    currState.machineState.HEAP.getMemoryUsed() >
+    currState.gcTriggerMemoryUsageThreshold *
+      currState.machineState.HEAP.getMemorySize()
   );
 }
 
@@ -52,7 +54,13 @@ export function executeStep(currState: ExecutionState) {
   const instructions: Array<AnyInstructionObj> = currState.program.instructions;
   const { jobState: currJob, machineState } = currState;
   if (needMemoryCleanup(currState)) {
+    const memUsage = currState.machineState.HEAP.getMemoryUsed();
     machineState.HEAP.runGarbageCollection();
+    const newMemUsage = currState.machineState.HEAP.getMemoryUsed();
+    currState.vmPrinter(
+      { component: "GC" },
+      `Compressed ${100 - Math.floor((newMemUsage / memUsage) * 100)}% -> ${memUsage} -> ${newMemUsage}`
+    );
   }
 
   let nextPCIndx = currJob.getPC().addr;

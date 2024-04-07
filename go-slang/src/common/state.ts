@@ -8,7 +8,11 @@ export type ExecutionState = {
   program: CompiledFile;
   machineState: MachineState;
   jobState: ThreadControlObject;
-  vmPrinter: (ctx: { threadId: string } | "VM", s: string) => void;
+  vmPrinter: (
+    ctx: { threadId: string } | { component: string },
+    s: string
+  ) => void;
+  gcTriggerMemoryUsageThreshold: number;
 };
 
 export type MachineState = {

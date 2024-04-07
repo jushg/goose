@@ -180,12 +180,17 @@ function getInstructionLogic(
         const callPC = InstrAddr.fromNum(es.jobState.getPC().addr + 1);
         const restOfProgramPc = InstrAddr.fromNum(es.jobState.getPC().addr + 3);
 
-        createThreadControlObject(es.machineState.HEAP, es.vmPrinter, {
-          pc: callPC,
-          os: duplicatedOS,
-          status: "RUNNABLE",
-          rts: es.jobState.getRTS().getTopScopeAddr(),
-        });
+        const goroutine = createThreadControlObject(
+          es.machineState.HEAP,
+          es.vmPrinter,
+          {
+            pc: callPC,
+            os: duplicatedOS,
+            status: "RUNNABLE",
+            rts: es.jobState.getRTS().getTopScopeAddr(),
+          }
+        );
+        es.machineState.JOB_QUEUE.enqueue(goroutine);
         es.jobState.setPC(restOfProgramPc);
       };
 

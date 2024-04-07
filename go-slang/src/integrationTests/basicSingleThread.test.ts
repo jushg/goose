@@ -44,8 +44,8 @@ describe("basic single threaded program", () => {
   it("should execute correctly", () => {
     const log: string[] = [];
     const prog = compileParsedProgram(parse(progStr));
-    let state = initializeVirtualMachine(prog, (2 ** 8) ** 2, (s) =>
-      log.push(s)
+    let state = initializeVirtualMachine(prog, (2 ** 8) ** 2, (ctx, s) =>
+      "threadId" in ctx ? log.push(s) : null
     );
 
     const getSingleThreadStatus = () => state.jobState.getStatus();
@@ -62,25 +62,28 @@ describe("basic single threaded program", () => {
     const maxInstrExecutions = 1000;
 
     let lastHundredInstr: any[] = [];
+    const updateLastHundredInstr = () => {
+      lastHundredInstr = pcExecutionOrder
+        .slice(-100)
+        .map((i) => [i, prog.instructions[i].op]);
+      lastHundredInstr = lastHundredInstr.map(([i, op], idx) => {
+        if (idx < lastHundredInstr.length - 10) return { i, op };
+        return { i, ...prog.instructions[i] };
+      });
+    };
+
     while (true) {
       if (pcExecutionOrder.length > maxInstrExecutions)
         expect(pcExecutionOrder).toHaveLength(0);
 
       pcExecutionOrder.push(getPC());
+      updateLastHundredInstr();
 
       try {
         const newState = executeStep(state);
         if (newState === null) break;
         state = newState;
       } catch (e) {
-        lastHundredInstr = pcExecutionOrder
-          .slice(-100)
-          .map((i) => [i, prog.instructions[i].op]);
-        lastHundredInstr = lastHundredInstr.map(([i, op], idx) => {
-          if (idx < lastHundredInstr.length - 10) return { i, op };
-          return { i, ...prog.instructions[i] };
-        });
-
         // console.dir(lastHundredInstr);
         throw e;
       }
@@ -92,35 +95,35 @@ describe("basic single threaded program", () => {
 
     // console.dir(lastHundredInstr);
     expect(log).toEqual([
-      "Thread t_00001__from_____0: 1",
-      "Thread t_00001__from_____0: 3",
-      "Thread t_00001__from_____0: 7",
-      "Thread t_00001__from_____0: 15",
-      "Thread t_00001__from_____0: 31",
-      "Thread t_00001__from_____0: 63",
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      "Thread t_00001__from_____0: false",
-      "Thread t_00001__from_____0: 'BAYBAYBAY'",
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
-      expect.stringMatching(/Thread t_00001__from_____0: 0x[0-9a-f]+/),
+      "1",
+      "3",
+      "7",
+      "15",
+      "31",
+      "63",
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      expect.stringMatching(/0x[0-9a-f]+/),
+      expect.stringMatching(/0x[0-9a-f]+/),
     ]);
   });
 });
