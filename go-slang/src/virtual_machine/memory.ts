@@ -383,6 +383,10 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     let reachableNodes = this.getAllReachableNodesFromRoot();
     let nodesMap: { [key: string]: HeapAddr } = {};
 
+    reachableNodes.forEach((addr) => {
+      nodesMap[addr.toString()] = this.createStandbyCopy(addr);
+    });
+
     let getNewAddr = (addr: HeapAddr) => {
       if (addr.isNull() || !(addr.toString() in nodesMap))
         return HeapAddr.getNull();
@@ -390,30 +394,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     };
 
     reachableNodes.forEach((addr) => {
-      nodesMap[addr.toString()] = this.createStandbyCopy(addr);
-    });
-
-    reachableNodes.forEach((addr) => {
-      let oldNode = this.get(addr);
-      if (oldNode === null || oldNode.type !== HeapType.BinaryPtr) return;
-      let newNodeAddr = getNewAddr(addr);
-
-      let heapValue = this.standbyMemory
-        .getHeapValue(newNodeAddr)
-        .toHeapValue();
-      if (heapValue.type !== HeapType.BinaryPtr) {
-        throw new Error(
-          `Unexpected heap type: ${heapValue.type}, expected BinaryPtr`
-        );
-      }
-      heapValue.child1 = getNewAddr(oldNode.child1);
-
-      heapValue.child2 = getNewAddr(oldNode.child2);
-
-      this.standbyMemory.setHeapValue(
-        newNodeAddr,
-        HeapInBytes.fromData(heapValue)
-      );
+      this.setStandbyMemory(getNewAddr(addr), getNewAddr);
     });
 
     this.threadDataMap = new Map(
@@ -432,24 +413,38 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   createStandbyCopy(addr: HeapAddr): HeapAddr {
-    let oldNode = this.get(addr);
-    if (oldNode === null) return HeapAddr.getNull();
-    switch (oldNode.type) {
-      case HeapType.BinaryPtr: {
-        return this.standbyMemory.allocBinaryPtr(
-          HeapAddr.getNull(),
-          HeapAddr.getNull()
+    if (addr.isNull()) return HeapAddr.getNull();
+    let oldHeapNode = this.getHeapValue(addr);
+    if (oldHeapNode === null) return HeapAddr.getNull();
+    let newAddr: HeapAddr = this.standbyMemory.alloc.getNewHeapAddress();
+    this.standbyMemory.setHeapValue(newAddr, HeapInBytes.fromData(oldHeapNode));
+    return newAddr;
+  }
+
+  setStandbyMemory(
+    newAddr: HeapAddr,
+    getNewAddr: (addr: HeapAddr) => HeapAddr
+  ) {
+    let oldHeapNode = this.standbyMemory.getHeapValue(newAddr).toHeapValue();
+    switch (oldHeapNode.type) {
+      case HeapType.String:
+        oldHeapNode.next = getNewAddr(oldHeapNode.next);
+        this.standbyMemory.setHeapValue(
+          newAddr,
+          HeapInBytes.fromData(oldHeapNode)
         );
-      }
-      case HeapType.String: {
-        return this.standbyMemory.allocString(oldNode.data);
-      }
-      case HeapType.Int:
-        return this.standbyMemory.allocInt(oldNode.data);
+        break;
+      case HeapType.BinaryPtr:
+        oldHeapNode.child1 = getNewAddr(oldHeapNode.child1);
+        oldHeapNode.child2 = getNewAddr(oldHeapNode.child2);
+        this.standbyMemory.setHeapValue(
+          newAddr,
+          HeapInBytes.fromData(oldHeapNode)
+        );
+        break;
       case HeapType.Bool:
-        return this.standbyMemory.allocBool(oldNode.data);
-      default:
-        throw new Error(`Unexpected heap type: ${oldNode}`);
+      case HeapType.Int:
+        break;
     }
   }
 
@@ -458,12 +453,30 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     const roots = this.getMemoryRoots().filter((r) => !r.isNull());
 
     while (roots.length > 0) {
-      const rootAddr = roots.pop()!;
-      visited.push(rootAddr);
-      const rootNode = this.get(rootAddr);
-      if (rootNode === null || rootNode.type !== HeapType.BinaryPtr) continue;
+      const curAddr = roots.pop()!;
+      visited.push(curAddr);
+      const curHeapNode = this.getHeapValue(curAddr);
+      if (curHeapNode === null) continue;
 
-      [rootNode.child1, rootNode.child2].forEach((addr) => {
+      const newAdd: HeapAddr[] = [];
+      switch (curHeapNode.type) {
+        case HeapType.BinaryPtr: {
+          newAdd.push(curHeapNode.child1);
+          newAdd.push(curHeapNode.child2);
+          break;
+        }
+        case HeapType.String: {
+          newAdd.push(curHeapNode.next);
+          break;
+        }
+        case HeapType.Int:
+        case HeapType.Bool:
+          break;
+        default:
+          const _: never = curHeapNode;
+          throw new Error(`Unexpected heap type: ${curHeapNode}`);
+      }
+      newAdd.forEach((addr) => {
         if (!addr.isNull() && !visited.find((a) => a.equals(addr))) {
           roots.push(addr);
         }
