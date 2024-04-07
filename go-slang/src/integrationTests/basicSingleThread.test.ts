@@ -9,19 +9,24 @@ func main() {
   var bar string
   var baz int
   innerFn := func () {
-    baz = 1
+    baz = 9000
+  }
+  printIntPtr := func (p *int) {
+    print(*p)
   }
   bar = "BAR1"
   innerFn()
   foo(1)
   bar = "BAR2"
+  print(&x)
+  print(&baz)
 }
 
 func foo(y int) {
   var baz string
   var bay string
   x = x + y
-  if x < 4 {
+  if x < 100 {
     print(x)
     foo(y * 2)
   }
@@ -38,7 +43,7 @@ func foo(y int) {
 describe("basic single threaded program", () => {
   it("should execute correctly", () => {
     const prog = compileParsedProgram(parse(progStr));
-    let state = initializeVirtualMachine(2 ** 8);
+    let state = initializeVirtualMachine((2 ** 8) ** 2);
 
     const log: string[] = [];
     state.jobState.print = (s) => log.push(s);
@@ -73,12 +78,16 @@ describe("basic single threaded program", () => {
 
       const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
       const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
-      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+      console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
     expect(log).toEqual([
       "1",
       "3",
+      "7",
+      "15",
+      "31",
+      "63",
       "false",
       "'BAYBAYBAY'",
       expect.stringMatching(/0x[0-9a-f]+/),
@@ -87,6 +96,20 @@ describe("basic single threaded program", () => {
       expect.stringMatching(/0x[0-9a-f]+/),
       "false",
       "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      "false",
+      "'BAYBAYBAY'",
+      expect.stringMatching(/0x[0-9a-f]+/),
+      expect.stringMatching(/0x[0-9a-f]+/),
       expect.stringMatching(/0x[0-9a-f]+/),
     ]);
   });
