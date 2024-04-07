@@ -61,18 +61,27 @@ describe("basic single threaded program", () => {
     const pcExecutionOrder: number[] = [];
     const maxInstrExecutions = 1000;
 
-    while (getSingleThreadStatus() !== "DONE") {
+    let lastHundredInstr: any[] = [];
+    while (true) {
       if (pcExecutionOrder.length > maxInstrExecutions)
         expect(pcExecutionOrder).toHaveLength(0);
 
       pcExecutionOrder.push(getPC());
 
       try {
-        state = executeStep(state);
+        const newState = executeStep(state);
+        if (newState === null) break;
+        state = newState;
       } catch (e) {
-        const _lastHundredInstr = pcExecutionOrder
+        lastHundredInstr = pcExecutionOrder
           .slice(-100)
           .map((i) => [i, prog.instructions[i].op]);
+        lastHundredInstr = lastHundredInstr.map(([i, op], idx) => {
+          if (idx < lastHundredInstr.length - 10) return { i, op };
+          return { i, ...prog.instructions[i] };
+        });
+
+        // console.dir(lastHundredInstr);
         throw e;
       }
 
@@ -81,6 +90,7 @@ describe("basic single threaded program", () => {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
+    // console.dir(lastHundredInstr);
     expect(log).toEqual([
       "Thread t_00001__from_____0: 1",
       "Thread t_00001__from_____0: 3",

@@ -41,15 +41,6 @@ export function initializeVirtualMachine(
   };
 }
 
-function cannotExecute(curState: ExecutionState): boolean {
-  // Check if curJobState is block by another thread
-  return curState.jobState.getStatus() !== "RUNNABLE";
-}
-
-function isTimeout(curState: ExecutionState): boolean {
-  return curState.machineState.TIME_SLICE === 0;
-}
-
 function needMemoryCleanup(curState: ExecutionState): boolean {
   return (
     curState.machineState.HEAP.getMemoryUsed() >
@@ -57,26 +48,36 @@ function needMemoryCleanup(curState: ExecutionState): boolean {
   );
 }
 
-export function executeStep(curState: ExecutionState) {
-  const instructions: Array<AnyInstructionObj> = curState.program.instructions;
-  if (cannotExecute(curState) || isTimeout(curState)) {
-    let nextJob = curState.machineState.JOB_QUEUE.dequeue();
-    let curJob = curState.jobState;
-    if (nextJob) {
-      curState.machineState.JOB_QUEUE.enqueue(curJob);
-      curState.jobState = nextJob;
-      return curState;
-    }
+export function executeStep(currState: ExecutionState) {
+  const instructions: Array<AnyInstructionObj> = currState.program.instructions;
+  const { jobState: currJob, machineState } = currState;
+  if (needMemoryCleanup(currState)) {
+    machineState.HEAP.runGarbageCollection();
   }
 
-  if (needMemoryCleanup(curState)) {
-    curState.machineState.HEAP.runGarbageCollection();
+  let nextPCIndx = currJob.getPC().addr;
+  machineState.TIME_SLICE--;
+  executeInstruction(instructions[nextPCIndx], currState);
+
+  if (machineState.TIME_SLICE === 0) {
+    if (currJob.getStatus() === "RUNNABLE")
+      currJob.setStatus("TIME_SLICE_EXCEEDED");
+    machineState.TIME_SLICE = STANDARD_TIME_SLICE;
   }
 
-  let nextPCIndx = curState.jobState.getPC().addr;
-  curState.machineState.TIME_SLICE--;
-  executeInstruction(instructions[nextPCIndx], curState);
-  return curState;
+  if (currJob.getStatus() === "RUNNABLE") return currState;
+
+  if (currJob.getStatus() === "TIME_SLICE_EXCEEDED")
+    currJob.setStatus("RUNNABLE");
+  if (currJob.getStatus() !== "DONE") machineState.JOB_QUEUE.enqueue(currJob);
+
+  let nextJob = machineState.JOB_QUEUE.dequeue();
+  if (nextJob) {
+    currState.jobState = nextJob;
+    return currState;
+  } else {
+    return null;
+  }
 }
 
 export function runProgram(prog: CompiledFile) {
@@ -93,7 +94,9 @@ export function runProgram(prog: CompiledFile) {
       // throw new PotentialInfiniteLoopError(locationDummyNode(-1, -1, null), MAX_TIME)
     }
 
-    curState = executeStep(curState);
+    const newState = executeStep(curState);
+    if (newState === null) break;
+    curState = newState;
   }
 
   // Clear up memory
