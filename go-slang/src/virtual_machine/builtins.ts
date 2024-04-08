@@ -10,6 +10,7 @@ const builtInsFromSysCall = [
   "printOS",
   "printHeap",
   "triggerBreakpoint",
+  "yield",
 ] satisfies SysCallObj["sym"][];
 
 const sysCallFunctionDefs = Object.keys(sysCallLogic)

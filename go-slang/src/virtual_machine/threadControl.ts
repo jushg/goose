@@ -37,6 +37,7 @@ export type ThreadControlObject = {
 
   setStatus(status: ThreadStatus): void;
   getStatus(): ThreadStatus;
+  isMain(): boolean;
 };
 
 let _id = 0;
@@ -105,6 +106,7 @@ export function createThreadControlObject(
   };
 
   const t: ThreadControlObject = {
+    isMain: () => _id === 1,
     getId: () => id,
     getOS: () => os,
     getRTS,

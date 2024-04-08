@@ -201,7 +201,7 @@ function getInstructionLogic(
           throw new Error(`Unsupported sysCall: ${ins.sym}`);
         }
         const sysCall = sysCallLogic[ins.sym as keyof typeof sysCallLogic];
-        sysCall({ ins, memory: es.machineState.HEAP, thread: es.jobState });
+        sysCall({ es, ins, memory: es.machineState.HEAP, thread: es.jobState });
         es.jobState.incrPC();
       };
 

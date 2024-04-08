@@ -6,6 +6,7 @@ import {
   SysCallInstructionObj,
   assertOpType,
 } from "../common/instructionObj";
+import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
 import { GoslingMemoryManager } from "./memory";
 import { ThreadControlObject } from "./threadControl";
@@ -18,6 +19,7 @@ type SysCall = ({
   ins: AnyInstructionObj;
   memory: GoslingMemoryManager;
   thread: ThreadControlObject;
+  es: ExecutionState;
 }) => void;
 
 const print: SysCall = ({ thread }) => {
@@ -45,8 +47,22 @@ const printHeap: SysCall = ({ memory, thread }) => {
   thread.print(`Heap: ${memory.toString()}`);
 };
 
-const done: SysCall = ({ thread }) => {
+const done: SysCall = ({ thread, memory, es }) => {
   thread.setStatus("DONE");
+
+  // // If the thread is the main thread, we need to stop the machine.
+  // if (thread.isMain()) {
+  //   for (const tId of memory.threadDataMap.keys()) {
+  //     const t = memory.getThreadData(tId);
+  //     if (t.status !== "DONE") {
+  //       es.vmPrinter(
+  //         { threadId: tId },
+  //         `Thread ${tId} (${t.status}) terminated by main thread.`
+  //       );
+  //       memory.setThreadData(tId, { status: "DONE" });
+  //     }
+  //   }
+  // }
 };
 
 const triggerBreakpoint: SysCall = ({ thread }) => {
@@ -88,8 +104,9 @@ const make: SysCall = ({ ins, thread }) => {
   }
 };
 
-const new_: SysCall = ({ ins, memory, thread }) => {
-  make({ ins, memory, thread });
+const new_: SysCall = (args) => {
+  make(args);
+  const { thread } = args;
   const obj = thread.getOS().pop();
   thread.getOS().push({
     type: HeapType.BinaryPtr,
@@ -113,6 +130,9 @@ const makeLambda: SysCall = ({ ins, memory, thread }) => {
 
   thread.getOS().push(ptrToLambda);
 };
+const yield_: SysCall = ({ es }) => {
+  es.machineState.TIME_SLICE = 0;
+};
 
 export const sysCallLogic = {
   make,
@@ -123,4 +143,5 @@ export const sysCallLogic = {
   printHeap,
   triggerBreakpoint,
   print,
+  yield: yield_,
 } satisfies { [key in SysCallInstructionObj["sym"]]: SysCall };
