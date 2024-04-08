@@ -31,6 +31,7 @@ export function initializeVirtualMachine(
     JOB_QUEUE: new JobQueue(),
     IS_RUNNING: true,
     TIME_SLICE: STANDARD_TIME_SLICE,
+    MAIN_ID: mainJobState.getId(),
   };
 
   return {
