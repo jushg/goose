@@ -150,3 +150,7 @@ describe("basic multi threaded program", () => {
     ]);
   });
 });
+
+describe("Test concurrency primitives", () => {
+  it.todo("test_and_set instructions");
+});

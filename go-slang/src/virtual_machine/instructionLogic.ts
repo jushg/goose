@@ -12,6 +12,7 @@ import { sysCallLogic } from "./sysCalls";
 import {
   assertGoslingObject,
   createThreadControlObject,
+  equalsAsGoslingLiterals,
   isGoslingObject,
 } from "./threadControl";
 import { getBinaryOpLogic, getUnaryOpLogic } from "./alu";
@@ -134,7 +135,30 @@ function getInstructionLogic(
 
     case OpCode.TEST_AND_SET:
       return (ins, es) => {
-        throw new Error("Function not implemented.");
+        /* 
+          The form of TEST_AND_SET is as such:
+
+          - LD Ptr  (or sequence of operations that result in OS.push arg A)
+          - LD Expected  (or sequence of operations that result in OS.push arg Expected)
+          - LD Desired  (or sequence of operations that result in OS.push arg Desired)
+          - TEST_AND_SET (OS.push true or false based on success of operation)
+
+          - rest of program
+         */
+        const ptr = es.jobState.getOS().pop();
+        assertGoslingType(HeapType.BinaryPtr, ptr);
+        const expected = es.jobState.getOS().pop();
+        const desired = es.jobState.getOS().pop();
+
+        const obj = es.machineState.HEAP.get(ptr.child1);
+        if (obj === null)
+          throw new Error("Expected a valid object at the address");
+        const success = equalsAsGoslingLiterals(obj, expected);
+        if (success) es.machineState.HEAP.set(ptr.child1, desired);
+        es.jobState.getOS().push({
+          type: HeapType.Bool,
+          data: success,
+        });
       };
 
     case OpCode.CLEAR:

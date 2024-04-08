@@ -157,6 +157,26 @@ export type GoslingLitOrObj<T extends HeapType = HeapType> =
   | Literal<GoslingObject<T>>
   | GoslingObject<T>;
 
+export function equalsAsGoslingLiterals(
+  a: Literal<AnyGoslingObject>,
+  b: Literal<AnyGoslingObject>
+): boolean {
+  if (a.type === HeapType.Int)
+    return b.type === HeapType.Int && a.data === b.data;
+  if (a.type === HeapType.Bool)
+    return b.type === HeapType.Bool && a.data === b.data;
+  if (a.type === HeapType.String)
+    return b.type === HeapType.String && a.data === b.data;
+  if (a.type === HeapType.BinaryPtr)
+    return (
+      b.type === HeapType.BinaryPtr &&
+      a.child1.equals(b.child1) &&
+      a.child2.equals(b.child2)
+    );
+  const _: never = a;
+  throw new Error(`Unhandled type in equalsAsGoslingLiterals: ${a}`);
+}
+
 export function isGoslingObject<T extends HeapType = HeapType>(
   obj: GoslingLitOrObj<T>
 ): obj is GoslingObject<T> {
