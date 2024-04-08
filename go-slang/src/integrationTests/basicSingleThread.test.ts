@@ -37,6 +37,7 @@ func foo(y int) {
   }
   print(bay)
   print(&bay)
+  return
 }
 `;
 

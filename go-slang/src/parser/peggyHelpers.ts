@@ -481,9 +481,9 @@ function makeSelectCase(
 export type ReturnStmtObj = {
   tag: "STMT";
   stmtType: "RETURN";
-  expr: ExprObj;
+  expr: ExprObj | null;
 };
-function makeReturnStmt(expr: ExprObj): ReturnStmtObj {
+function makeReturnStmt(expr: ExprObj | null): ReturnStmtObj {
   return { tag: "STMT", stmtType: "RETURN", expr };
 }
 
