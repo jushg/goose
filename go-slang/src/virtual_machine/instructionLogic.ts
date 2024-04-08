@@ -138,9 +138,9 @@ function getInstructionLogic(
         /* 
           The form of TEST_AND_SET is as such:
 
-          - LD Ptr  (or sequence of operations that result in OS.push arg A)
-          - LD Expected  (or sequence of operations that result in OS.push arg Expected)
           - LD Desired  (or sequence of operations that result in OS.push arg Desired)
+          - LD Expected  (or sequence of operations that result in OS.push arg Expected)
+          - LD Ptr  (or sequence of operations that result in OS.push arg Ptr)
           - TEST_AND_SET (OS.push true or false based on success of operation)
 
           - rest of program
@@ -159,6 +159,7 @@ function getInstructionLogic(
           type: HeapType.Bool,
           data: success,
         });
+        es.jobState.incrPC();
       };
 
     case OpCode.CLEAR:
