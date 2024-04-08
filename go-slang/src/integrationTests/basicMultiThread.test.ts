@@ -87,8 +87,8 @@ describe("basic multi threaded program", () => {
         throw e;
       }
 
-      const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
-      const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
