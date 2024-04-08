@@ -139,7 +139,7 @@ COMMENT_MULTI     "multiline-comment"           = "/*" content:( !"*/" . )* "*/"
 // # Identifiers ============================
 
 RESERVED = (
-  ("func" / "new" / "make" / "case" / "select" / "switch" / "if" / "else" / "for" / "go" / "var" / "const" / "int" / "string" / "chan")
+  ("func" / "new" / "make" / "case" / "select" / "switch" / "if" / "else" / "for" / "go" / "var" / "const" / "int" / "string" / "chan" / "__sys" / "__noop")
   !( LETTER / DIGIT / UBAR ) // Excludes possible identifiers that start with a reserved keyword (e.g. `forCounter`)
 )
 
@@ -222,9 +222,12 @@ FunctionDecl    "function declaration"          = "func" WS ident:IDENT WS? inpu
 
 // # Expressions ============================
 
-Operand         "operand"                       = v: Literal { return v; }
+Operand         "operand"                       = '__noop' LPAREN str:(LETTER / DIGIT / UBAR)* RPAREN 
+  { return makeNoOp(str.join('')) }
+                                                / v: Literal { return v; }
                                                 / v: IDENT { return v; }
                                                 / LPAREN v:Expression RPAREN { return v; }
+                                                
 
 Literal         "literal"                       = IntegerLit
                                                 / StringLit

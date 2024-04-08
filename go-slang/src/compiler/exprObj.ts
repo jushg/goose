@@ -135,6 +135,19 @@ export function getExprLogic(
         pf.instructions.push(makeSysCallInstruction(sym, type, args.length));
       };
 
+    case "NO_OP":
+      return (s, pf) => {
+        assertTag("NO_OP", s);
+        if (!s.label) return;
+
+        const { label } = s;
+        if (!(label in pf.noopReplaceMap)) {
+          throw new Error(`Noop label not found: ${label}`);
+        }
+
+        pf.instructions.push(...pf.noopReplaceMap[label]);
+      };
+
     default: {
       const _: never = key;
       throw new Error(`Unsupported expr type: ${key}`);

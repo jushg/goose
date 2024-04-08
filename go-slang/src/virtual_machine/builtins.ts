@@ -1,5 +1,14 @@
-import { FuncDeclObj, SysCallObj } from "../parser";
+import {
+  AnyInstructionObj,
+  OpCode,
+  SysCallInstructionObj,
+} from "../common/instructionObj";
 import { sysCallLogic } from "./sysCalls";
+
+const _builtinsFnDef: {
+  functions: string[];
+  noopTags: Record<string, AnyInstructionObj[]>;
+} = { functions: [], noopTags: {} };
 
 // goose.peggy ensures that `make`/`new` are converted to SysCallObj.
 // Therefore, we do not need to create fn definitions for them.
@@ -11,40 +20,29 @@ const builtInsFromSysCall = [
   "printHeap",
   "triggerBreakpoint",
   "yield",
-] satisfies SysCallObj["sym"][];
+] satisfies SysCallInstructionObj["sym"][];
 
 const sysCallFunctionDefs = Object.keys(sysCallLogic)
+  .map((key: string) => key as SysCallInstructionObj["sym"])
   .filter(
     (key: string) => builtInsFromSysCall.find((k) => k === key) !== undefined
   )
-  .map((key: string) => {
-    return {
-      tag: "SYS_CALL",
-      sym: key,
-      type: null,
-      args: [],
-    } satisfies SysCallObj;
+  .map((sysCallName) => {
+    return [
+      sysCallName,
+      {
+        tag: "INSTR",
+        op: OpCode.SYS_CALL,
+        sym: sysCallName,
+        type: null,
+        argCount: 0,
+      } satisfies SysCallInstructionObj,
+    ] as const;
   })
-  .map((sysCall) => {
-    const key = sysCall.sym;
-    return {
-      tag: "STMT",
-      stmtType: "FUNC_DECL",
-      ident: { tag: "IDENT", val: key },
-      lit: {
-        tag: "LITERAL",
-        type: {
-          tag: "TYPE",
-          type: { base: "FUNC", inputT: [], returnT: null },
-        },
-        input: [],
-        body: {
-          tag: "STMT",
-          stmtType: "BLOCK",
-          stmts: [{ tag: "STMT", stmtType: "EXPR", expr: sysCall }],
-        },
-      },
-    } satisfies FuncDeclObj;
+  .map(([sysCallName, sysCallInstr]) => {
+    const fn = `func ${sysCallName}() { __noop(${sysCallName}); }`;
+    _builtinsFnDef.functions.push(fn);
+    _builtinsFnDef.noopTags[sysCallName] = [sysCallInstr];
   });
 
 if (sysCallFunctionDefs.length !== builtInsFromSysCall.length)
@@ -52,4 +50,4 @@ if (sysCallFunctionDefs.length !== builtInsFromSysCall.length)
     `Expected 4 sys calls to be defined ${Object.keys(sysCallLogic)} : ${Object.keys(sysCallLogic).filter((key) => key in builtInsFromSysCall)}`
   );
 
-export const builtinsFnDef: FuncDeclObj[] = [...sysCallFunctionDefs];
+export const builtinsFnDef = _builtinsFnDef;
