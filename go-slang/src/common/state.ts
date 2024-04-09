@@ -24,6 +24,7 @@ export type MachineState = {
   IS_RUNNING: boolean;
   // Time slice for current job
   TIME_SLICE: number;
+  MAIN_ID: string;
 };
 
 export class JobQueue {

@@ -37,6 +37,7 @@ export type ThreadControlObject = {
 
   setStatus(status: ThreadStatus): void;
   getStatus(): ThreadStatus;
+  isMain(): boolean;
 };
 
 let _id = 0;
@@ -105,6 +106,7 @@ export function createThreadControlObject(
   };
 
   const t: ThreadControlObject = {
+    isMain: () => _id === 1,
     getId: () => id,
     getOS: () => os,
     getRTS,
@@ -154,6 +156,26 @@ export function createThreadControlObject(
 export type GoslingLitOrObj<T extends HeapType = HeapType> =
   | Literal<GoslingObject<T>>
   | GoslingObject<T>;
+
+export function equalsAsGoslingLiterals(
+  a: Literal<AnyGoslingObject>,
+  b: Literal<AnyGoslingObject>
+): boolean {
+  if (a.type === HeapType.Int)
+    return b.type === HeapType.Int && a.data === b.data;
+  if (a.type === HeapType.Bool)
+    return b.type === HeapType.Bool && a.data === b.data;
+  if (a.type === HeapType.String)
+    return b.type === HeapType.String && a.data === b.data;
+  if (a.type === HeapType.BinaryPtr)
+    return (
+      b.type === HeapType.BinaryPtr &&
+      a.child1.equals(b.child1) &&
+      a.child2.equals(b.child2)
+    );
+  const _: never = a;
+  throw new Error(`Unhandled type in equalsAsGoslingLiterals: ${a}`);
+}
 
 export function isGoslingObject<T extends HeapType = HeapType>(
   obj: GoslingLitOrObj<T>

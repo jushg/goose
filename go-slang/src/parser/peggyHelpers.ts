@@ -141,17 +141,17 @@ export function makeBoolLiteral(val: boolean): BoolLiteralObj {
 }
 
 export type IntLiteralObj = { tag: "LITERAL"; type: IntTypeObj; val: number };
-function makeIntLiteralObj(val: number): IntLiteralObj {
+export function makeIntLiteralObj(val: number): IntLiteralObj {
   return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "INT" } }, val };
 }
 
 export type StrLiteralObj = { tag: "LITERAL"; type: StrTypeObj; val: string };
-function makeStrLiteralObj(val: string): StrLiteralObj {
+export function makeStrLiteralObj(val: string): StrLiteralObj {
   return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "STR" } }, val };
 }
 
 export type NilLiteralObj = { tag: "LITERAL"; type: NilTypeObj };
-function makeNilLiteralObj(): NilLiteralObj {
+export function makeNilLiteralObj(): NilLiteralObj {
   return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "NIL" } } };
 }
 
@@ -259,6 +259,11 @@ function makeBinaryExpr(
   return { tag: "BINARY_EXPR", lhs, op, rhs };
 }
 
+export type NoOpObj = { tag: "NO_OP"; label: string };
+export function makeNoOp(label: string): NoOpObj {
+  return { tag: "NO_OP", label };
+}
+
 export type ExprObj =
   | IdentObj
   | AnyLiteralObj
@@ -267,7 +272,8 @@ export type ExprObj =
   | CallObj
   | UnaryExprObj
   | BinaryExprObj
-  | SysCallObj;
+  | SysCallObj
+  | NoOpObj;
 
 export type ExpressionStmtObj = {
   tag: "STMT";
@@ -481,9 +487,9 @@ function makeSelectCase(
 export type ReturnStmtObj = {
   tag: "STMT";
   stmtType: "RETURN";
-  expr: ExprObj;
+  expr: ExprObj | null;
 };
-function makeReturnStmt(expr: ExprObj): ReturnStmtObj {
+function makeReturnStmt(expr: ExprObj | null): ReturnStmtObj {
   return { tag: "STMT", stmtType: "RETURN", expr };
 }
 

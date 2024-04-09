@@ -288,7 +288,7 @@ export function getStmtLogic(
     case "RETURN":
       return (s, pf) => {
         assertStmt("RETURN", s);
-        compileTagObj(s.expr, pf);
+        if (s.expr) compileTagObj(s.expr, pf);
         pf.instructions.push(makeExitScopeInstruction("CALL"));
       };
 

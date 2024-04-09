@@ -3,7 +3,15 @@ import {
   AnyInstructionObj,
   DoneInstructionObj,
 } from "../common/instructionObj";
-import { BlockObj, CallObj, ProgramObj, StmtObj, SysCallObj } from "../parser";
+import {
+  BlockObj,
+  CallObj,
+  FuncDeclObj,
+  ProgramObj,
+  StmtObj,
+  SysCallObj,
+  parse,
+} from "../parser";
 import { builtinsFnDef } from "../virtual_machine/builtins";
 import { compileTagObj } from "./compileFunc";
 
@@ -24,7 +32,14 @@ function addGlobalEnv(programTopLevelDeclarations: ProgramObj): BlockObj {
     tag: "STMT",
     stmtType: "BLOCK",
     stmts: [
-      ...builtinsFnDef,
+      ...builtinsFnDef.functions
+        .flatMap((fnStr) => parse(fnStr) as ProgramObj)
+        .map((fn) => {
+          if (fn.tag !== "STMT" || fn.stmtType !== "FUNC_DECL") {
+            throw new Error(`Expected FUNC_DECL in ${JSON.stringify(fn)}`);
+          }
+          return fn as FuncDeclObj;
+        }),
       {
         tag: "STMT",
         stmtType: "BLOCK",
@@ -47,6 +62,7 @@ export function compileParsedProgram(
     instructions: new Array<AnyInstructionObj>(),
     labelMap: {},
     gotoLabelMap: {},
+    noopReplaceMap: { ...builtinsFnDef.noopTags },
   };
 
   compileTagObj(addGlobalEnv(programTopLevelDeclarations), pf);
