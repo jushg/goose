@@ -1559,8 +1559,7 @@ L1:   for {
     ] satisfies ProgramObj);
   });
 
-  // Currently failing.
-  test.skip("should work with semicolons", () => {
+  test("should work with semicolons", () => {
     expect(
       parse(`
     func boundedSemInit(upperBound, initialValue int) *int {
@@ -1571,7 +1570,7 @@ L1:   for {
       *upperBoundPtr = upperBound;
       makeBinPtr(countPtr, upperBoundPtr)
     }`)
-    ).toBe([
+    ).toEqual([
       {
         tag: "STMT",
         stmtType: "FUNC_DECL",

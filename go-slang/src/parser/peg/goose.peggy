@@ -15,7 +15,8 @@ DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD                                              = WS* (SEMICOLON / NEWLINE) WS*
+BD                                              = WS* SEMICOLON WS* NEWLINE WS*
+                                                / WS* NEWLINE WS*
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
