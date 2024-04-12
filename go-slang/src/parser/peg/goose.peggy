@@ -439,6 +439,8 @@ IncDecStmt      "increment/decrement statement" = expr:Expression WS? INC
 
 Assignment      "assignment"                    = lhs:IDENT WS? c:COLON? EQUAL WS? rhs:Expression
   { return makeAssignmentStmt(lhs, c ? ":=" : "=", rhs) }
+                                                / ASTERISK WS? lhs:Expression WS? EQUAL WS? rhs:Expression
+  { return makeAssignmentStmt(makeUnaryExpr(lhs, '*'), '=', rhs) }
 
 // # 'if' statements ======================
 
