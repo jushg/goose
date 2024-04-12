@@ -45,7 +45,7 @@ export function initializeVirtualMachine(
 
 function needMemoryCleanup(currState: ExecutionState): boolean {
   return (
-    currState.machineState.HEAP.getMemoryUsed() >
+    currState.machineState.HEAP.getMemoryAllocated() >
     currState.gcTriggerMemoryUsageThreshold *
       currState.machineState.HEAP.getMemorySize()
   );
@@ -55,9 +55,9 @@ export function executeStep(currState: ExecutionState) {
   const instructions: Array<AnyInstructionObj> = currState.program.instructions;
   const { jobState: currJob, machineState } = currState;
   if (needMemoryCleanup(currState)) {
-    const memUsage = currState.machineState.HEAP.getMemoryUsed();
+    const memUsage = currState.machineState.HEAP.getMemoryAllocated();
     machineState.HEAP.runGarbageCollection();
-    const newMemUsage = currState.machineState.HEAP.getMemoryUsed();
+    const newMemUsage = currState.machineState.HEAP.getMemoryAllocated();
     currState.vmPrinter(
       { component: "GC" },
       `Compressed ${100 - Math.floor((newMemUsage / memUsage) * 100)}% -> ${memUsage} -> ${newMemUsage}`

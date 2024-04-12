@@ -51,7 +51,9 @@ export type IUntypedAllocator = {
   getHeapValueInBytes(addr: HeapAddr): number[];
   printHeap(): string[];
   getNodeCount(): number;
-  getUsedNodeCount(): number;
+  getAllocatedNodeCount(): number;
+  getNextAllocatedHeapAddress(addr: HeapAddr): HeapAddr;
+  getFirstAllocatedHeapAddress(): HeapAddr;
   reset(): void;
 };
 

@@ -65,7 +65,7 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
     return this.memory.nodeCount;
   }
 
-  getUsedNodeCount(): number {
+  getAllocatedNodeCount(): number {
     return this.FREE_PTR - 1;
   }
 
@@ -90,5 +90,20 @@ export class SimpleMemoryAllocator implements IUntypedAllocator {
 
   reset(): void {
     this.FREE_PTR = 1;
+  }
+
+  getNextAllocatedHeapAddress(addr: HeapAddr): HeapAddr {
+    const next = addr.next();
+    if (next.toNum() >= this.FREE_PTR) {
+      return HeapAddr.getNull();
+    }
+    return next;
+  }
+
+  getFirstAllocatedHeapAddress(): HeapAddr {
+    if (this.FREE_PTR === 1) {
+      return HeapAddr.getNull();
+    }
+    return HeapAddr.fromNum(1);
   }
 }
