@@ -80,6 +80,27 @@ func testAndSetInt(ptr *int, expected int, desired int) bool {
   }
 );
 
+updateBuiltinsFnDef(
+  `
+func max(x, y int) {
+  if x > y {
+    return x
+  }
+  return y
+}`,
+  {}
+);
+updateBuiltinsFnDef(
+  `
+func min(x, y int) {
+  if x < y {
+    return x
+  }
+  return y
+}`,
+  {}
+);
+
 // Mutex functions
 updateBuiltinsFnDef(`func mutexInit() *int { return new(int); }`, {});
 updateBuiltinsFnDef(
@@ -96,6 +117,44 @@ updateBuiltinsFnDef(
 func mutexUnlock(unlockedMutexPtr *int) {
   for ; !testAndSetInt(unlockedMutexPtr, 1, 0) ; {
     yield()
+  }
+}`,
+  {}
+);
+
+// BoundedSem functions
+updateBuiltinsFnDef(
+  `
+func boundedSemInit(upperBound, initialValue int) *int {
+  countPtr := new(int)
+  upperBoundPtr := new(int)
+
+  *countPtr = initialValue
+  *upperBoundPtr = upperBound
+  makeBinPtr(countPtr, upperBoundPtr)
+}`,
+  {}
+);
+updateBuiltinsFnDef(
+  `
+func boundedSemPost(sem *int) {
+  bound := *getBinPtrChild2(sem)
+  desired := min(*sem + 1, bound)
+  for ; !testAndSetInt(sem, desired-1, desired) ; {
+    yield()
+    desired = min(*sem + 1, bound)
+  }
+}`,
+  {}
+);
+updateBuiltinsFnDef(
+  `
+func boundedSemWait(sem *int) {
+  bound := *getBinPtrChild2(sem)
+  desired := max(*sem - 1, 0)
+  for ; !testAndSetInt(sem, desired+1, desired) ; {
+    yield()
+    desired = max(*sem - 1, 0)
   }
 }`,
   {}
