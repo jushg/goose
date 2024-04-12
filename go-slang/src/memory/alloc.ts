@@ -22,7 +22,7 @@ export class Allocator {
     return this.alloc.getNodeCount();
   }
 
-  getUsedNodeCount(): number {
+  getAllocatedNodeCount(): number {
     return this.alloc.getAllocatedNodeCount();
   }
 

@@ -484,8 +484,8 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return this.memory.getNodeCount();
   }
 
-  getMemoryUsed(): number {
-    return this.memory.getUsedNodeCount();
+  getMemoryAllocated(): number {
+    return this.memory.getAllocatedNodeCount();
   }
 
   getMemoryResidency(): number {
