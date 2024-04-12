@@ -114,6 +114,8 @@ function getInstructionLogic(
 
     case OpCode.CALL:
       return (ins, es) => {
+        // Safe to allow the arguments to remain as is because the function called with run DECL + ASSIGN
+        // to pop all values and copy the literals over
         let fn = es.jobState.getOS().pop();
 
         if (fn.type !== HeapType.BinaryPtr || !isGoslingObject(fn)) {
@@ -268,12 +270,30 @@ function getDefaultTypeValue(x: AnyTypeObj): Literal<AnyGoslingObject> {
         type: HeapType.String,
         data: "",
       };
-    default:
+
+    case "FUNC":
+    case "PTR":
       return {
         type: HeapType.BinaryPtr,
         child1: HeapAddr.getNull(),
         child2: HeapAddr.getNull(),
       };
+
+    case "NIL":
+      // allowed because we don't have robust type checking.
+      // When types are unknown, this is given (e.g. `:=`)
+      return {
+        type: HeapType.BinaryPtr,
+        child1: HeapAddr.getNull(),
+        child2: HeapAddr.getNull(),
+      };
+    case "ARRAY":
+    case "CHAN":
+      throw new Error(`Type ${x.type.base} not implemented`);
+
+    default:
+      const _: never = x.type;
+      throw new Error(`Unhandled type: ${JSON.stringify(x)}`);
   }
 }
 
@@ -306,5 +326,9 @@ function getHeapNodeFromLiteral(
         child1: HeapAddr.getNull(),
         child2: HeapAddr.getNull(),
       };
+    default: {
+      const _: never = x.type.type;
+      throw new Error(`Unhandled literal type: ${x}`);
+    }
   }
 }

@@ -431,6 +431,10 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       case HeapType.Bool:
       case HeapType.Int:
         break;
+      default: {
+        const _: never = oldHeapNode;
+        throw new Error(`Unexpected heap type: ${oldHeapNode}`);
+      }
     }
   }
 
@@ -458,9 +462,10 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
         case HeapType.Int:
         case HeapType.Bool:
           break;
-        default:
+        default: {
           const _: never = curHeapNode;
           throw new Error(`Unexpected heap type: ${curHeapNode}`);
+        }
       }
       newAdd.forEach((addr) => {
         if (!addr.isNull() && !visited.find((a) => a.equals(addr))) {
