@@ -352,7 +352,9 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       if (!("__label" in env.env)) {
         return false;
       }
-      const labelObj = env.env["__label"].valueObj;
+      const ptrToLabel = this.get(env.env["__label"].valueListPtr);
+      assertGoslingType(HeapType.BinaryPtr, ptrToLabel);
+      const labelObj = this.get(ptrToLabel.child2);
       assertGoslingType(HeapType.String, labelObj);
       return labelObj.data.replace(/\0/g, "") == label.replace(/\0/g, "");
     });
@@ -364,10 +366,19 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     }
 
     const {
-      __pc: { valueObj: pc },
-      __ptrToRts: { valueObj: rtsPtr },
+      __pc: { valueListPtr: nodeOfPcAddr },
+      __ptrToRts: { valueListPtr: nodeOfRtsPtrAddr },
     } = envs[id].env;
+
+    const nodeOfPc = this.get(nodeOfPcAddr);
+    assertGoslingType(HeapType.BinaryPtr, nodeOfPc);
+    const nodeOfRtsPtr = this.get(nodeOfRtsPtrAddr);
+    assertGoslingType(HeapType.BinaryPtr, nodeOfRtsPtr);
+
+    const pc = this.get(nodeOfPc.child2);
     assertGoslingType(HeapType.Int, pc);
+
+    const rtsPtr = this.get(nodeOfRtsPtr.child2);
     assertGoslingType(HeapType.BinaryPtr, rtsPtr);
 
     return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
