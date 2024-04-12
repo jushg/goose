@@ -3,7 +3,6 @@ import {
   OpCode,
   SysCallInstructionObj,
 } from "../common/instructionObj";
-import { makeIntLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 
 const _builtinsFnDef: {
@@ -84,14 +83,18 @@ updateBuiltinsFnDef(`func mutexInit() *int { return new(int); }`, {});
 updateBuiltinsFnDef(
   `
 func mutexLock(unlockedMutexPtr *int) {
-  for ; testAndSetInt(unlockedMutexPtr, 0, 1) ; {}
+  for ; !testAndSetInt(unlockedMutexPtr, 0, 1) ; {
+    yield()
+  }
 }`,
   {}
 );
 updateBuiltinsFnDef(
   `
 func mutexUnlock(unlockedMutexPtr *int) {
-  for ; testAndSetInt(unlockedMutexPtr, 1, 0) ; {}
+  for ; !testAndSetInt(unlockedMutexPtr, 1, 0) ; {
+    yield()
+  }
 }`,
   {}
 );

@@ -201,7 +201,7 @@ func foo(y int) {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 10000;
+    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
