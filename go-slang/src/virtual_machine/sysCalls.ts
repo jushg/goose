@@ -98,9 +98,10 @@ const make: SysCall = ({ ins, thread }) => {
     case "NIL":
     case "ARRAY":
       throw new Error(`Cannot use 'make' on ${baseType}`);
-    default:
+    default: {
       const _: never = baseType;
       throw new Error(`Unsupported type on 'make': ${type}`);
+    }
   }
 };
 
