@@ -1,10 +1,10 @@
-import { Allocator } from "../memory";
 import { GoslingMemoryManager } from "../virtual_machine/memory";
 import { ThreadControlObject } from "../virtual_machine/threadControl";
 import { CompiledFile } from "./compiledFile";
 export const STANDARD_TIME_SLICE = 100;
 
 export type ExecutionState = {
+  mainThreadId: string;
   program: CompiledFile;
   machineState: MachineState;
   jobState: ThreadControlObject;

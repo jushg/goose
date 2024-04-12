@@ -35,6 +35,7 @@ export function initializeVirtualMachine(
   };
 
   return {
+    mainThreadId: mainJobState.getId(),
     jobState: mainJobState,
     machineState: startingMachineState,
     gcTriggerMemoryUsageThreshold,

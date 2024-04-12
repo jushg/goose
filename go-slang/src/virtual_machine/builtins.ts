@@ -149,4 +149,16 @@ func boundedSemWait(sem *int) {
   {}
 );
 
+updateBuiltinsFnDef(
+  `
+func wgInit() { return boundedSemInit(2147483647, 0) }
+func wgAdd(wg *int) { boundedSemPost(wg) }
+func wgDone(wg *int) { boundedSemWait(wg) }
+func wgWait(wg *int) {
+  for ; *wg != 0 ; { yield() }
+}
+`,
+  {}
+);
+
 export const builtinsFnDef = _builtinsFnDef;
