@@ -87,11 +87,8 @@ func max(x, y int) {
     return x
   }
   return y
-}`,
-  {}
-);
-updateBuiltinsFnDef(
-  `
+}
+
 func min(x, y int) {
   if x < y {
     return x
@@ -102,18 +99,16 @@ func min(x, y int) {
 );
 
 // Mutex functions
-updateBuiltinsFnDef(`func mutexInit() *int { return new(int); }`, {});
 updateBuiltinsFnDef(
   `
+func mutexInit() *int { return new(int); }
+
 func mutexLock(unlockedMutexPtr *int) {
   for ; !testAndSetInt(unlockedMutexPtr, 0, 1) ; {
     yield()
   }
-}`,
-  {}
-);
-updateBuiltinsFnDef(
-  `
+}
+
 func mutexUnlock(unlockedMutexPtr *int) {
   for ; !testAndSetInt(unlockedMutexPtr, 1, 0) ; {
     yield()
@@ -131,12 +126,9 @@ func boundedSemInit(upperBound, initialValue int) *int {
 
   *countPtr = initialValue
   *upperBoundPtr = upperBound
-  makeBinPtr(countPtr, upperBoundPtr)
-}`,
-  {}
-);
-updateBuiltinsFnDef(
-  `
+  return makeBinPtr(countPtr, upperBoundPtr)
+}
+
 func boundedSemPost(sem *int) {
   bound := *getBinPtrChild2(sem)
   desired := min(*sem + 1, bound)
@@ -144,11 +136,8 @@ func boundedSemPost(sem *int) {
     yield()
     desired = min(*sem + 1, bound)
   }
-}`,
-  {}
-);
-updateBuiltinsFnDef(
-  `
+}
+
 func boundedSemWait(sem *int) {
   bound := *getBinPtrChild2(sem)
   desired := max(*sem - 1, 0)
