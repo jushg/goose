@@ -79,7 +79,14 @@ export function createThreadControlObject(
       const val = os.peek();
       const _os = getOS();
       memory.setThreadData(id, { os: getOsAddr(_os.slice(1)) });
-      return memory.get(val.addr)!;
+
+      const result = memory.get(val.addr);
+      if (result === null)
+        throw new Error(
+          `OS .pop() finds null from node ${JSON.stringify(val)}`
+        );
+
+      return result;
     },
     peek: () => {
       const _os = getOS();
@@ -87,7 +94,14 @@ export function createThreadControlObject(
 
       const val = _os.at(0)!.value;
       if (val === null) throw new Error("Operand stack .top is null");
-      return memory.get(val.addr)!;
+
+      const result = memory.get(val.addr);
+      if (result === null)
+        throw new Error(
+          `OS .peek() finds null from node ${JSON.stringify(val)}`
+        );
+
+      return result;
     },
     length: () => {
       const _os = getOS();

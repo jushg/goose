@@ -3,7 +3,6 @@ import {
   OpCode,
   SysCallInstructionObj,
 } from "../common/instructionObj";
-import { makeIntLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 
 const _builtinsFnDef: {
@@ -34,6 +33,8 @@ const builtInsFromSysCall = [
   "printHeap",
   "triggerBreakpoint",
   "yield",
+  "makeBinPtr",
+  "getBinPtrChild2",
 ] satisfies SysCallInstructionObj["sym"][];
 
 const sysCallFunctionDefs = Object.keys(sysCallLogic)
@@ -79,19 +80,71 @@ func testAndSetInt(ptr *int, expected int, desired int) bool {
   }
 );
 
-// Mutex functions
-updateBuiltinsFnDef(`func mutexInit() *int { return new(int); }`, {});
 updateBuiltinsFnDef(
   `
-func mutexLock(unlockedMutexPtr *int) {
-  for ; testAndSetInt(unlockedMutexPtr, 0, 1) ; {}
+func max(x, y int) {
+  if x > y {
+    return x
+  }
+  return y
+}
+
+func min(x, y int) {
+  if x < y {
+    return x
+  }
+  return y
 }`,
   {}
 );
+
+// Mutex functions
 updateBuiltinsFnDef(
   `
+func mutexInit() *int { return new(int); }
+
+func mutexLock(unlockedMutexPtr *int) {
+  for ; !testAndSetInt(unlockedMutexPtr, 0, 1) ; {
+    yield()
+  }
+}
+
 func mutexUnlock(unlockedMutexPtr *int) {
-  for ; testAndSetInt(unlockedMutexPtr, 1, 0) ; {}
+  for ; !testAndSetInt(unlockedMutexPtr, 1, 0) ; {
+    yield()
+  }
+}`,
+  {}
+);
+
+// BoundedSem functions
+updateBuiltinsFnDef(
+  `
+func boundedSemInit(upperBound, initialValue int) *int {
+  countPtr := new(int)
+  upperBoundPtr := new(int)
+
+  *countPtr = initialValue
+  *upperBoundPtr = upperBound
+  return makeBinPtr(countPtr, upperBoundPtr)
+}
+
+func boundedSemPost(sem *int) {
+  bound := *getBinPtrChild2(sem)
+  desired := min(*sem + 1, bound)
+  for ; !testAndSetInt(sem, desired-1, desired) ; {
+    yield()
+    desired = min(*sem + 1, bound)
+  }
+}
+
+func boundedSemWait(sem *int) {
+  bound := *getBinPtrChild2(sem)
+  desired := max(*sem - 1, 0)
+  for ; !testAndSetInt(sem, desired+1, desired) ; {
+    yield()
+    desired = max(*sem - 1, 0)
+  }
 }`,
   {}
 );
