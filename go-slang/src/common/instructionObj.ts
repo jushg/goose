@@ -179,6 +179,8 @@ export type SysCallInstructionObj = InstructionObj<
       | "printOS"
       | "printHeap"
       | "triggerBreakpoint"
+      | "makeBinPtr"
+      | "getBinPtrChild2"
       | "makeLambda"
       | "print"
       | "yield"

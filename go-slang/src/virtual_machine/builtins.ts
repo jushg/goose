@@ -33,6 +33,8 @@ const builtInsFromSysCall = [
   "printHeap",
   "triggerBreakpoint",
   "yield",
+  "makeBinPtr",
+  "getBinPtrChild2",
 ] satisfies SysCallInstructionObj["sym"][];
 
 const sysCallFunctionDefs = Object.keys(sysCallLogic)

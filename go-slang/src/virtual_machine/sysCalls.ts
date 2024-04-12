@@ -135,6 +135,29 @@ const yield_: SysCall = ({ es }) => {
   es.machineState.TIME_SLICE = 0;
 };
 
+const makeBinPtr: SysCall = ({ thread }) => {
+  const B = thread.getOS().pop();
+  const A = thread.getOS().pop();
+  assertGoslingType(HeapType.BinaryPtr, A);
+  assertGoslingType(HeapType.BinaryPtr, B);
+  thread.getOS().push({
+    type: HeapType.BinaryPtr,
+    child1: A.child1,
+    child2: B.child1,
+  });
+};
+
+const getBinPtrChild2: SysCall = ({ thread }) => {
+  const binPtr = thread.getOS().pop();
+  assertGoslingType(HeapType.BinaryPtr, binPtr);
+  const { child2: res } = binPtr;
+  thread.getOS().push({
+    type: HeapType.BinaryPtr,
+    child1: res,
+    child2: HeapAddr.getNull(),
+  });
+};
+
 export const sysCallLogic = {
   make,
   done,
@@ -145,4 +168,6 @@ export const sysCallLogic = {
   triggerBreakpoint,
   print,
   yield: yield_,
+  makeBinPtr,
+  getBinPtrChild2,
 } satisfies { [key in SysCallInstructionObj["sym"]]: SysCall };
