@@ -1,8 +1,5 @@
 import { CompiledFile } from "../common/compiledFile";
-import {
-  AnyInstructionObj,
-  DoneInstructionObj,
-} from "../common/instructionObj";
+import { AnyInstructionObj } from "../common/instructionObj";
 import {
   BlockObj,
   CallObj,
