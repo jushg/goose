@@ -23,7 +23,7 @@ export class Allocator {
   }
 
   getUsedNodeCount(): number {
-    return this.alloc.getUsedNodeCount();
+    return this.alloc.getAllocatedNodeCount();
   }
 
   getNewHeapAddress(): HeapAddr {
@@ -108,5 +108,13 @@ export class Allocator {
 
   reset(): void {
     this.alloc.reset();
+  }
+
+  getNextAllocatedHeapAddress(addr: HeapAddr): HeapAddr {
+    return this.alloc.getNextAllocatedHeapAddress(addr);
+  }
+
+  getFirstAllocatedHeapAddress(): HeapAddr {
+    return this.alloc.getFirstAllocatedHeapAddress();
   }
 }

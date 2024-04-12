@@ -32,6 +32,10 @@ export class HeapAddr {
     this._a = `0x${address.toString(16)}`;
   }
 
+  next(): HeapAddr {
+    return HeapAddr.fromNum(this.toNum() + 1);
+  }
+
   toString(): string {
     return `H: 0x${this.toNum().toString(16)}`;
   }
