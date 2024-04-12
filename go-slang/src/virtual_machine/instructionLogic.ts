@@ -123,11 +123,6 @@ function getInstructionLogic(
         es.jobState.execFn(innerFnLambda);
       };
 
-    case OpCode.RESET:
-      return (ins, es) => {
-        throw new Error("Function not implemented.");
-      };
-
     case OpCode.TEST_AND_SET:
       return (ins, es) => {
         /* 
@@ -155,11 +150,6 @@ function getInstructionLogic(
           data: success,
         });
         es.jobState.incrPC();
-      };
-
-    case OpCode.CLEAR:
-      return (ins, es) => {
-        throw new Error("Function not implemented.");
       };
 
     case OpCode.GOROUTINE:
