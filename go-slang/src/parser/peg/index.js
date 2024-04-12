@@ -59,6 +59,11 @@ function makeBoolLiteral(val) {
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "BOOL" } }, val };
 }
 function makeIntLiteralObj(val) {
+    // Must use hardcoded constant (cannot be imported from ./src/memory/index.ts) because
+    // of parser autogeneration
+    const limits = { MAX_INT: 2147483647, MIN_INT: -2147483648 };
+    if (val > limits.MAX_INT || val < limits.MIN_INT)
+        throw new Error(`Invalid int literal: ${val}. Must be ${limits.MAX_INT} >= val >= ${limits.MIN_INT}`);
     return { tag: "LITERAL", type: { tag: "TYPE", type: { base: "INT" } }, val };
 }
 function makeStrLiteralObj(val) {
