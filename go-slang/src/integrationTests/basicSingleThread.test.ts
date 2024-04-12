@@ -19,7 +19,7 @@ func main() {
   foo(1)
   bar = "BAR2"
   print(&x)
-  print(&baz)
+  print(bar)
 }
 
 func foo(y int) {
@@ -124,7 +124,7 @@ describe("basic single threaded program", () => {
       "'BAYBAYBAY'",
       expect.stringMatching(/0x[0-9a-f]+/),
       expect.stringMatching(/0x[0-9a-f]+/),
-      expect.stringMatching(/0x[0-9a-f]+/),
+      "'BAR2'",
     ]);
   });
 });

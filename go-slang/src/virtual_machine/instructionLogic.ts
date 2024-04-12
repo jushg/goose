@@ -8,6 +8,7 @@ import {
 import { ExecutionState } from "../common/state";
 import { HeapAddr, HeapType } from "../memory";
 import { AnyLiteralObj, AnyTypeObj, FuncLiteralObj } from "../parser";
+import { getBinaryOpLogic, getUnaryOpLogic } from "./alu";
 import { sysCallLogic } from "./sysCalls";
 import {
   assertGoslingObject,
@@ -15,7 +16,6 @@ import {
   equalsAsGoslingLiterals,
   isGoslingObject,
 } from "./threadControl";
-import { getBinaryOpLogic, getUnaryOpLogic } from "./alu";
 
 export function executeInstruction(
   ins: AnyInstructionObj,
@@ -123,16 +123,6 @@ function getInstructionLogic(
         es.jobState.execFn(innerFnLambda);
       };
 
-    case OpCode.RESET:
-      return (ins, es) => {
-        throw new Error("Function not implemented.");
-      };
-
-    case OpCode.DONE:
-      return (ins, es) => {
-        es.machineState.IS_RUNNING = false;
-      };
-
     case OpCode.TEST_AND_SET:
       return (ins, es) => {
         /* 
@@ -160,11 +150,6 @@ function getInstructionLogic(
           data: success,
         });
         es.jobState.incrPC();
-      };
-
-    case OpCode.CLEAR:
-      return (ins, es) => {
-        throw new Error("Function not implemented.");
       };
 
     case OpCode.GOROUTINE:

@@ -36,12 +36,9 @@ export enum OpCode {
   LD = "LD",
   ASSIGN = "ASSIGN",
   CALL = "CALL", // Now call instr doesn't create stack space
-  RESET = "RESET",
-  DONE = "DONE",
 
   // Concurrent instructs, atomic, use for concurrent constructs
   TEST_AND_SET = "TEST_AND_SET",
-  CLEAR = "CLEAR",
   GOROUTINE = "GOROUTINE",
 
   SYS_CALL = "SYS_CALL",
@@ -154,28 +151,10 @@ export function makeCallInstruction(args: number): CallInstructionObj {
   return { tag: "INSTR", op: OpCode.CALL, args: args };
 }
 
-export type ResetInstructionObj = InstructionObj<OpCode.RESET>;
-
-export function makeResetInstruction(): ResetInstructionObj {
-  return { tag: "INSTR", op: OpCode.RESET };
-}
-
-export type DoneInstructionObj = InstructionObj<OpCode.DONE>;
-
-export function makeDoneInstruction(): DoneInstructionObj {
-  return { tag: "INSTR", op: OpCode.DONE };
-}
-
 export type TestAndSetInstructionObj = InstructionObj<OpCode.TEST_AND_SET>;
 
 export function makeTestAndSetInstruction(): TestAndSetInstructionObj {
   return { tag: "INSTR", op: OpCode.TEST_AND_SET };
-}
-
-export type ClearInstructionObj = InstructionObj<OpCode.CLEAR>;
-
-export function makeClearInstruction(): ClearInstructionObj {
-  return { tag: "INSTR", op: OpCode.CLEAR };
 }
 
 export type GoroutineInstructionObj = InstructionObj<
@@ -245,10 +224,7 @@ export type AnyInstructionObj =
   | LdInstructionObj
   | AssignInstructionObj
   | CallInstructionObj
-  | ResetInstructionObj
-  | DoneInstructionObj
   | TestAndSetInstructionObj
-  | ClearInstructionObj
   | GoroutineInstructionObj
   | SysCallInstructionObj
   | AluInstructionObj;

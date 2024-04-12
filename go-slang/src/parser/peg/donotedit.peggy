@@ -178,7 +178,8 @@ DIGIT          "digit"                   = [0-9]
 
 // # primitive signs -----------------------
 
-BD                                              = WS* (SEMICOLON / NEWLINE) WS*
+BD                                              = WS* SEMICOLON WS* NEWLINE WS*
+                                                / WS* NEWLINE WS*
 
 SEMICOLON         "semicolon"                   = ';'
 COLON             "colon"                       = ':'
@@ -602,6 +603,8 @@ IncDecStmt      "increment/decrement statement" = expr:Expression WS? INC
 
 Assignment      "assignment"                    = lhs:IDENT WS? c:COLON? EQUAL WS? rhs:Expression
   { return makeAssignmentStmt(lhs, c ? ":=" : "=", rhs) }
+                                                / ASTERISK WS? lhs:Expression WS? EQUAL WS? rhs:Expression
+  { return makeAssignmentStmt(makeUnaryExpr(lhs, '*'), '=', rhs) }
 
 // # 'if' statements ======================
 

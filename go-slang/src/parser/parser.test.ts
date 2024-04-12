@@ -1558,4 +1558,189 @@ L1:   for {
       },
     ] satisfies ProgramObj);
   });
+
+  test("should work with semicolons", () => {
+    expect(
+      parse(`
+    func boundedSemInit(upperBound, initialValue int) *int {
+      countPtr := new(int);
+      upperBoundPtr := new(int);
+    
+      *countPtr = initialValue;
+      *upperBoundPtr = upperBound;
+      makeBinPtr(countPtr, upperBoundPtr)
+    }`)
+    ).toEqual([
+      {
+        tag: "STMT",
+        stmtType: "FUNC_DECL",
+        ident: {
+          tag: "IDENT",
+          val: "boundedSemInit",
+        },
+        lit: {
+          tag: "LITERAL",
+          type: {
+            tag: "TYPE",
+            type: {
+              base: "FUNC",
+              inputT: [
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "INT",
+                  },
+                },
+                {
+                  tag: "TYPE",
+                  type: {
+                    base: "INT",
+                  },
+                },
+              ],
+              returnT: {
+                tag: "TYPE",
+                type: {
+                  base: "PTR",
+                  inner: {
+                    tag: "TYPE",
+                    type: {
+                      base: "INT",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          input: [
+            {
+              ident: {
+                tag: "IDENT",
+                val: "upperBound",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "INT",
+                },
+              },
+            },
+            {
+              ident: {
+                tag: "IDENT",
+                val: "initialValue",
+              },
+              type: {
+                tag: "TYPE",
+                type: {
+                  base: "INT",
+                },
+              },
+            },
+          ],
+          body: {
+            tag: "STMT",
+            stmtType: "BLOCK",
+            stmts: [
+              {
+                tag: "STMT",
+                stmtType: "ASSIGN",
+                lhs: {
+                  tag: "IDENT",
+                  val: "countPtr",
+                },
+                rhs: {
+                  tag: "SYS_CALL",
+                  sym: "new",
+                  type: {
+                    tag: "TYPE",
+                    type: {
+                      base: "INT",
+                    },
+                  },
+                  args: [],
+                },
+                op: ":=",
+              },
+              {
+                tag: "STMT",
+                stmtType: "ASSIGN",
+                lhs: {
+                  tag: "IDENT",
+                  val: "upperBoundPtr",
+                },
+                rhs: {
+                  tag: "SYS_CALL",
+                  sym: "new",
+                  type: {
+                    tag: "TYPE",
+                    type: {
+                      base: "INT",
+                    },
+                  },
+                  args: [],
+                },
+                op: ":=",
+              },
+              {
+                tag: "STMT",
+                stmtType: "ASSIGN",
+                lhs: {
+                  tag: "UNARY_EXPR",
+                  expr: {
+                    tag: "IDENT",
+                    val: "countPtr",
+                  },
+                  op: "*",
+                },
+                rhs: {
+                  tag: "IDENT",
+                  val: "initialValue",
+                },
+                op: "=",
+              },
+              {
+                tag: "STMT",
+                stmtType: "ASSIGN",
+                lhs: {
+                  tag: "UNARY_EXPR",
+                  expr: {
+                    tag: "IDENT",
+                    val: "upperBoundPtr",
+                  },
+                  op: "*",
+                },
+                rhs: {
+                  tag: "IDENT",
+                  val: "upperBound",
+                },
+                op: "=",
+              },
+              {
+                tag: "STMT",
+                stmtType: "EXPR",
+                expr: {
+                  tag: "CALL",
+                  func: {
+                    tag: "IDENT",
+                    val: "makeBinPtr",
+                  },
+                  args: [
+                    {
+                      tag: "IDENT",
+                      val: "countPtr",
+                    },
+                    {
+                      tag: "IDENT",
+                      val: "upperBoundPtr",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      },
+    ] satisfies ProgramObj);
+  });
 });
