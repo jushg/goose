@@ -24,18 +24,27 @@ type SysCall = ({
 
 const print: SysCall = ({ thread }) => {
   const arg: AnyGoslingObject = thread.getOS().pop();
-  if (arg.type === HeapType.String) {
-    thread.print(`'${arg.data}'`);
-    return;
-  } else if (arg.type === HeapType.Int) {
-    thread.print(`${arg.data}`);
-    return;
-  } else if (arg.type === HeapType.Bool) {
-    thread.print(`${arg.data}`);
-    return;
-  } else if (arg.type === HeapType.BinaryPtr) {
-    thread.print(`${arg.child1.toString().slice(3)}`);
-    return;
+  switch (arg.type) {
+    case HeapType.String: {
+      thread.print(`'${arg.data}'`);
+      return;
+    }
+    case HeapType.Int: {
+      thread.print(`${arg.data}`);
+      return;
+    }
+    case HeapType.Bool: {
+      thread.print(`${arg.data}`);
+      return;
+    }
+    case HeapType.BinaryPtr: {
+      thread.print(`${arg.child1.toString().slice(3)}`);
+      return;
+    }
+    default: {
+      const _: never = arg;
+      throw new Error(`Unexpected type for print ${JSON.stringify(arg)}`);
+    }
   }
 };
 
