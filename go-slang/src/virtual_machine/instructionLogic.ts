@@ -114,7 +114,19 @@ function getInstructionLogic(
 
     case OpCode.CALL:
       return (ins, es) => {
-        let fn = es.jobState.getOS().pop();
+        assertOpType(OpCode.CALL, ins);
+        const os = es.jobState.getOS();
+        let fn = os.pop();
+
+        // Ensure that the OS values do not accidentaly mutate caller's RTS values by
+        // replacing it with newly allocated literals of the same value.
+        const args: AnyGoslingObject[] = [];
+        for (let argIdx = 0; argIdx < ins.args; argIdx++) {
+          const arg = os.pop();
+          args.push(es.machineState.HEAP.alloc(arg));
+        }
+
+        args.reverse().map((arg) => os.push(arg.addr));
 
         if (fn.type !== HeapType.BinaryPtr || !isGoslingObject(fn)) {
           throw new Error("Expected function pointer on top of stack");
