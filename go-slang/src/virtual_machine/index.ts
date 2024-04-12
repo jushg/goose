@@ -171,8 +171,6 @@ export type GoslingLambdaObj = {
 
 export type GoslingListObj = {
   nodeAddr: HeapAddr;
-  node: AnyGoslingObject;
-  value: AnyGoslingObject | null;
 }[];
 
 export type IGoslingMemoryManager = {

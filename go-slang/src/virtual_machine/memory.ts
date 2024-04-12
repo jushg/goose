@@ -137,7 +137,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       if (ptr === null) break;
 
       assertGoslingType(HeapType.BinaryPtr, ptr);
-      arr.push({ nodeAddr: curr, node: ptr, value: this.get(ptr.child2) });
+      arr.push({ nodeAddr: ptr.addr });
 
       if (ptr.child1 === null) break;
       curr = ptr.child1;
@@ -164,8 +164,6 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
       child1,
       child2: newItem.addr,
     });
-    list[idx].node = { ...node, child2: newItem.addr };
-    list[idx].value = newItem;
   }
 
   allocList(toAppend: HeapAddr[], prevList?: GoslingListObj): GoslingListObj {
@@ -178,10 +176,7 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
         child1: prevListAddr,
         child2: valAddr,
       });
-      prevList = [
-        { nodeAddr: newNode.addr, node: newNode, value: this.get(valAddr) },
-        ...prevList!,
-      ];
+      prevList = [{ nodeAddr: newNode.addr }, ...prevList!];
       prevListAddr = prevList[0].nodeAddr;
     }
 

@@ -30,14 +30,18 @@ export function readScopeData(
   addr: HeapAddr,
   memory: GoslingMemoryManager
 ): GoslingScopeData {
-  const envs = memory.getList(addr).map(({ nodeAddr, value, node }, idx) => {
+  const envs = memory.getList(addr).map(({ nodeAddr }, idx) => {
+    const node = memory.get(nodeAddr);
+    assertGoslingType(HeapType.BinaryPtr, node);
+
+    const value = memory.get(node.child2);
     if (value === null) return { nodeAddr, node, value, env: {} };
     if (!isGoslingType(HeapType.BinaryPtr, value))
       throw new Error(`Non-ptr in env list at ${addr}:${idx}=${value?.addr}`);
 
     try {
       const env = getEnv(value.addr, memory);
-      return { nodeAddr, node, value, env };
+      return { nodeAddr, env };
     } catch (e) {
       throw new Error(`Invalid env (env list at ${addr}:${idx}): ${e}`);
     }
@@ -116,8 +120,10 @@ function getEnv(addr: HeapAddr, memory: GoslingMemoryManager) {
   for (let i = 0; i < list.length; i += 2) {
     const keyListItem = list[i];
     const valListItem = list[i + 1];
-    const key = keyListItem.value;
+    const keyPtr = memory.get(keyListItem.nodeAddr);
+    assertGoslingType(HeapType.BinaryPtr, keyPtr);
 
+    const key = memory.get(keyPtr.child2);
     if (key === null) throw new Error(`Invalid key at ${i / 2} in env ${addr}`);
     assertGoslingType(HeapType.String, key);
 
