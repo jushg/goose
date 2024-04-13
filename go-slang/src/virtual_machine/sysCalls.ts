@@ -175,6 +175,7 @@ const getBinPtrChild2: SysCall = ({ thread }) => {
  * Result:
  * q will remain unchanged.
  * p will now contain { child1: 0xA, child2: 0xC }
+ * Note that there is NO return value. This is a side-effect only function.
  */
 const setBinPtrChild2: SysCall = ({ thread, memory }) => {
   const newSecondChild = thread.getOS().pop();
