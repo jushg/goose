@@ -59,19 +59,19 @@ const printHeap: SysCall = ({ memory, thread }) => {
 const done: SysCall = ({ thread, memory, es }) => {
   thread.setStatus("DONE");
 
-  // // If the thread is the main thread, we need to stop the machine.
-  // if (thread.isMain()) {
-  //   for (const tId of memory.threadDataMap.keys()) {
-  //     const t = memory.getThreadData(tId);
-  //     if (t.status !== "DONE") {
-  //       es.vmPrinter(
-  //         { threadId: tId },
-  //         `Thread ${tId} (${t.status}) terminated by main thread.`
-  //       );
-  //       memory.setThreadData(tId, { status: "DONE" });
-  //     }
-  //   }
-  // }
+  // If the thread is the main thread, we need to stop the machine.
+  if (es.mainThreadId == thread.getId()) {
+    for (const tId of memory.threadDataMap.keys()) {
+      const t = memory.getThreadData(tId);
+      if (t.status !== "DONE") {
+        es.vmPrinter(
+          { threadId: tId },
+          `Thread ${tId} (${t.status}) terminated by main thread.`
+        );
+        memory.setThreadData(tId, { status: "DONE" });
+      }
+    }
+  }
 };
 
 const triggerBreakpoint: SysCall = ({ thread }) => {
