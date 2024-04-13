@@ -171,7 +171,7 @@ updateBuiltinsFnDef(
   `
   func queueInit(capacity int) *int {
     dummyPtr := new(int)
-    *dummyPtr = 5
+    *dummyPtr = -1
     queueDataPtr := makeBinPtr(&dummyPtr, &dummyPtr)
 
     sizePtr := new(int)
@@ -198,53 +198,40 @@ updateBuiltinsFnDef(
     newBackPtr := new(int)
     *newBackPtr = val
 
-    dataPtr := *queue
-    backPtr := getBinPtrChild2(dataPtr)
-    print(**backPtr)
+    setBinPtrChild2(&(*getBinPtrChild2(*queue)), &newBackPtr)
 
-    *backPtr = makeBinPtr(&(**backPtr), &newBackPtr)
-    print(**backPtr)
+    setBinPtrChild2(&(*queue), &newBackPtr)
 
-
+    
     updateQueueSize(queue, size + 1)
     return true
   }
 
   func tryPopFrontQueue(queue *int) *int {
-    dataAndSizePtr := *queue
-    dataPtr := *dataAndSizePtr
     size := queueSize(queue)
     var nilPtr *int
   
     if size == 0 {
-      return 0
+      return nilPtr
     }
   
-    frontPtr := *dataPtr
-    
-    realFrontPtr := getBinPtrChild2(frontPtr)
-    frontVal := *realFrontPtr
-
-    print(*frontVal)
-  
+    frontVal := peekFrontQueue(queue)
+    realFrontPtr := *getBinPtrChild2(**queue)
     nextFrontPtr := getBinPtrChild2(realFrontPtr)
-    *frontPtr = makeBinPtr(&(*frontPtr), &nextFrontPtr)
-  
-    if nextFrontPtr == nilPtr {
-      *dataPtr = makeBinPtr(&(*dataPtr),&(*dataPtr))
-    } 
     updateQueueSize(queue, size - 1)
-    return frontVal
+    if queueSize(queue) == 0 {
+      setBinPtrChild2(&(*queue), &(**queue))
+    } else {
+      setBinPtrChild2(&(**queue), &(*nextFrontPtr))
+    }
+    return &frontVal
   }
 
   func peekFrontQueue(queue *int) int {
-    dataPtr := *queue
-    frontPtr := *dataPtr
     if queueSize(queue) == 0 {
       return -1
     }
-    realFrontPtr := *getBinPtrChild2(frontPtr)
-    return *realFrontPtr
+    return **getBinPtrChild2(**queue)
   }
 
   func popFrontQueue(queue *int) int {
