@@ -265,6 +265,21 @@ updateBuiltinsFnDef(
   {}
 );
 
+export const channelBuiltins = {
+  chanInit: {
+    fnName: "chanInit",
+    argCount: 1,
+  },
+  chanSend: {
+    fnName: "chanSend",
+    argCount: 2,
+  },
+  chanRecv: {
+    fnName: "chanRecv",
+    argCount: 1,
+  },
+};
+
 // Channel functions
 // Use `chanInit` to create a channel:
 // use 0 to create an unbuffered channel,

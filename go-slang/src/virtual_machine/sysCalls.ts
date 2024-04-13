@@ -102,7 +102,9 @@ const make: SysCall = ({ ins, thread }) => {
       });
       return;
     case "CHAN":
-      throw new Error("Channel type not implemented for 'make'");
+      throw new Error(
+        "Channel type not implemented for 'make' as an instruction"
+      );
     case "FUNC":
     case "NIL":
     case "ARRAY":

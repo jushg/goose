@@ -621,7 +621,7 @@ func main() {
   print(x)
 }
     `;
-    let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
+    // let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
 
@@ -634,8 +634,8 @@ func main() {
       ch := make(chan int, 2)
       ch <- 1
       ch <- 2
-      fmt.Println(<-ch)
-      fmt.Println(<-ch)
+      print(<-ch)
+      print(<-ch)
     }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);

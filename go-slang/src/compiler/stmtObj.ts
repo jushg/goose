@@ -36,6 +36,7 @@ import {
   assertTag,
   scanDeclaration,
 } from "./utils";
+import { channelBuiltins } from "../virtual_machine/builtins";
 
 export function getStmtLogic(
   key: StmtObj["stmtType"]
@@ -65,7 +66,12 @@ export function getStmtLogic(
         addLabelIfExist(pf.instructions.length, s.label, pf);
         compileTagObj(s.lhs, pf);
         compileTagObj(s.rhs, pf);
-        throw new Error("SEND not implemented");
+        pf.instructions.push(
+          makeLdInstruction(channelBuiltins.chanSend.fnName)
+        );
+        pf.instructions.push(
+          makeCallInstruction(channelBuiltins.chanSend.argCount)
+        );
       };
 
     case "INC":

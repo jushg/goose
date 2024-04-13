@@ -15,7 +15,14 @@ import {
   makeSysCallInstruction,
   makeUnaryAluInstruction,
 } from "../common/instructionObj";
-import { AnyLiteralObj, AnyTypeObj, ExprObj, FuncLiteralObj } from "../parser";
+import {
+  AnyLiteralObj,
+  AnyTypeObj,
+  ExprObj,
+  FuncLiteralObj,
+  makeIntLiteralObj,
+} from "../parser";
+import { channelBuiltins } from "../virtual_machine/builtins";
 import { sysCallLogic } from "../virtual_machine/sysCalls";
 import { compileTagObj } from "./compileFunc";
 import { AnyTagObj, assertTag, scanDeclaration } from "./utils";
@@ -109,7 +116,18 @@ export function getExprLogic(
       return (s, pf) => {
         assertTag("UNARY_EXPR", s);
         compileTagObj(s.expr, pf);
-        pf.instructions.push(makeUnaryAluInstruction(s.op));
+        if (s.op !== "<-") {
+          pf.instructions.push(makeUnaryAluInstruction(s.op));
+          return;
+        }
+
+        // Receive from channel
+        pf.instructions.push(
+          makeLdInstruction(channelBuiltins.chanRecv.fnName)
+        );
+        pf.instructions.push(
+          makeCallInstruction(channelBuiltins.chanRecv.argCount)
+        );
       };
 
     case "BINARY_EXPR":
@@ -132,7 +150,21 @@ export function getExprLogic(
         const sym = s.sym as keyof typeof sysCallLogic;
 
         s.args.map((arg) => compileTagObj(arg, pf));
-        pf.instructions.push(makeSysCallInstruction(sym, type, args.length));
+
+        // Special case for channel init -> using builtin function
+        if (sym === "make" && type !== null && type.type.base === "CHAN") {
+          if (args.length === 0) {
+            pf.instructions.push(makeLdcInstruction(makeIntLiteralObj(0)));
+          }
+          pf.instructions.push(
+            makeLdInstruction(channelBuiltins.chanInit.fnName)
+          );
+          pf.instructions.push(
+            makeCallInstruction(channelBuiltins.chanInit.argCount)
+          );
+        } else {
+          pf.instructions.push(makeSysCallInstruction(sym, type, args.length));
+        }
       };
 
     case "NO_OP":
