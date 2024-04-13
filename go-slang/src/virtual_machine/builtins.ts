@@ -35,6 +35,7 @@ const builtInsFromSysCall = [
   "yield",
   "makeBinPtr",
   "getBinPtrChild2",
+  "setBinPtrChild2",
 ] satisfies SysCallInstructionObj["sym"][];
 
 const sysCallFunctionDefs = Object.keys(sysCallLogic)
