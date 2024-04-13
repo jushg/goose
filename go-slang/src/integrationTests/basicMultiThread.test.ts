@@ -584,6 +584,8 @@ func main() {
     ch <- 1
   }
 
+  print("MAIN")
+
   go bar()
   x := <-ch
   print("after receive")
@@ -606,7 +608,21 @@ func main() {
       // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
-    console.dir(log);
+    expect(Object.keys(log)).toHaveLength(2);
+
+    let barId = Object.keys(log).filter(
+      (id) => id !== state.machineState.MAIN_ID
+    )[0];
+    expect(log[barId]).toEqual([
+      "'BAR'",
+      "'not terminated!'",
+      expect.stringMatching(/.*terminated by main thread\./),
+    ]);
+    expect(log[state.machineState.MAIN_ID]).toEqual([
+      "'MAIN'",
+      "'after receive'",
+      "1",
+    ]);
   });
 
   test.concurrent("test with buffered channel, simple", async () => {
