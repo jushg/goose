@@ -602,4 +602,46 @@ func main() {
       expect(log[barId]).toEqual(["'BAR'", "'not terminated!'"]);
     }
   });
+
+  test.concurrent("test with unbuffered channel, full", async () => {
+    const progStr = `
+func main() {
+  ch := make(chan int)
+  bar := func () {
+    print("BAR")
+    for i := 0; i < 10; i = i + 1 { yield() }
+    print("not terminated!")
+    ch <- 1
+
+  }
+
+  go bar()
+  x := <-ch
+  print("after receive")
+  print(x)
+}
+    `;
+    let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
+    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const pcExecutionOrder: Record<string, number[]> = {};
+
+    // console.dir(prog.instructions, { maxArrayLength: null });
+  });
+
+  test.concurrent("test with buffered channel, simple", async () => {
+    const progStr = `
+    func main() {
+      ch := make(chan int, 2)
+      ch <- 1
+      ch <- 2
+      fmt.Println(<-ch)
+      fmt.Println(<-ch)
+    }
+    `;
+    let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
+    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const pcExecutionOrder: Record<string, number[]> = {};
+
+    console.dir(prog.instructions, { maxArrayLength: null, depth: 10 });
+  });
 });
