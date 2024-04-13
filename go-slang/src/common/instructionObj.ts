@@ -181,6 +181,7 @@ export type SysCallInstructionObj = InstructionObj<
       | "triggerBreakpoint"
       | "makeBinPtr"
       | "getBinPtrChild2"
+      | "setBinPtrChild2"
       | "makeLambda"
       | "print"
       | "yield"

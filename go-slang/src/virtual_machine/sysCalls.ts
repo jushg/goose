@@ -167,6 +167,36 @@ const getBinPtrChild2: SysCall = ({ thread }) => {
   });
 };
 
+/*
+ * To be used as so:
+ * For `setBinPtrChild2(&p, q)`, where p is { child1: 0xA, child2: 0xB }, q is { child1: 0xC, ... }
+ * &p is used to provide the address to it, to allow for memory setting.
+ *
+ * Result:
+ * q will remain unchanged.
+ * p will now contain { child1: 0xA, child2: 0xC }
+ */
+const setBinPtrChild2: SysCall = ({ thread, memory }) => {
+  const newSecondChild = thread.getOS().pop();
+  assertGoslingType(HeapType.BinaryPtr, newSecondChild);
+  const secondChildValue = newSecondChild.child1;
+
+  const ptrToBinPtr = thread.getOS().pop();
+  assertGoslingType(HeapType.BinaryPtr, ptrToBinPtr);
+
+  const binPtr = memory.getHeapValue(ptrToBinPtr.child1);
+  if (binPtr.type !== HeapType.BinaryPtr)
+    throw new Error("Expected BinaryPtr in setBinPtrChild2");
+
+  const { gcFlag, type, child1 } = binPtr;
+  memory.setHeapValue(ptrToBinPtr.child1, {
+    gcFlag,
+    type,
+    child1,
+    child2: secondChildValue,
+  });
+};
+
 export const sysCallLogic = {
   make,
   done,
@@ -179,4 +209,5 @@ export const sysCallLogic = {
   yield: yield_,
   makeBinPtr,
   getBinPtrChild2,
+  setBinPtrChild2,
 } satisfies { [key in SysCallInstructionObj["sym"]]: SysCall };
