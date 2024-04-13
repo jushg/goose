@@ -200,12 +200,12 @@ const setBinPtrChild2: SysCall = ({ thread, memory }) => {
 
 /*
  * To be used as so:
- * For `setBinPtrChild2(&p, q)`, where p is { child1: 0xA, child2: 0xB }, q is { child1: 0xC, ... }
+ * For `setBinPtrChild1(&p, q)`, where p is { child1: 0xA, child2: 0xB }, q is { child1: 0xC, ... }
  * &p is used to provide the address to it, to allow for memory setting.
  *
  * Result:
  * q will remain unchanged.
- * p will now contain { child1: 0xA, child2: 0xC }
+ * p will now contain { child1: 0xC, child2: 0xB }
  */
 const setBinPtrChild1: SysCall = ({ thread, memory }) => {
   const newFirstChild = thread.getOS().pop();
