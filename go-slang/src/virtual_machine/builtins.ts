@@ -2,7 +2,10 @@ import {
   AnyInstructionObj,
   OpCode,
   SysCallInstructionObj,
+  makeLdInstruction,
+  makeLdcInstruction,
 } from "../common/instructionObj";
+import { makeNilLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 
 const _builtinsFnDef: {
@@ -167,17 +170,17 @@ func wgWait(wg *int) {
 updateBuiltinsFnDef(
   `
   func queueInit(capacity int) *int {
-    frontPtr := makeBinPtr(new(int), new(int))
-    queueDataPtr := makeBinPtr(&frontPtr, &frontPtr)
+    dummyPtr := new(int)
+    *dummyPtr = 5
+    queueDataPtr := makeBinPtr(&dummyPtr, &dummyPtr)
+
     sizePtr := new(int)
     *sizePtr = 0
-    dataAndSizePtr := makeBinPtr(&queueDataPtr, sizePtr)
-  
     capacityPtr := new(int)
     *capacityPtr = capacity
+    sizeCapacityPtr := makeBinPtr(sizePtr, capacityPtr)
 
-    print(dataAndSizePtr)
-    return makeBinPtr(&dataAndSizePtr, capacityPtr)
+    return makeBinPtr(&queueDataPtr, &sizeCapacityPtr)    
   }
   
   func pushBackQueue(queue *int, val int) {
@@ -185,67 +188,84 @@ updateBuiltinsFnDef(
   }
   
   func tryPushBackQueue(queue *int, val int) bool {
-    dataAndSizePtr := *queue
-    dataPtr := *dataAndSizePtr
-    size := *getBinPtrChild2(dataAndSizePtr)
-    capacity := *getBinPtrChild2(queue)
-  
+    size := queueSize(queue)
+    capacity := queueCapacity(queue)
+
     if size == capacity {
       return false
     }
   
-    newBackPtr := makeBinPtr(new(int), new(int))
+    newBackPtr := new(int)
     *newBackPtr = val
 
-  
-    oldBackPtr := getBinPtrChild2(dataPtr)
-    *oldBackPtr = makeBinPtr(&(*oldBackPtr), &newBackPtr)
-  
-  
-    sizePtr := *getBinPtrChild2(dataAndSizePtr)
-  
-    *sizePtr = size + 1
-  
+    dataPtr := *queue
+    backPtr := getBinPtrChild2(dataPtr)
+    print(**backPtr)
+
+    *backPtr = makeBinPtr(&(**backPtr), &newBackPtr)
+    print(**backPtr)
+
+
+    updateQueueSize(queue, size + 1)
     return true
   }
 
   func tryPopFrontQueue(queue *int) *int {
     dataAndSizePtr := *queue
     dataPtr := *dataAndSizePtr
-    size := *getBinPtrChild2(dataAndSizePtr)
+    size := queueSize(queue)
+    var nilPtr *int
   
     if size == 0 {
-      return nil
+      return 0
     }
   
     frontPtr := *dataPtr
     
     realFrontPtr := getBinPtrChild2(frontPtr)
     frontVal := *realFrontPtr
+
+    print(*frontVal)
   
     nextFrontPtr := getBinPtrChild2(realFrontPtr)
-    *frontPtr = makeBinPtr(**frontPtr, nextFrontPtr)
+    *frontPtr = makeBinPtr(&(*frontPtr), &nextFrontPtr)
   
-    if nextFrontPtr == nil {
-      *dataPtr = makeBinPtr(**dataPtr,**dataPtr)
+    if nextFrontPtr == nilPtr {
+      *dataPtr = makeBinPtr(&(*dataPtr),&(*dataPtr))
     } 
-    sizePtr := *getBinPtrChild2(dataAndSizePtr)
-    *sizePtr = size - 1
+    updateQueueSize(queue, size - 1)
     return frontVal
   }
 
+  func peekFrontQueue(queue *int) int {
+    dataPtr := *queue
+    frontPtr := *dataPtr
+    if queueSize(queue) == 0 {
+      return -1
+    }
+    realFrontPtr := *getBinPtrChild2(frontPtr)
+    return *realFrontPtr
+  }
+
   func popFrontQueue(queue *int) int {
+    var nilPtr *int
     for ; true ; {
       val := tryPopFrontQueue(queue)
-      if val != nil {
+      if val != nilPtr {
         return *val
       }
       yield()
     }
   }
 
+  func updateQueueSize(queue *int, size int) {
+    sizePtr := *getBinPtrChild2(queue)
+    *sizePtr = size
+  }
+
   func queueSize(queue *int) int {
-    return *getBinPtrChild2(*queue)
+    sizeCapacityPtr := *getBinPtrChild2(queue)
+    return *sizeCapacityPtr
   }
 
   func queueEmpty(queue *int) bool {
@@ -253,14 +273,14 @@ updateBuiltinsFnDef(
   }
 
   func queueFull(queue *int) bool {
-    dataAndSizePtr := *queue
-    size := *getBinPtrChild2(dataAndSizePtr)
-    capacity := *getBinPtrChild2(queue)
+    size := queueSize(queue)
+    capacity := queueCapacity(queue)
     return size == capacity
   }
 
   func queueCapacity(queue *int) int {
-    return *getBinPtrChild2(queue)
+    sizeCapacityPtr := *getBinPtrChild2(queue)
+    return *getBinPtrChild2(sizeCapacityPtr)
   }
 
   `,
@@ -295,9 +315,9 @@ func chanInit(capacity int) *int {
 
   emptySem := boundedSemInit(capacity + 1, capacity + 1)
   fullSem := boundedSemInit(capacity + 1, 0)
-  semPtr := makeBinPtr(emptySem, fullSem)
-  chanControlPtr := makeBinPtr(semPtr, chanMutexPtr)
-  return makeBinPtr(queuePtr, chanControlPtr)
+  semPtr := makeBinPtr(&emptySem, &fullSem)
+  chanControlPtr := makeBinPtr(&semPtr, &chanMutexPtr)
+  return makeBinPtr(&queuePtr, &chanControlPtr)
 }
 
 

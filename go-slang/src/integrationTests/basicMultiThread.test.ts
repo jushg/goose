@@ -594,8 +594,6 @@ func main() {
     // let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
-
-    // console.dir(prog.instructions, { maxArrayLength: null });
   });
 
   test.concurrent("test with buffered channel, simple", async () => {
@@ -611,7 +609,5 @@ func main() {
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
-
-    console.dir(prog.instructions, { maxArrayLength: null, depth: 10 });
   });
 });
