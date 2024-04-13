@@ -304,16 +304,17 @@ func chanInit(capacity int) *int {
   fullSem := boundedSemInit(capacity + 1, 0)
   semPtr := makeBinPtr(&emptySem, &fullSem)
   chanControlPtr := makeBinPtr(&semPtr, &chanMutexPtr)
+
   return makeBinPtr(&queuePtr, &chanControlPtr)
 }
 
 
 func chanSend(ch *int, val int) {
-  chanControlPtr := *getBinPtrChild2(*ch)
-  semPtr := *getBinPtrChild2(chanControlPtr)
-  emptySem := *getBinPtrChild2(semPtr)
-  fullSem := *getBinPtrChild2(semPtr)
+  chanControlPtr := *getBinPtrChild2(ch)
+  semPtr := *chanControlPtr
   mutexPtr := *getBinPtrChild2(chanControlPtr)
+  emptySem := *semPtr
+  fullSem := *getBinPtrChild2(semPtr)
   queuePtr := *ch
 
   boundedSemWait(emptySem)
@@ -334,16 +335,16 @@ func chanSend(ch *int, val int) {
 }
 
 func chanRecv(ch *int) int {
-  chanControlPtr := *getBinPtrChild2(*ch)
-  semPtr := *getBinPtrChild2(chanControlPtr)
-  emptySem := *getBinPtrChild2(semPtr)
-  fullSem := *getBinPtrChild2(semPtr)
+  chanControlPtr := *getBinPtrChild2(ch)
+  semPtr := *chanControlPtr
   mutexPtr := *getBinPtrChild2(chanControlPtr)
-
+  emptySem := *semPtr
+  fullSem := *getBinPtrChild2(semPtr)
+  queuePtr := *ch
 
   boundedSemWait(fullSem)
   mutexLock(mutexPtr)
-  val := popFrontQueue(*ch)
+  val := popFrontQueue(queuePtr)
   mutexUnlock(mutexPtr)
   boundedSemPost(emptySem)
   return val

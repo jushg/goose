@@ -582,7 +582,6 @@ func main() {
     for i := 0; i < 10; i = i + 1 { yield() }
     print("not terminated!")
     ch <- 1
-
   }
 
   go bar()
@@ -591,9 +590,23 @@ func main() {
   print(x)
 }
     `;
-    // let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
+    let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
+    while (true) {
+      try {
+        const newState = executeStep(state);
+        if (newState === null) break;
+        state = newState;
+      } catch (e) {
+        throw e;
+      }
+
+      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+    }
+    console.dir(log);
   });
 
   test.concurrent("test with buffered channel, simple", async () => {
@@ -609,5 +622,19 @@ func main() {
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
+    while (true) {
+      try {
+        const newState = executeStep(state);
+        if (newState === null) break;
+        state = newState;
+      } catch (e) {
+        throw e;
+      }
+
+      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+    }
+    expect(log[state.machineState.MAIN_ID]).toEqual(["1", "2"]);
   });
 });
