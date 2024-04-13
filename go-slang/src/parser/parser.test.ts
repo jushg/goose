@@ -84,28 +84,20 @@ func main() {
                       stmts: [
                         {
                           tag: "STMT",
-                          stmtType: "EXPR",
-                          expr: {
-                            tag: "BINARY_EXPR",
-                            lhs: {
-                              tag: "IDENT",
-                              val: "messages",
-                            },
-                            op: "<",
-                            rhs: {
-                              tag: "UNARY_EXPR",
-                              expr: {
-                                tag: "LITERAL",
-                                type: {
-                                  tag: "TYPE",
-                                  type: {
-                                    base: "STR",
-                                  },
-                                },
-                                val: "ping",
+                          stmtType: "SEND",
+                          lhs: {
+                            tag: "IDENT",
+                            val: "messages",
+                          },
+                          rhs: {
+                            tag: "LITERAL",
+                            type: {
+                              tag: "TYPE",
+                              type: {
+                                base: "STR",
                               },
-                              op: "-",
                             },
+                            val: "ping",
                           },
                         },
                       ],

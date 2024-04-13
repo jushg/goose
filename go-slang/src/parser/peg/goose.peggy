@@ -368,7 +368,8 @@ binary_op       "binary operator"               = mul_op
 rel_op          "comparison operator"           = EQL           // "=="
                                                 / NEQ           // "!="
                                                 / LEQ           // "<="
-                                                / LSS           // "<"
+                                                / LSS !"-"      // "<", but not in "<-"
+                                                { return '<' }
                                                 / GEQ           // ">="
                                                 / GTR           // ">"
 
