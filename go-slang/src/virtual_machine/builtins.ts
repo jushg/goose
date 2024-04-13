@@ -167,19 +167,21 @@ func wgWait(wg *int) {
 updateBuiltinsFnDef(
   `
   func queueInit(capacity int) *int {
-    frontPtr := new(int)
-    queueDataPtr := makeBinPtr(frontPtr, frontPtr)
+    frontPtr := makeBinPtr(new(int), new(int))
+    queueDataPtr := makeBinPtr(&frontPtr, &frontPtr)
     sizePtr := new(int)
     *sizePtr = 0
-    dataAndSizePtr := makeBinPtr(queueDataPtr, sizePtr)
+    dataAndSizePtr := makeBinPtr(&queueDataPtr, sizePtr)
   
     capacityPtr := new(int)
     *capacityPtr = capacity
-    return makeBinPtr(dataAndSizePtr, capacityPtr)
+
+    print(dataAndSizePtr)
+    return makeBinPtr(&dataAndSizePtr, capacityPtr)
   }
   
   func pushBackQueue(queue *int, val int) {
-    for ; !tryPushBack(queue, val) ; { yield() }
+    for ; !tryPushBackQueue(queue, val) ; { yield() }
   }
   
   func tryPushBackQueue(queue *int, val int) bool {
@@ -192,13 +194,13 @@ updateBuiltinsFnDef(
       return false
     }
   
-    newNextPtr := new(int)
-    *newNextPtr = val
+    newBackPtr := makeBinPtr(new(int), new(int))
+    *newBackPtr = val
+
   
     oldBackPtr := getBinPtrChild2(dataPtr)
-    *oldBackPtr = makeBinPtr(**oldBackPtr, newNextPtr)
+    *oldBackPtr = makeBinPtr(&(*oldBackPtr), &newBackPtr)
   
-    *dataPtr = makeBinPtr(**dataPtr, newNextPtr)
   
     sizePtr := *getBinPtrChild2(dataAndSizePtr)
   
@@ -225,8 +227,8 @@ updateBuiltinsFnDef(
     *frontPtr = makeBinPtr(**frontPtr, nextFrontPtr)
   
     if nextFrontPtr == nil {
-      *dataPtr = makeBinPtr(**dataPtr, **dataPtr)
-    }
+      *dataPtr = makeBinPtr(**dataPtr,**dataPtr)
+    } 
     sizePtr := *getBinPtrChild2(dataAndSizePtr)
     *sizePtr = size - 1
     return frontVal
@@ -234,7 +236,7 @@ updateBuiltinsFnDef(
 
   func popFrontQueue(queue *int) int {
     for ; true ; {
-      val := tryPopFront(queue)
+      val := tryPopFrontQueue(queue)
       if val != nil {
         return *val
       }
