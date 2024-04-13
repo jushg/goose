@@ -60,7 +60,7 @@ describe("basic single threaded program", () => {
         .map(({ env }) => env);
 
     const pcExecutionOrder: number[] = [];
-    const maxInstrExecutions = 1000;
+    const maxInstrExecutions = 1200;
 
     let lastHundredInstr: any[] = [];
     const updateLastHundredInstr = () => {

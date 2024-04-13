@@ -166,7 +166,7 @@ func wgWait(wg *int) {
 // Queue data structure
 updateBuiltinsFnDef(
   `
-  func makeQueue(capacity int) *int {
+  func queueInit(capacity int) *int {
     frontPtr := new(int)
     queueDataPtr := makeBinPtr(frontPtr, frontPtr)
     sizePtr := new(int)
@@ -287,7 +287,7 @@ export const channelBuiltins = {
 updateBuiltinsFnDef(
   `
 func chanInit(capacity int) *int {
-  queuePtr := makeQueue(capacity + 1)
+  queuePtr := queueInit(capacity + 1)
 
   chanMutexPtr := mutexInit()
 
