@@ -17,11 +17,7 @@ const setUpMultiThreadedTest = (progStr: string) => {
   const getMemory = () => state.machineState.HEAP;
   const getThread = () => state.jobState;
   const getPC = () => state.jobState.getPC().addr;
-  const _getRts = () =>
-    getThread()
-      .getRTS()
-      .getScopeData()
-      .map(({ env }) => env);
+  const _getRts = () => getThread().getRTS().toString();
 
   return {
     log,

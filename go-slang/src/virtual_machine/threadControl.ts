@@ -4,6 +4,7 @@ import {
   GoslingListObj,
   GoslingObject,
   Literal,
+  assertGoslingType,
 } from ".";
 import { GoslingScopeObj } from "./scope";
 
@@ -58,14 +59,13 @@ export function createThreadControlObject(
   const id = `t_${(++_id).toString(16).padStart(5, "0")}__from${initData.pc.addr.toString().padStart(6, "_")}`;
   memory.allocThreadData(id, initData);
 
-  const getOS = () => memory.getList(memory.getThreadData(id).os);
+  let _os = memory.getList(memory.getThreadData(id).os);
   const getRTS = () => memory.getEnvs(memory.getThreadData(id).rts);
   const getPC = () => memory.getThreadData(id).pc;
   const getStatus = () => memory.getThreadData(id).status;
 
   const os: GoslingOperandStackObj = {
     push: (val: Literal<AnyGoslingObject> | HeapAddr) => {
-      let _os = getOS();
       const valueObj =
         val instanceof HeapAddr ? memory.get(val) : memory.alloc(val);
 
@@ -76,8 +76,8 @@ export function createThreadControlObject(
     },
     pop: () => {
       const val = os.peek();
-      const _os = getOS();
-      memory.setThreadData(id, { os: getOsAddr(_os.slice(1)) });
+      _os = _os.slice(1);
+      memory.setThreadData(id, { os: getOsAddr(_os) });
 
       const result = memory.get(val.addr);
       if (result === null)
@@ -88,10 +88,12 @@ export function createThreadControlObject(
       return result;
     },
     peek: () => {
-      const _os = getOS();
       if (_os.length === 0) throw new Error("Operand stack is empty");
 
-      const val = _os.at(0)!.value;
+      const valNode = memory.get(_os.at(0)!.nodeAddr);
+      assertGoslingType(HeapType.BinaryPtr, valNode);
+
+      const val = memory.get(valNode.child2);
       if (val === null) throw new Error("Operand stack .top is null");
 
       const result = memory.get(val.addr);
@@ -103,16 +105,24 @@ export function createThreadControlObject(
       return result;
     },
     length: () => {
-      const _os = getOS();
       return _os.length;
     },
     toString: () => {
-      const _os = getOS();
+      const getValueFromValueListPtr = (ptr: HeapAddr) => {
+        try {
+          const valueListItem = memory.get(ptr);
+          if (valueListItem === null) return "*(null)";
+
+          assertGoslingType(HeapType.BinaryPtr, valueListItem);
+          return JSON.stringify(memory.get(valueListItem.child2));
+        } catch (e) {
+          return `(error: ${e})`;
+        }
+      };
+
       return (
         `OS(${_os.length}): [\n` +
-        `${_os
-          .map((n) => JSON.stringify(n.value, undefined, "  "))
-          .join(", ")}` +
+        `${_os.map((n) => getValueFromValueListPtr(n.nodeAddr)).join(", ")}` +
         `\n]`
       );
     },
