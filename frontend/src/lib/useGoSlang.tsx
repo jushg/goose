@@ -9,8 +9,12 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { useVmLogs } from "./useVmLog";
 
+export type CompilationState =
+  | "PARSE_FAILED"
+  | "COMPILATION_FAILED"
+  | "COMPILED";
+
 export const useCompiler = () => {
-  type CompilationState = "PARSE_FAILED" | "COMPILATION_FAILED" | "COMPILED";
   const [compiledFile, setCompiledFile] = useState<CompiledFile | null>(null);
   const [state, setState] = useState<CompilationState>("PARSE_FAILED");
 
@@ -36,9 +40,11 @@ export const useCompiler = () => {
       console.error(e);
       return;
     }
+
+    setState("COMPILED");
   };
 
-  return { setGooseCode, state, compiledFile };
+  return { setGooseCode, compilationState: state, compiledFile };
 };
 
 export type useVmOptions = {

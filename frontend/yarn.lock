@@ -1449,6 +1449,11 @@
   resolved "https://registry.yarnpkg.com/@fontsource/roboto/-/roboto-5.0.12.tgz#418f7305a3be7fc567dd154db20090f7ece7fc6c"
   integrity sha512-x0o17jvgoSSbS9OZnUX2+xJmVRvVCfeaYJjkS7w62iN7CuJWtMf5vJj8LqgC7ibqIkitOHVW+XssRjgrcHn62g==
 
+"@fontsource/source-code-pro@^5.0.17":
+  version "5.0.17"
+  resolved "https://registry.yarnpkg.com/@fontsource/source-code-pro/-/source-code-pro-5.0.17.tgz#a69df6b9fc19fe8b2d04126ce28ad9213cf0049b"
+  integrity sha512-Q5GfthInOTW+Ek5k97/LH6FWLmD+IwHwBEEXF+KStvsyPwSZz+0ssdWJfz/ZRaTZxOk7FwlRgysXAWo41fq6bQ==
+
 "@humanwhocodes/config-array@^0.11.14":
   version "0.11.14"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.14.tgz#d78e481a039f7566ecc9660b4ea7fe6b1fec442b"
