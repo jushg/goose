@@ -2,7 +2,10 @@ import {
   AnyInstructionObj,
   OpCode,
   SysCallInstructionObj,
+  makeLdInstruction,
+  makeLdcInstruction,
 } from "../common/instructionObj";
+import { makeNilLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 
 const _builtinsFnDef: {
@@ -150,6 +153,7 @@ func boundedSemWait(sem *int) {
   {}
 );
 
+// WaitGroup functions
 updateBuiltinsFnDef(
   `
 func wgInit() { return boundedSemInit(2147483647, 0) }
@@ -157,6 +161,193 @@ func wgAdd(wg *int) { boundedSemPost(wg) }
 func wgDone(wg *int) { boundedSemWait(wg) }
 func wgWait(wg *int) {
   for ; *wg != 0 ; { yield() }
+}
+`,
+  {}
+);
+
+// Queue data structure
+updateBuiltinsFnDef(
+  `
+  func queueInit(capacity int) *int {
+    dummyPtr := new(int)
+    *dummyPtr = -1
+    queueDataPtr := makeBinPtr(&dummyPtr, &dummyPtr)
+
+    sizePtr := new(int)
+    *sizePtr = 0
+    capacityPtr := new(int)
+    *capacityPtr = capacity
+    sizeCapacityPtr := makeBinPtr(sizePtr, capacityPtr)
+
+    return makeBinPtr(&queueDataPtr, &sizeCapacityPtr)    
+  }
+  
+  func pushBackQueue(queue *int, val int) {
+    for ; !tryPushBackQueue(queue, val) ; { yield() }
+  }
+  
+  func tryPushBackQueue(queue *int, val int) bool {
+    size := queueSize(queue)
+    capacity := queueCapacity(queue)
+
+    if size == capacity {
+      return false
+    }
+  
+    newBackPtr := new(int)
+    *newBackPtr = val
+
+    setBinPtrChild2(&(*getBinPtrChild2(*queue)), &newBackPtr)
+
+    setBinPtrChild2(&(*queue), &newBackPtr)
+
+    
+    updateQueueSize(queue, size + 1)
+    return true
+  }
+
+  func tryPopFrontQueue(queue *int) *int {
+    size := queueSize(queue)
+    var nilPtr *int
+  
+    if size == 0 {
+      return nilPtr
+    }
+  
+    frontVal := peekFrontQueue(queue)
+    realFrontPtr := *getBinPtrChild2(**queue)
+    nextFrontPtr := getBinPtrChild2(realFrontPtr)
+    updateQueueSize(queue, size - 1)
+    if queueSize(queue) == 0 {
+      setBinPtrChild2(&(*queue), &(**queue))
+    } else {
+      setBinPtrChild2(&(**queue), &(*nextFrontPtr))
+    }
+    return &frontVal
+  }
+
+  func peekFrontQueue(queue *int) int {
+    if queueSize(queue) == 0 {
+      return -1
+    }
+    return **getBinPtrChild2(**queue)
+  }
+
+  func popFrontQueue(queue *int) int {
+    var nilPtr *int
+    for ; true ; {
+      val := tryPopFrontQueue(queue)
+      if val != nilPtr {
+        return *val
+      }
+      yield()
+    }
+  }
+
+  func updateQueueSize(queue *int, size int) {
+    sizePtr := *getBinPtrChild2(queue)
+    *sizePtr = size
+  }
+
+  func queueSize(queue *int) int {
+    sizeCapacityPtr := *getBinPtrChild2(queue)
+    return *sizeCapacityPtr
+  }
+
+  func queueEmpty(queue *int) bool {
+    return queueSize(queue) == 0
+  }
+
+  func queueFull(queue *int) bool {
+    size := queueSize(queue)
+    capacity := queueCapacity(queue)
+    return size == capacity
+  }
+
+  func queueCapacity(queue *int) int {
+    sizeCapacityPtr := *getBinPtrChild2(queue)
+    return *getBinPtrChild2(sizeCapacityPtr)
+  }
+
+  `,
+  {}
+);
+
+export const channelBuiltins = {
+  chanInit: {
+    fnName: "chanInit",
+    argCount: 1,
+  },
+  chanSend: {
+    fnName: "chanSend",
+    argCount: 2,
+  },
+  chanRecv: {
+    fnName: "chanRecv",
+    argCount: 1,
+  },
+};
+
+// Channel functions
+// Use `chanInit` to create a channel:
+// use 0 to create an unbuffered channel,
+// and use a positive integer to create a buffered channel.
+updateBuiltinsFnDef(
+  `
+func chanInit(capacity int) *int {
+  queuePtr := queueInit(capacity + 1)
+
+  chanMutexPtr := mutexInit()
+
+  emptySem := boundedSemInit(capacity + 1, capacity + 1)
+  fullSem := boundedSemInit(capacity + 1, 0)
+  semPtr := makeBinPtr(&emptySem, &fullSem)
+  chanControlPtr := makeBinPtr(&semPtr, &chanMutexPtr)
+
+  return makeBinPtr(&queuePtr, &chanControlPtr)
+}
+
+
+func chanSend(ch *int, val int) {
+  chanControlPtr := *getBinPtrChild2(ch)
+  semPtr := *chanControlPtr
+  mutexPtr := *getBinPtrChild2(chanControlPtr)
+  emptySem := *semPtr
+  fullSem := *getBinPtrChild2(semPtr)
+  queuePtr := *ch
+
+  boundedSemWait(emptySem)
+  mutexLock(mutexPtr)
+  pushBackQueue(queuePtr, val)
+  mutexUnlock(mutexPtr)
+  boundedSemPost(fullSem)
+
+  for ; true ; {
+    mutexLock(mutexPtr)
+    if !queueFull(queuePtr) {
+      mutexUnlock(mutexPtr)
+      break
+    }
+    mutexUnlock(mutexPtr)
+    yield()
+  }
+}
+
+func chanRecv(ch *int) int {
+  chanControlPtr := *getBinPtrChild2(ch)
+  semPtr := *chanControlPtr
+  mutexPtr := *getBinPtrChild2(chanControlPtr)
+  emptySem := *semPtr
+  fullSem := *getBinPtrChild2(semPtr)
+  queuePtr := *ch
+
+  boundedSemWait(fullSem)
+  mutexLock(mutexPtr)
+  val := popFrontQueue(queuePtr)
+  mutexUnlock(mutexPtr)
+  boundedSemPost(emptySem)
+  return val
 }
 `,
   {}

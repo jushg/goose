@@ -1,6 +1,5 @@
-import { compileParsedProgram } from "../compiler";
-import { parse } from "../parser";
-import { executeStep, initializeVirtualMachine } from "../virtual_machine";
+import { executeStep } from "../virtual_machine";
+import { setUpTest } from "./utils";
 
 const progStr = `
 var x int
@@ -43,24 +42,10 @@ func foo(y int) {
 
 describe("basic single threaded program", () => {
   it("should execute correctly", () => {
-    const log: string[] = [];
-    const prog = compileParsedProgram(parse(progStr));
-    let state = initializeVirtualMachine(prog, (2 ** 8) ** 2, (ctx, s) =>
-      "threadId" in ctx ? log.push(s) : null
-    );
-
-    const getSingleThreadStatus = () => state.jobState.getStatus();
-    const getMemory = () => state.machineState.HEAP;
-    const getThread = () => state.jobState;
-    const getPC = () => state.jobState.getPC().addr;
-    const _getRts = () =>
-      getThread()
-        .getRTS()
-        .getScopeData()
-        .map(({ env }) => env);
+    let { log, state, getPC, prog } = setUpTest(progStr);
 
     const pcExecutionOrder: number[] = [];
-    const maxInstrExecutions = 1000;
+    const maxInstrExecutions = 1200;
 
     let lastHundredInstr: any[] = [];
     const updateLastHundredInstr = () => {
@@ -85,7 +70,7 @@ describe("basic single threaded program", () => {
         if (newState === null) break;
         state = newState;
       } catch (e) {
-        // console.dir(lastHundredInstr);
+        console.dir(lastHundredInstr);
         throw e;
       }
 
@@ -94,8 +79,7 @@ describe("basic single threaded program", () => {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
-    // console.dir(lastHundredInstr);
-    expect(log).toEqual([
+    expect(log[state.mainThreadId]).toEqual([
       "1",
       "3",
       "7",

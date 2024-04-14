@@ -1,35 +1,5 @@
-import { compileParsedProgram } from "../compiler";
-import { parse } from "../parser";
-import { executeStep, initializeVirtualMachine } from "../virtual_machine";
-
-const setUpMultiThreadedTest = (progStr: string) => {
-  const log: Record<string, string[]> = {};
-  const prog = compileParsedProgram(parse(progStr));
-  let state = initializeVirtualMachine(prog, (2 ** 8) ** 2, (ctx, s) => {
-    const pushLog = (id: string, s: string) => {
-      if (!log[id]) log[id] = [];
-      log[id].push(s);
-    };
-    "threadId" in ctx ? pushLog(ctx.threadId, s) : pushLog(ctx.component, s);
-  });
-
-  const getId = () => state.jobState.getId();
-  const getMemory = () => state.machineState.HEAP;
-  const getThread = () => state.jobState;
-  const getPC = () => state.jobState.getPC().addr;
-  const _getRts = () => getThread().getRTS().toString();
-
-  return {
-    log,
-    prog,
-    state,
-    getId,
-    getMemory,
-    getThread,
-    getPC,
-    _getRts,
-  };
-};
+import { executeStep } from "../virtual_machine";
+import { setUpTest as setUpMultiThreadedTest } from "./utils";
 
 describe("basic multi threaded program", () => {
   const progStr = `
@@ -601,5 +571,86 @@ func main() {
       expect(log[barId]).toHaveLength(2);
       expect(log[barId]).toEqual(["'BAR'", "'not terminated!'"]);
     }
+  });
+
+  test.concurrent("test with unbuffered channel, full", async () => {
+    const progStr = `
+func main() {
+  ch := make(chan int)
+  bar := func () {
+    print("BAR")
+    for i := 0; i < 10; i = i + 1 { yield() }
+    print("not terminated!")
+    ch <- 1
+  }
+
+  print("MAIN")
+
+  go bar()
+  x := <-ch
+  print("after receive")
+  print(x)
+}
+    `;
+    let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
+    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const pcExecutionOrder: Record<string, number[]> = {};
+    while (true) {
+      try {
+        const newState = executeStep(state);
+        if (newState === null) break;
+        state = newState;
+      } catch (e) {
+        throw e;
+      }
+
+      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+    }
+    expect(Object.keys(log)).toHaveLength(2);
+
+    let barId = Object.keys(log).filter(
+      (id) => id !== state.machineState.MAIN_ID
+    )[0];
+    expect(log[barId]).toEqual([
+      "'BAR'",
+      "'not terminated!'",
+      expect.stringMatching(/.*terminated by main thread\./),
+    ]);
+    expect(log[state.machineState.MAIN_ID]).toEqual([
+      "'MAIN'",
+      "'after receive'",
+      "1",
+    ]);
+  });
+
+  test.concurrent("test with buffered channel, simple", async () => {
+    const progStr = `
+    func main() {
+      ch := make(chan int, 2)
+      ch <- 1
+      ch <- 2
+      print(<-ch)
+      print(<-ch)
+    }
+    `;
+    let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
+    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const pcExecutionOrder: Record<string, number[]> = {};
+    while (true) {
+      try {
+        const newState = executeStep(state);
+        if (newState === null) break;
+        state = newState;
+      } catch (e) {
+        throw e;
+      }
+
+      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
+      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+    }
+    expect(log[state.machineState.MAIN_ID]).toEqual(["1", "2"]);
   });
 });

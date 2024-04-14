@@ -52,7 +52,7 @@ export function getUnaryOpLogic(
 
     case "<-":
       return (_, es) => {
-        throw new Error(`Unary ${key} not implemented`);
+        throw new Error(`Unary ${key} should not be executed here`);
       };
 
     default: {
