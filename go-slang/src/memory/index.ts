@@ -68,10 +68,6 @@ export function createHeapManager(heapNodeCount: number): Allocator {
 }
 
 export { Allocator } from "./alloc";
-export {
-  AnyHeapValue,
-  HeapAddr,
-  HeapInBytes,
-  HeapType,
-  HeapValue,
-} from "./node";
+export { HeapAddr, HeapInBytes, HeapType } from "./node";
+export type { AnyHeapValue, HeapValue } from "./node";
+

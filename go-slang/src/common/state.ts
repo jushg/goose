@@ -54,7 +54,7 @@ export class JobQueue {
     return this.items.length;
   }
 
-  print(): void {
-    console.log(this.items);
+  print(): string {
+    return "JOBS: [" + this.items.map((item) => item.getId()).join(", ") + "]";
   }
 }

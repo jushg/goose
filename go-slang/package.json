@@ -1,7 +1,10 @@
 {
   "name": "go-slang",
   "version": "1.0.0",
-  "main": "src/index.js",
+  "main": "dist/src/index.js",
+  "exports": {
+    "./*": "./dist/*"
+  },
   "license": "MIT",
   "scripts": {
     "updateParser": "npm run updatePeggySource && peggy -o src/parser/peg/index.js --format es src/parser/peg/donotedit.peggy",

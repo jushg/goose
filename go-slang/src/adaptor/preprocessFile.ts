@@ -9,7 +9,7 @@ const parseProgram = async (
     return undefined;
   }
 
-  return parse(files[entrypointFilePath]);
+  return parse(files[entrypointFilePath] || "");
 };
 
 export default parseProgram;

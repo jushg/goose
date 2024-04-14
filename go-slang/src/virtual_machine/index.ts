@@ -52,7 +52,7 @@ function needMemoryCleanup(currState: ExecutionState): boolean {
   );
 }
 
-export function executeStep(currState: ExecutionState) {
+export function executeStep(currState: ExecutionState): ExecutionState | null {
   const instructions: Array<AnyInstructionObj> = currState.program.instructions;
   const { jobState: currJob, machineState } = currState;
   if (needMemoryCleanup(currState)) {
@@ -75,11 +75,14 @@ export function executeStep(currState: ExecutionState) {
     machineState.TIME_SLICE = STANDARD_TIME_SLICE;
   }
 
-  if (currJob.getStatus() === "RUNNABLE") return currState;
+  const status = currJob.getStatus();
 
-  if (currJob.getStatus() === "TIME_SLICE_EXCEEDED")
+  if (status === "RUNNABLE") return currState;
+
+  if (status === "TIME_SLICE_EXCEEDED") {
     currJob.setStatus("RUNNABLE");
-  if (currJob.getStatus() !== "DONE") machineState.JOB_QUEUE.enqueue(currJob);
+    machineState.JOB_QUEUE.enqueue(currJob);
+  }
 
   let nextJob = machineState.JOB_QUEUE.dequeue();
   if (nextJob) {
