@@ -7,19 +7,19 @@ import {
   initializeVirtualMachine,
 } from "go-slang/src/virtual_machine";
 import { useCallback, useEffect, useState } from "react";
+import { useVmLogs } from "./useVmLog";
 
 export const useCompiler = () => {
   type CompilationState = "PARSE_FAILED" | "COMPILATION_FAILED" | "COMPILED";
   const [compiledFile, setCompiledFile] = useState<CompiledFile | null>(null);
   const [state, setState] = useState<CompilationState>("PARSE_FAILED");
 
-  const setGooseCode = (gooseCode: string) => {
+  const setGooseCode = async (gooseCode: string) => {
     console.info(`setting goose code: \n---\n${gooseCode}\n`);
 
     let parsedProg: ProgramObj;
     try {
       parsedProg = parse(gooseCode);
-      console.dir(parsedProg);
     } catch (e) {
       setState("PARSE_FAILED");
       console.error(e);
@@ -41,68 +41,171 @@ export const useCompiler = () => {
   return { setGooseCode, state, compiledFile };
 };
 
-export type LogItem = {
-  ctx: { threadId: string } | { component: string };
-  message: string;
-  timestamp: string;
+export type useVmOptions = {
+  compiledFile: CompiledFile | null;
+  breakpoints?: number[];
+  memorySizeInNodes?: number;
+  gcTriggerMemoryUsageThreshold?: number;
 };
 
-export const useVm = (compiledFile: CompiledFile | null) => {
-  const [log, setLog] = useState<LogItem[]>([]);
-  let vmState: ExecutionState | null = null;
+type ExecutionTimePoint = {
+  threadId: string;
+  instructionIdx: number;
+  status: "breakpoint" | "finished" | "error";
+};
+
+const executeTillBreakHelper = (
+  vmState: ExecutionState | null,
+  timepoint: ExecutionTimePoint,
+  breakpoints: number[],
+  incrementInstructionCount: () => void,
+  setResumeKey: (s: string) => void
+): [ExecutionTimePoint, ExecutionState | null] => {
+  while (true) {
+    try {
+      if (vmState === null) {
+        console.info("vmState is null, returning");
+        return [timepoint, vmState];
+      }
+
+      console.info(
+        `[ ] Executing step!!` +
+          `\n  time left: ${vmState.machineState.TIME_SLICE}` +
+          `\n  thread: ${vmState.jobState.getId()}` +
+          `\n  executing step ${JSON.stringify(
+            vmState.program.instructions.at(vmState.jobState.getPC().addr)
+          )}`
+      );
+
+      vmState = executeStep(vmState);
+      incrementInstructionCount();
+      if (vmState === null) {
+        timepoint.status = "finished";
+        return [timepoint, vmState];
+      }
+
+      const instructionIdx = vmState.jobState.getPC().addr;
+      timepoint = {
+        status: "breakpoint",
+        threadId: vmState.jobState.getId(),
+        instructionIdx,
+      };
+
+      if (breakpoints.includes(instructionIdx)) {
+        const newResumeKey = `${instructionIdx}_${Math.random()}`;
+        console.info(
+          `[!] breakpoint hit: ${instructionIdx} in thread ${vmState.jobState.getId()}\n` +
+            `bt: [${breakpoints.join(
+              ", "
+            )}], setting resume key to ${newResumeKey}`
+        );
+        setResumeKey(`${instructionIdx}_${Math.random()}`);
+        timepoint.status = "breakpoint";
+        return [timepoint, vmState];
+      }
+
+      console.info(
+        `[x] ~~executed step~~` +
+          `\n  time left: ${vmState.machineState.TIME_SLICE}` +
+          `\n  thread: ${vmState.jobState.getId()}`
+      );
+    } catch (e) {
+      console.error(e);
+      if (!vmState) {
+        console.error("--- error in execution: ---\n  but vmState is null");
+      } else {
+        console.error(
+          "--- error in execution: ---" +
+            `\n  time left: ${vmState.machineState.TIME_SLICE}` +
+            `\n  thread: ${vmState.jobState.getId()}` +
+            `\n  last executed step ${JSON.stringify(
+              vmState.program.instructions.at(vmState.jobState.getPC().addr)
+            )}`
+        );
+      }
+      timepoint.status = "error";
+      return [timepoint, vmState];
+    }
+  }
+};
+
+export const useVm = (args: useVmOptions) => {
+  const {
+    compiledFile,
+    breakpoints,
+    memorySizeInNodes,
+    gcTriggerMemoryUsageThreshold,
+  } = args;
+  const { log, appendLog, resetLog } = useVmLogs();
+  const [resumeKey, setResumeKey] = useState<string>("");
+  const [instructionCount, setInstructionCount] = useState<number>(0);
+  const [vmState, setVmState] = useState<ExecutionState | null>(null);
 
   useEffect(() => {
-    console.log("initializing vm");
-
     if (!compiledFile) return;
+
+    console.info("initializing vm");
+
+    resetLog();
     const initState = initializeVirtualMachine(
       compiledFile,
-      (2 ** 8) ** 2,
-      (ctx, s) => {
-        const d = new Date();
-        setLog((log) => [
-          ...log,
-          {
-            ctx,
-            message: s,
-            timestamp: `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}`,
-          },
-        ]);
+      memorySizeInNodes,
+      appendLog,
+      gcTriggerMemoryUsageThreshold
+    );
+
+    setVmState(initState);
+  }, [
+    memorySizeInNodes,
+    compiledFile,
+    gcTriggerMemoryUsageThreshold,
+    resetLog,
+    appendLog,
+  ]);
+
+  const executeTillBreak = useCallback(
+    (vmState: ExecutionState, timepoint: ExecutionTimePoint) => {
+      return executeTillBreakHelper(
+        vmState,
+        timepoint,
+        breakpoints || [],
+        () => setInstructionCount((c) => c + 1),
+        setResumeKey
+      );
+    },
+    [breakpoints, setInstructionCount, setResumeKey]
+  );
+
+  const executor = useCallback(
+    async (clientResumeKey: string): Promise<ExecutionTimePoint | null> => {
+      if (!vmState) {
+        console.info("vm not initialized");
+        return null;
       }
-    );
 
-    setLog([]);
-    vmState = initState;
-  }, [compiledFile]);
+      let currentTimePoint: ExecutionTimePoint = {
+        threadId: vmState.jobState.getId(),
+        instructionIdx: vmState.jobState.getPC().addr,
+        status: "breakpoint",
+      };
 
-  const executor = useCallback(() => {
-    if (!vmState) {
-      return false;
-    }
-    console.log(
-      `
-    [ ] Executing step!!
-      time left: ${vmState.machineState.TIME_SLICE}
-      thread: ${vmState.jobState.getId()}
-      executing step ${JSON.stringify(
-        vmState.program.instructions.at(vmState.jobState?.getPC()?.addr)
-      )}`
-    );
-    const newVmState = executeStep(vmState);
-    if (!newVmState) {
-      console.log("no new vm state");
-      console.dir(vmState.jobState);
-      console.log(vmState.machineState.JOB_QUEUE.print());
-    }
-    console.log(`
-    [x] ~~executed step~~
-      time left: ${vmState.machineState.TIME_SLICE}
-      thread: ${vmState.jobState.getId()}
-      newVm: ${newVmState !== null}
-     `);
-    vmState = newVmState;
-    return true;
-  }, [compiledFile]);
+      if (clientResumeKey !== resumeKey) {
+        console.info(
+          `skipping execution: '${clientResumeKey}' !== '${resumeKey}'`
+        );
+        return currentTimePoint;
+      }
 
-  return { log, executeStep: executor };
+      console.info(`resuming execution: '${clientResumeKey}'`);
+      const [timepoint, newVmState] = executeTillBreak(
+        vmState,
+        currentTimePoint
+      );
+      setVmState(newVmState);
+      return timepoint;
+    },
+    [resumeKey, vmState, executeTillBreak]
+  );
+
+  return { log, executeStep: executor, resumeKey, instructionCount };
 };

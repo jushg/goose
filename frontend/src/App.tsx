@@ -1,10 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import "./App.css";
-import { useCompiler, useVm } from "./lib/useGoSlang";
+import { useCompiler, useVm, useVmOptions } from "./lib/useGoSlang";
 
 function App() {
   const { setGooseCode, compiledFile, state: compilerState } = useCompiler();
-  const { executeStep, log } = useVm(compiledFile);
+  const vmOptions = useMemo<useVmOptions>(
+    () => ({ compiledFile, breakpoints: [1] }),
+    [compiledFile]
+  );
+  const { executeStep, log, resumeKey } = useVm(vmOptions);
 
   useEffect(() => {
     setGooseCode(`
@@ -13,15 +17,6 @@ function App() {
         }
       `);
   }, []);
-
-  useEffect(() => {
-    if (!compiledFile) return;
-    let maxInstr = 100_000;
-    while (maxInstr-- > 0) {
-      console.log("executing");
-      executeStep();
-    }
-  }, [compiledFile]);
 
   return (
     <div className="App">
@@ -43,6 +38,19 @@ function App() {
         >
           Learn React
         </a>
+        <button
+          onClick={() => {
+            console.info("'Resume' button clicked");
+            if (!compiledFile) return;
+
+            console.log("executing");
+            executeStep(resumeKey).then((timepoint) => {
+              console.info(`execution done: ${JSON.stringify(timepoint)}`);
+            });
+          }}
+        >
+          Resume
+        </button>
       </header>
     </div>
   );
