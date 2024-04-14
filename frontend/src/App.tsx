@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import "./App.css";
 import { useCompiler, useVm } from "./lib/useGoSlang";
 
 function App() {
   const { setGooseCode, compiledFile, state: compilerState } = useCompiler();
-  const { executeStep, log } = useVm(compiledFile);
+  const vmOptions = useMemo(() => ({ compiledFile }), [compiledFile]);
+  const { executeStep, log } = useVm(vmOptions);
 
   useEffect(() => {
     setGooseCode(`
@@ -16,11 +17,8 @@ function App() {
 
   useEffect(() => {
     if (!compiledFile) return;
-    let maxInstr = 100_000;
-    while (maxInstr-- > 0) {
-      console.log("executing");
-      executeStep();
-    }
+    console.log("executing");
+    executeStep("");
   }, [compiledFile]);
 
   return (
