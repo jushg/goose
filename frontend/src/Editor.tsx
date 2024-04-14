@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { CompiledFile } from "go-slang/src/common/compiledFile";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { CompilationState } from "./lib/useGoSlang";
 
 export const Editor = ({
@@ -37,6 +37,18 @@ export const Editor = ({
     print(*x)
   }
   `);
+
+  const textFieldHandler = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setCodeStr(e.target.value);
+    },
+    [setCodeStr]
+  );
+  const compileBtnHandler = useCallback(() => {
+    setHasBeenCompiled(true);
+    setGooseCode(codeStr);
+  }, [setHasBeenCompiled, setGooseCode, codeStr]);
+
   return (
     <>
       <Stack direction={"row"} style={{ height: "100%", padding: "2%" }}>
@@ -54,12 +66,9 @@ export const Editor = ({
               style: { fontFamily: "monospace" },
             }}
             value={codeStr}
-            onChange={(e) => setCodeStr(e.target.value)}
+            onChange={textFieldHandler}
           />
-          <Button
-            variant="contained"
-            onClick={() => (setHasBeenCompiled(true), setGooseCode(codeStr))}
-          >
+          <Button variant="contained" onClick={compileBtnHandler}>
             Compile
           </Button>
         </Box>

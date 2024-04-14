@@ -1,5 +1,5 @@
 import { Box, Paper, Stack } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import "./App.css";
 import { Editor } from "./Editor";
 import { VmVizualizer } from "./VmVisualizer";
@@ -13,6 +13,11 @@ function App() {
     [compiledFile]
   );
   const { executeStep, log, resumeKey, instructionCount } = useVm(vmOptions);
+
+  const resumeHandler = useCallback(() => {
+    setIsRunning(true);
+    executeStep(resumeKey).then(() => setIsRunning(false));
+  }, [setIsRunning, executeStep, resumeKey]);
 
   return (
     <Stack
@@ -38,10 +43,7 @@ function App() {
             logs={log}
             allowResume={!isRunning}
             instructionCount={instructionCount}
-            resumeHandler={() => (
-              setIsRunning(true),
-              executeStep(resumeKey).then(() => setIsRunning(false))
-            )}
+            resumeHandler={resumeHandler}
           />
         </Paper>
       </Box>
