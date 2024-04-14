@@ -137,4 +137,4 @@ export async function compileFiles(
   }
 }
 
-export { Context, Result };
+export type { Context, Result };
