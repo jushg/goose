@@ -55,15 +55,27 @@ export const Editor = ({
         <Box height={"100%"} width={"100%"}>
           <TextField
             multiline
-            minRows={19}
-            maxRows={19}
             sx={{
               width: "100%",
+              minHeight: "50vh",
+              maxHeight: "50vh",
               paddingBottom: "2%",
             }}
             inputProps={{
-              spellCheck: "false",
-              style: { fontFamily: "monospace" },
+              style: {
+                minHeight: "50vh",
+                maxHeight: "50vh",
+                fontFamily: "monospace",
+                overflow: "scroll",
+              },
+            }}
+            InputProps={{
+              style: {
+                minHeight: "50vh",
+                maxHeight: "50vh",
+                fontFamily: "monospace",
+                overflow: "scroll",
+              },
             }}
             value={codeStr}
             onChange={textFieldHandler}
