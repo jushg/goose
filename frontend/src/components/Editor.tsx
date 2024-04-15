@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { CompiledFile } from "go-slang/src/common/compiledFile";
 import { useCallback, useState } from "react";
-import { CompilationState } from "./lib/useGoSlang";
+import { CompilationState } from "../hooks/useGoSlang";
 
 export const Editor = ({
   setGooseCode,

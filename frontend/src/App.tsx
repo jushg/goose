@@ -1,9 +1,9 @@
 import { Box, Paper, Stack } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import "./App.css";
-import { Editor } from "./Editor";
-import { VmVizualizer } from "./VmVisualizer";
-import { useCompiler, useVm, useVmOptions } from "./lib/useGoSlang";
+import { Editor } from "./components/Editor";
+import { VmVisualizer } from "./components/VmVisualizer";
+import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
 
 function App() {
   const [isRunning, setIsRunning] = useState(false);
@@ -39,7 +39,7 @@ function App() {
       </Box>
       <Box sx={{ width: "95%", height: "30%" }}>
         <Paper elevation={3} style={{ height: "100%" }}>
-          <VmVizualizer
+          <VmVisualizer
             logs={log}
             allowResume={!isRunning}
             instructionCount={instructionCount}
