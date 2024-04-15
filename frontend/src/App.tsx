@@ -9,6 +9,9 @@ function App() {
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isCompiled, setIsCompiled] = useState(false);
+  const [errorMessageIfAny, setErrorMessageIfAny] = useState<string | null>(
+    null
+  );
   const { setGooseCode, compiledFile, compilationState } = useCompiler();
   const vmOptions = useMemo<useVmOptions>(
     () => ({ compiledFile, breakpoints }),
@@ -18,8 +21,14 @@ function App() {
 
   const resumeHandler = useCallback(() => {
     setIsRunning(true);
-    executeStep(resumeKey).then(() => setIsRunning(false));
-  }, [setIsRunning, executeStep, resumeKey]);
+    executeStep(resumeKey)
+      .then((t) => {
+        t?.status === "error"
+          ? setErrorMessageIfAny(t.errorMessage || "error!")
+          : setErrorMessageIfAny(null);
+      })
+      .then(() => setIsRunning(false));
+  }, [setIsRunning, executeStep, setErrorMessageIfAny, resumeKey]);
 
   return (
     <Stack
@@ -48,6 +57,7 @@ function App() {
             isCompiled={isCompiled}
             isRunning={isRunning}
             logs={log}
+            errorMessageIfAny={errorMessageIfAny}
             instructionCount={instructionCount}
             resumeHandler={resumeHandler}
           />

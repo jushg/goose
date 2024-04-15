@@ -3,12 +3,14 @@ import { LogItem } from "../hooks/useVmLog";
 import { LogVisualizer } from "./LogVisualizer";
 
 export const VmVisualizer = ({
+  errorMessageIfAny,
   isCompiled,
   isRunning,
   logs,
   resumeHandler,
   instructionCount,
 }: {
+  errorMessageIfAny: string | null;
   isCompiled: boolean;
   isRunning: boolean;
   logs: LogItem[];
@@ -43,6 +45,15 @@ export const VmVisualizer = ({
             </Typography>
           ) : (
             <Typography variant="h6">Compile program first</Typography>
+          )}
+          {errorMessageIfAny && (
+            <>
+              <br />
+              <br />
+              <Typography variant="h6" color="error" marginTop={"-50px"}>
+                {errorMessageIfAny}
+              </Typography>
+            </>
           )}
         </Box>
       </Stack>
