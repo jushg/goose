@@ -1,5 +1,6 @@
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, DataGridProps, GridColDef } from "@mui/x-data-grid";
 import { CompiledFile } from "go-slang/src/common/compiledFile";
+import { useCallback } from "react";
 
 const stringify = (instr: any) => {
   if (typeof instr !== "object") return `${instr}`;
@@ -21,10 +22,17 @@ const stringify = (instr: any) => {
     .join(", ");
 };
 
+type HandleSelectionModelChangeType = Exclude<
+  DataGridProps["onRowSelectionModelChange"],
+  undefined
+>;
+
 export const InstrVisualiser = ({
   compiledFile,
+  setBreakpoints,
 }: {
   compiledFile: CompiledFile;
+  setBreakpoints: (breakpoints: number[]) => void;
 }) => {
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 60 },
@@ -37,12 +45,26 @@ export const InstrVisualiser = ({
     data: stringify(instr),
   }));
 
+  const handleSelectionModelChange: DataGridProps["onRowSelectionModelChange"] =
+    useCallback<HandleSelectionModelChangeType>(
+      (model, _detail) => {
+        const ids = new Set(model);
+        setBreakpoints(
+          [...ids].map((id: string | number) => parseInt(`${id}`))
+        );
+      },
+
+      [setBreakpoints]
+    );
+
   return (
     <>
       <DataGrid
         rows={rows}
         columns={columns}
         style={{ height: "90%" }}
+        checkboxSelection
+        onRowSelectionModelChange={handleSelectionModelChange}
       ></DataGrid>
     </>
   );

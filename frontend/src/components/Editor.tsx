@@ -5,15 +5,20 @@ import { CompilationState } from "../hooks/useGoSlang";
 import { InstrVisualiser } from "./InstrVisualiser";
 
 export const Editor = ({
+  isCompiled,
+  setIsCompiled,
   setGooseCode,
   compiledFile,
   compilationState,
+  setBreakpoints,
 }: {
+  isCompiled: boolean;
+  setIsCompiled: (e: boolean) => void;
   setGooseCode: (code: string) => void;
   compiledFile: CompiledFile | null;
   compilationState: CompilationState;
+  setBreakpoints: (breakpoints: number[]) => void;
 }) => {
-  const [hasBeenCompiled, setHasBeenCompiled] = useState<boolean>(false);
   const [codeStr, setCodeStr] = useState<string>(`
   var x int
 
@@ -33,13 +38,14 @@ export const Editor = ({
   const textFieldHandler = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setCodeStr(e.target.value);
+      setIsCompiled(false);
     },
-    [setCodeStr]
+    [setCodeStr, setIsCompiled]
   );
   const compileBtnHandler = useCallback(() => {
-    setHasBeenCompiled(true);
+    setIsCompiled(true);
     setGooseCode(codeStr);
-  }, [setHasBeenCompiled, setGooseCode, codeStr]);
+  }, [setIsCompiled, setGooseCode, codeStr]);
 
   return (
     <>
@@ -85,17 +91,17 @@ export const Editor = ({
           }}
         >
           <Typography variant="h6">Instructions</Typography>
-          {hasBeenCompiled && compilationState === "PARSE_FAILED" && (
-            <Typography>Parse failed</Typography>
-          )}
-          {hasBeenCompiled && compilationState === "COMPILATION_FAILED" && (
-            <Typography>Compilation failed</Typography>
-          )}
-          {hasBeenCompiled && compilationState === "COMPILED" && (
-            <InstrVisualiser compiledFile={compiledFile!} />
-          )}
-          {!hasBeenCompiled && (
+          {!isCompiled ? (
             <Typography>Compile to see instructions</Typography>
+          ) : compilationState === "PARSE_FAILED" ? (
+            <Typography>Parse failed</Typography>
+          ) : compilationState === "COMPILATION_FAILED" ? (
+            <Typography>Compilation failed</Typography>
+          ) : (
+            <InstrVisualiser
+              compiledFile={compiledFile!}
+              setBreakpoints={setBreakpoints}
+            />
           )}
         </Box>
       </Stack>

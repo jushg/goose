@@ -49,7 +49,7 @@ export const useCompiler = () => {
 
 export type useVmOptions = {
   compiledFile: CompiledFile | null;
-  breakpoints?: number[];
+  breakpoints: number[];
   memorySizeInNodes?: number;
   gcTriggerMemoryUsageThreshold?: number;
 };
@@ -174,7 +174,7 @@ export const useVm = (args: useVmOptions) => {
       return executeTillBreakHelper(
         vmState,
         timepoint,
-        breakpoints || [],
+        breakpoints,
         () => setInstructionCount((c) => c + 1),
         setResumeKey
       );
