@@ -58,6 +58,7 @@ export const Editor = ({
               minHeight: "50vh",
               maxHeight: "50vh",
               paddingBottom: "2%",
+              spellcheck: "false",
             }}
             inputProps={{
               style: {
@@ -66,6 +67,7 @@ export const Editor = ({
                 fontFamily: "monospace",
                 overflow: "scroll",
               },
+              spellCheck: false,
             }}
             InputProps={{
               style: {
