@@ -6,18 +6,29 @@ import { VmVisualizer } from "./components/VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
 
 function App() {
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isCompiled, setIsCompiled] = useState(false);
+  const [errorMessageIfAny, setErrorMessageIfAny] = useState<string | null>(
+    null
+  );
   const { setGooseCode, compiledFile, compilationState } = useCompiler();
   const vmOptions = useMemo<useVmOptions>(
-    () => ({ compiledFile, breakpoints: [] }),
-    [compiledFile]
+    () => ({ compiledFile, breakpoints }),
+    [compiledFile, breakpoints]
   );
   const { executeStep, log, resumeKey, instructionCount } = useVm(vmOptions);
 
   const resumeHandler = useCallback(() => {
     setIsRunning(true);
-    executeStep(resumeKey).then(() => setIsRunning(false));
-  }, [setIsRunning, executeStep, resumeKey]);
+    executeStep(resumeKey)
+      .then((t) => {
+        t?.status === "error"
+          ? setErrorMessageIfAny(t.errorMessage || "error!")
+          : setErrorMessageIfAny(null);
+      })
+      .then(() => setIsRunning(false));
+  }, [setIsRunning, executeStep, setErrorMessageIfAny, resumeKey]);
 
   return (
     <Stack
@@ -31,17 +42,22 @@ function App() {
       <Box sx={{ width: "95%", height: "60%" }}>
         <Paper elevation={3} style={{ height: "100%" }}>
           <Editor
+            isCompiled={isCompiled}
+            setIsCompiled={setIsCompiled}
             compilationState={compilationState}
             setGooseCode={setGooseCode}
             compiledFile={compiledFile}
+            setBreakpoints={setBreakpoints}
           />
         </Paper>
       </Box>
       <Box sx={{ width: "95%", height: "30%" }}>
         <Paper elevation={3} style={{ height: "100%" }}>
           <VmVisualizer
+            isCompiled={isCompiled}
+            isRunning={isRunning}
             logs={log}
-            allowResume={!isRunning}
+            errorMessageIfAny={errorMessageIfAny}
             instructionCount={instructionCount}
             resumeHandler={resumeHandler}
           />

@@ -3,14 +3,18 @@ import { LogItem } from "../hooks/useVmLog";
 import { LogVisualizer } from "./LogVisualizer";
 
 export const VmVisualizer = ({
+  errorMessageIfAny,
+  isCompiled,
+  isRunning,
   logs,
   resumeHandler,
-  allowResume,
   instructionCount,
 }: {
+  errorMessageIfAny: string | null;
+  isCompiled: boolean;
+  isRunning: boolean;
   logs: LogItem[];
   resumeHandler: () => void;
-  allowResume: boolean;
   instructionCount: number;
 }) => {
   return (
@@ -29,13 +33,28 @@ export const VmVisualizer = ({
           <Button
             variant="contained"
             onClick={resumeHandler}
-            disabled={!allowResume}
+            disabled={!isCompiled || isRunning}
           >
             Resume
           </Button>
-          <Typography variant="h6">
-            Instructions Executed: {instructionCount}
-          </Typography>
+          <br />
+          {isCompiled ? (
+            <Typography variant="h6">
+              Instructions Executed: {instructionCount}{" "}
+              {isRunning && " (running)"}
+            </Typography>
+          ) : (
+            <Typography variant="h6">Compile program first</Typography>
+          )}
+          {errorMessageIfAny && (
+            <>
+              <br />
+              <br />
+              <Typography variant="h6" color="error" marginTop={"-50px"}>
+                {errorMessageIfAny}
+              </Typography>
+            </>
+          )}
         </Box>
       </Stack>
     </>

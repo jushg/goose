@@ -49,15 +49,16 @@ export const useCompiler = () => {
 
 export type useVmOptions = {
   compiledFile: CompiledFile | null;
-  breakpoints?: number[];
+  breakpoints: number[];
   memorySizeInNodes?: number;
   gcTriggerMemoryUsageThreshold?: number;
 };
 
-type ExecutionTimePoint = {
+export type ExecutionTimePoint = {
   threadId: string;
   instructionIdx: number;
   status: "breakpoint" | "finished" | "error";
+  errorMessage?: string;
 };
 
 const executeTillBreakHelper = (
@@ -117,19 +118,17 @@ const executeTillBreakHelper = (
       );
     } catch (e) {
       console.error(e);
-      if (!vmState) {
-        console.error("--- error in execution: ---\n  but vmState is null");
-      } else {
-        console.error(
-          "--- error in execution: ---" +
-            `\n  time left: ${vmState.machineState.TIME_SLICE}` +
-            `\n  thread: ${vmState.jobState.getId()}` +
-            `\n  last executed step ${JSON.stringify(
-              vmState.program.instructions.at(vmState.jobState.getPC().addr)
-            )}`
-        );
-      }
       timepoint.status = "error";
+      timepoint.errorMessage = vmState
+        ? "--- error in execution: ---" +
+          `\n  thread: ${vmState.jobState.getId()}` +
+          `\n  last executed step ${JSON.stringify(
+            vmState.program.instructions.at(vmState.jobState.getPC().addr)
+          )}` +
+          `\n  error: ${JSON.stringify(e)}`
+        : "--- error in execution: ---\n  but vmState is null";
+
+      console.error(timepoint.errorMessage);
       return [timepoint, vmState];
     }
   }
@@ -174,7 +173,7 @@ export const useVm = (args: useVmOptions) => {
       return executeTillBreakHelper(
         vmState,
         timepoint,
-        breakpoints || [],
+        breakpoints,
         () => setInstructionCount((c) => c + 1),
         setResumeKey
       );
