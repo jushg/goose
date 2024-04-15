@@ -1,58 +1,53 @@
-import { useEffect, useMemo } from "react";
+import { Box, Paper, Stack } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
 import "./App.css";
+import { Editor } from "./Editor";
+import { VmVizualizer } from "./VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./lib/useGoSlang";
 
 function App() {
-  const { setGooseCode, compiledFile, state: compilerState } = useCompiler();
+  const [isRunning, setIsRunning] = useState(false);
+  const { setGooseCode, compiledFile, compilationState } = useCompiler();
   const vmOptions = useMemo<useVmOptions>(
-    () => ({ compiledFile, breakpoints: [1] }),
+    () => ({ compiledFile, breakpoints: [] }),
     [compiledFile]
   );
-  const { executeStep, log, resumeKey } = useVm(vmOptions);
+  const { executeStep, log, resumeKey, instructionCount } = useVm(vmOptions);
 
-  useEffect(() => {
-    setGooseCode(`
-        func main() {
-          print("k");
-        }
-      `);
-  }, []);
+  const resumeHandler = useCallback(() => {
+    setIsRunning(true);
+    executeStep(resumeKey).then(() => setIsRunning(false));
+  }, [setIsRunning, executeStep, resumeKey]);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>{compilerState}</p>
-        <br />
-        <p>Log Length: {log.length}</p>
-        <br />
-        Log:
-        <br />
-        {log.map((l) => (
-          <p>{JSON.stringify(l)}</p>
-        ))}
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <button
-          onClick={() => {
-            console.info("'Resume' button clicked");
-            if (!compiledFile) return;
-
-            console.log("executing");
-            executeStep(resumeKey).then((timepoint) => {
-              console.info(`execution done: ${JSON.stringify(timepoint)}`);
-            });
-          }}
-        >
-          Resume
-        </button>
-      </header>
-    </div>
+    <Stack
+      spacing={2}
+      width={"100vw"}
+      height={"100vh"}
+      bgcolor={"slategray"}
+      alignItems={"center"}
+      paddingTop={"2%"}
+    >
+      <Box sx={{ width: "95%", height: "60%" }}>
+        <Paper elevation={3} style={{ height: "100%" }}>
+          <Editor
+            compilationState={compilationState}
+            setGooseCode={setGooseCode}
+            compiledFile={compiledFile}
+          />
+        </Paper>
+      </Box>
+      <Box sx={{ width: "95%", height: "30%" }}>
+        <Paper elevation={3} style={{ height: "100%" }}>
+          <VmVizualizer
+            logs={log}
+            allowResume={!isRunning}
+            instructionCount={instructionCount}
+            resumeHandler={resumeHandler}
+          />
+        </Paper>
+      </Box>
+    </Stack>
   );
 }
 
