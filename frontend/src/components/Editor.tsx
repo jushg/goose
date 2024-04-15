@@ -1,16 +1,8 @@
-import {
-  Box,
-  Button,
-  Divider,
-  List,
-  ListItem,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { CompiledFile } from "go-slang/src/common/compiledFile";
 import { useCallback, useState } from "react";
 import { CompilationState } from "../hooks/useGoSlang";
+import { InstrVisualiser } from "./InstrVisualiser";
 
 export const Editor = ({
   setGooseCode,
@@ -88,7 +80,7 @@ export const Editor = ({
           p="2%"
           style={{
             height: "80%",
-            width: "40%",
+            width: "100%",
             overflow: "scroll",
           }}
         >
@@ -100,25 +92,7 @@ export const Editor = ({
             <Typography>Compilation failed</Typography>
           )}
           {hasBeenCompiled && compilationState === "COMPILED" && (
-            <List>
-              {compiledFile &&
-                compiledFile.instructions.map((instruction, i) => (
-                  <>
-                    <ListItem key={i}>
-                      <Typography
-                        style={{
-                          whiteSpace: "pre-line",
-                          width: "100%",
-                          overflow: "scroll",
-                        }}
-                      >
-                        {JSON.stringify(instruction).slice(0, 100)}
-                      </Typography>
-                    </ListItem>
-                    <Divider />
-                  </>
-                ))}
-            </List>
+            <InstrVisualiser compiledFile={compiledFile!} />
           )}
           {!hasBeenCompiled && (
             <Typography>Compile to see instructions</Typography>
