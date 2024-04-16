@@ -16,8 +16,7 @@
     "updatePeggySource_rmTranspiledFile": "rm src/parser/peggyHelpers.js",
     "updatePeggySource": "npm run updatePeggySource_transpileHelpersTs && npm run updatePeggySource_wipeFile && npm run updatePeggySource_buildFile && npm run updatePeggySource_rmTranspiledFile",
     "test": "npm run updateParser > /dev/null && tsc && jest",
-    "build": "yarn build:slang",
-    "build:slang": "tsc --project tsconfig.json"
+    "build": "npm run updateParser > /dev/null && tsc "
   },
   "dependencies": {
     "peggy": "^4.0.2"
