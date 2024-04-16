@@ -380,30 +380,21 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   runGarbageCollection() {
-    let forwardAddrMap = this.copyAllReachableNodesFromRoot();
+    for (const root of this.getMemoryRoots()) {
+      this.copy(root);
+    }
 
-    let getNewAddr = (oldAddr: HeapAddr) => {
-      if (oldAddr.isNull()) return HeapAddr.getNull();
-      if (!(oldAddr.toString() in forwardAddrMap))
-        throw new Error(
-          `Forward space not allocated for ${oldAddr.toString()}`
-        );
-      return forwardAddrMap[oldAddr.toString()];
-    };
+    let scanPtr = this.standbyMemory.getFirstAllocatedHeapAddress();
+    while (!scanPtr.isNull()) {
+      let curHeapNode = this.standbyMemory.getHeapValue(scanPtr).toHeapValue();
 
-    let curNewAddr = this.standbyMemory.getFirstAllocatedHeapAddress();
-
-    while (!curNewAddr.isNull()) {
-      let curHeapNode = this.standbyMemory
-        .getHeapValue(curNewAddr)
-        .toHeapValue();
       switch (curHeapNode.type) {
         case HeapType.String:
-          curHeapNode.next = getNewAddr(curHeapNode.next);
+          curHeapNode.next = this.copy(curHeapNode.next);
           break;
         case HeapType.BinaryPtr:
-          curHeapNode.child1 = getNewAddr(curHeapNode.child1);
-          curHeapNode.child2 = getNewAddr(curHeapNode.child2);
+          curHeapNode.child1 = this.copy(curHeapNode.child1);
+          curHeapNode.child2 = this.copy(curHeapNode.child2);
           break;
         case HeapType.Bool:
         case HeapType.Int:
@@ -414,10 +405,10 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
         }
       }
       this.standbyMemory.setHeapValue(
-        curNewAddr,
+        scanPtr,
         HeapInBytes.fromData(curHeapNode)
       );
-      curNewAddr = this.standbyMemory.getNextAllocatedHeapAddress(curNewAddr);
+      scanPtr = this.standbyMemory.getNextAllocatedHeapAddress(scanPtr);
     }
 
     this.threadDataMap = new Map(
@@ -425,8 +416,8 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
         key,
         {
           ...threadData,
-          rts: getNewAddr(threadData.rts),
-          os: getNewAddr(threadData.os),
+          rts: this.copy(threadData.rts),
+          os: this.copy(threadData.os),
         },
       ])
     );
@@ -435,55 +426,23 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     this.standbyMemory.reset();
   }
 
-  private createStandbyCopy(addr: HeapAddr): HeapAddr {
-    if (addr.isNull()) return HeapAddr.getNull();
-    let oldHeapNode = this.getHeapValue(addr);
-    if (oldHeapNode === null) return HeapAddr.getNull();
-    let newAddr: HeapAddr = this.standbyMemory.alloc.getNewHeapAddress();
-    this.standbyMemory.setHeapValue(newAddr, HeapInBytes.fromData(oldHeapNode));
-    return newAddr;
-  }
-
-  private copyAllReachableNodesFromRoot(): { [key: string]: HeapAddr } {
-    const forwardAddrMap: { [key: string]: HeapAddr } = {};
-    const roots = this.getMemoryRoots().filter((r) => !r.isNull());
-    while (roots.length > 0) {
-      const curAddr = roots.pop()!;
-      const curHeapNode = this.getHeapValue(curAddr);
-      if (curHeapNode === null || curHeapNode.gcFlag === GcFlag.Marked)
-        continue;
-      const newAddr = this.createStandbyCopy(curAddr);
-      forwardAddrMap[curAddr.toString()] = newAddr;
-
-      const newAdd: HeapAddr[] = [];
-      switch (curHeapNode.type) {
-        case HeapType.BinaryPtr: {
-          newAdd.push(curHeapNode.child1);
-          newAdd.push(curHeapNode.child2);
-          break;
-        }
-        case HeapType.String: {
-          newAdd.push(curHeapNode.next);
-          break;
-        }
-        case HeapType.Int:
-        case HeapType.Bool:
-          break;
-        default: {
-          const _: never = curHeapNode;
-          throw new Error(`Unexpected heap type: ${curHeapNode}`);
-        }
-      }
-      curHeapNode.gcFlag = GcFlag.Marked;
-      this.setHeapValue(curAddr, curHeapNode);
-
-      newAdd.forEach((addr) => {
-        if (!addr.isNull()) {
-          roots.push(addr);
-        }
-      });
+  private copy(addr: HeapAddr) {
+    const node = this.getHeapValue(addr);
+    if (node === null) return addr;
+    if (node.gcFlag === GcFlag.Marked) {
+      assertHeapType(HeapType.BinaryPtr, node);
+      return node.child1;
     }
-    return forwardAddrMap;
+
+    const fwdAddr = this.standbyMemory.getNewHeapAddress();
+    this.standbyMemory.setHeapValue(fwdAddr, HeapInBytes.fromData(node));
+    this.setHeapValue(addr, {
+      type: HeapType.BinaryPtr,
+      child1: fwdAddr,
+      child2: HeapAddr.getNull(),
+      gcFlag: GcFlag.Marked,
+    });
+    return fwdAddr;
   }
 
   getMemorySize(): number {
