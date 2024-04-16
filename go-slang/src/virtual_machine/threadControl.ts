@@ -144,17 +144,21 @@ export function createThreadControlObject(
       }),
     execFn: (f) => {
       let rts = getRTS();
-      rts = memory.allocNewCallFrame(getPC(), rts, f.closure.getTopScopeAddr());
+      const osAddr = memory.getThreadData(id).os;
+      rts = memory.allocNewCallFrame({
+        callerPC: getPC(),
+        callerRTS: rts,
+        osAddr,
+        lambdaClosure: f.closure.getTopScopeAddr(),
+      });
       memory.setThreadData(id, { rts: rts.getTopScopeAddr(), pc: f.pcAddr });
     },
     execFor: () => {
-      let rts = getRTS();
-      rts = memory.allocNewSpecialFrame(
-        t.getPC(),
-        rts,
-        "FOR",
-        rts.getTopScopeAddr()
-      );
+      let continueRTS = getRTS();
+      const rts = memory.allocNewForFrame({
+        continuePC: t.getPC(),
+        continueRTS,
+      });
       memory.setThreadData(id, { rts: rts.getTopScopeAddr() });
     },
     exitFrame: () => {
@@ -162,11 +166,8 @@ export function createThreadControlObject(
       memory.setThreadData(id, { rts: enclosing.getTopScopeAddr() });
     },
     exitSpecialFrame: (label) => {
-      const { pc, rts: newRTS } = memory.getEnclosingSpecialFrame(
-        getRTS(),
-        label
-      );
-      memory.setThreadData(id, { rts: newRTS.getTopScopeAddr(), pc });
+      const { pc, rts, os } = memory.getEnclosingSpecialFrame(getRTS(), label);
+      memory.setThreadData(id, { pc, rts, os });
     },
     setStatus: (status) => memory.setThreadData(id, { status }),
     getStatus,
