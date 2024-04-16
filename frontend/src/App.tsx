@@ -2,13 +2,14 @@ import { Box, Paper, Stack } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import "./App.css";
 import { Editor } from "./components/Editor";
-import { VmVisualizer } from "./components/VmVisualizer";
+import { VmStatus, VmVisualizer } from "./components/VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
+
+export const VERBOSITY: 0 | 1 | 2 = 2;
 
 function App() {
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isCompiled, setIsCompiled] = useState(false);
+  const [vmStatus, setVmState] = useState<VmStatus>("NOT_COMPILED");
   const [errorMessageIfAny, setErrorMessageIfAny] = useState<string | null>(
     null
   );
@@ -17,18 +18,39 @@ function App() {
     () => ({ compiledFile, breakpoints }),
     [compiledFile, breakpoints]
   );
-  const { executeStep, log, resumeKey, instructionCount } = useVm(vmOptions);
-
+  const { executeStep, log, resumeKey, instructionCount, resetVm } =
+    useVm(vmOptions);
+  const setIsCompiled = useCallback(
+    (isCompiled: boolean) =>
+      isCompiled ? setVmState("COMPILED") : setVmState("NOT_COMPILED"),
+    [setVmState]
+  );
   const resumeHandler = useCallback(() => {
-    setIsRunning(true);
-    executeStep(resumeKey)
-      .then((t) => {
-        t?.status === "error"
-          ? setErrorMessageIfAny(t.errorMessage || "error!")
-          : setErrorMessageIfAny(null);
-      })
-      .then(() => setIsRunning(false));
-  }, [setIsRunning, executeStep, setErrorMessageIfAny, resumeKey]);
+    setVmState("RUNNING");
+    executeStep(resumeKey).then((t) => {
+      if (!t) {
+        console.error("executeStep returned null: vm is not initialized");
+        return;
+      }
+
+      if (t.status === "error") {
+        setErrorMessageIfAny(t.errorMessage || "error!");
+        return;
+      }
+
+      setErrorMessageIfAny(null);
+      if (t.status === "finished") {
+        setVmState("FINISHED");
+      } else if (t.status === "breakpoint") {
+        setVmState("PAUSED");
+      } else if (t.status === "breakpoint") {
+        setVmState("PAUSED");
+      } else {
+        const _: never = t.status;
+      }
+    });
+  }, [setErrorMessageIfAny, executeStep, setErrorMessageIfAny, resumeKey]);
+  console.info("App rendered");
 
   return (
     <Stack
@@ -42,7 +64,7 @@ function App() {
       <Box sx={{ width: "95%", height: "60%" }}>
         <Paper elevation={3} style={{ height: "100%" }}>
           <Editor
-            isCompiled={isCompiled}
+            isCompiled={vmStatus === "COMPILED"}
             setIsCompiled={setIsCompiled}
             compilationState={compilationState}
             setGooseCode={setGooseCode}
@@ -54,12 +76,12 @@ function App() {
       <Box sx={{ width: "95%", height: "30%" }}>
         <Paper elevation={3} style={{ height: "100%" }}>
           <VmVisualizer
-            isCompiled={isCompiled}
-            isRunning={isRunning}
+            vmStatus={vmStatus}
             logs={log}
             errorMessageIfAny={errorMessageIfAny}
             instructionCount={instructionCount}
             resumeHandler={resumeHandler}
+            resetVm={resetVm}
           />
         </Paper>
       </Box>

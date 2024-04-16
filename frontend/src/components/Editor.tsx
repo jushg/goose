@@ -20,19 +20,36 @@ export const Editor = ({
   setBreakpoints: (breakpoints: number[]) => void;
 }) => {
   const [codeStr, setCodeStr] = useState<string>(`
-  var x int
+func worker(inputCh *int, outputCh *int) {
+  id := <-inputCh
+  result := id * 2
+  outputCh <- result
+}
+    
+func main() {
+  numWorkers := 3
 
-  func main() {
-    go goo(&x)
-    x = 5
-    go goo(&x)
-
-    for i := 0; i < 10; i++ { yield() }
+  inputCh := make(chan int, numWorkers)
+  for i := 0; i < numWorkers; i++ {
+    inputCh <- i
   }
 
-  func goo(x *int) {
-    print(*x)
+
+  outputCh := make(chan int, 0)
+  wg := wgInit()
+    
+  for i := 0; i < numWorkers; i++ {
+    wgAdd(wg)
+    go func () {
+      worker(inputCh, outputCh); wgDone(wg) 
+    }()
   }
+    
+  for i := 0; i < numWorkers; i++ {
+    print(<-outputCh)
+  }
+  wgWait(wg)
+}
   `);
 
   const textFieldHandler = useCallback(
@@ -47,6 +64,7 @@ export const Editor = ({
     setGooseCode(codeStr);
   }, [setIsCompiled, setGooseCode, codeStr]);
 
+  console.info("Editor rendered");
   return (
     <>
       <Stack direction={"row"} style={{ height: "100%", padding: "2%" }}>
