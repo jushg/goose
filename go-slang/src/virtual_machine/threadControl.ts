@@ -104,7 +104,7 @@ export function createThreadControlObject(
 
       return result;
     },
-    length: () => {
+    getLength: () => {
       return _os.length;
     },
     toString: () => {
@@ -218,5 +218,5 @@ export type GoslingOperandStackObj = {
   pop(): AnyGoslingObject;
   peek(): AnyGoslingObject;
   toString(): string;
-  length(): number;
+  getLength(): number;
 };

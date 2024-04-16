@@ -232,7 +232,7 @@ function getInstructionLogic(
 
     case OpCode.CLEAR_OS:
       return (ins, es) => {
-        while (es.jobState.getOS().length) {
+        while (es.jobState.getOS().getLength()) {
           es.jobState.getOS().pop();
         }
         es.jobState.incrPC();
