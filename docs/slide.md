@@ -1,6 +1,23 @@
+---
+type: slide
+---
+
+<style type="text/css">
+  .reveal p {
+    text-align: left;
+    padding-left: 40px;
+  }
+  .reveal ul {
+    display: block;
+  }
+  .reveal ol {
+    display: block;
+  }
+</style>
+
 ## Project: Goose Intepreter
 
-#### Golang sublanguage implementation using virtual machine
+#### Golang sublanguage implementation (VM)
 
 Team:
 
@@ -9,118 +26,152 @@ Team:
 
 ---
 
-## Table of Contents
+### Architecture
 
-- Language Features Overview
-- Implementation Deepdive
-  - Parsing and Compiling
-  - Virtual Machine Runner
-  - Memory Management
-  - Concurrency Control
-- Other Dependencies (If have time):
-  - Frontend
-  - Peggy
-  - Jest for testing
+<img src="https://hackmd.io/_uploads/SysxRcogC.png" height="300" />
+
+<p>Note: TSC / JavaScript V8 excluded for brevity</p>
 
 ---
 
 ### Language Features Overview
 
-Broadly speaking, the Goose interpreter is a TypeScript program that takes in any Go program and outputs an evaluation result of that program.
+- sequential logic: `for`, `if`, `func`, `func` literals, `var`, primitive types: `bool`, `str`, `int` and related operations and `*T` for any type
 
-Supported features:
-
-- Sequencial logic: for, if , function, variable, primitive type arithmetic
-- Concurrency logic: goroutine, channel, waitgroup
+- concurrency logic: `goroutine`, `mutex`, `semaphore`, `waitgroup`, `channel`
 
 ---
 
-### Implementation Deepdive
+### Demo
 
-Details on the important aspect of our implementation
+#### [goose-liard.vercel.app](https://goose-liard.vercel.app)
 
 ---
 
-### Parsing and Compiling
+### Parser
 
-A Golang Grammar file (goose.peg) is written by us, which is then used by Peggy.js to generate our parser logic
+- `goose.peg` and `peggyHelpers.ts` define types and grammar
+- [PeggyJs](peggyjs.org) generates left-recursive parser in JS
+- well-typed parser data objects
 
-Compiling logic is recursively calling the parsed object to create new instructions. (Can talk about NOOP logic insertion here)
+---
+
+### Compiler
+
+- recursive compiler with well-typed instruction data objects
+- macro-like compiler directives for reusable Gosling snippets
+- `addGlobalEnv` to set builtins
+
+---
+
+### Compiler Macro Example
+
+```typescript=
+updateBuiltinsFnDef(
+  `
+func testAndSetInt(ptr *int, expected, desired int) bool {
+  return __noop(testAndSetInt_TEST_AND_SWAP)
+}`,
+  {
+    testAndSetInt_TEST_AND_SWAP: [
+      { op: OpCode.LD, symbol: "desired" },
+      { op: OpCode.LD, symbol: "expected" },
+      { op: OpCode.LD, symbol: "ptr" },
+      { op: OpCode.TEST_AND_SET },
+    ],
+  }
+)
+```
+
+---
+
+### Virtual Machine
+
+- Gosling interpreter written in Typescript
+- operand-stack architecture, with RTS and OS both stored in VM memory
+- provides access to thread control and sys call
+
+---
+
+### Exploring call behaviour
+
+```go=
+func main() {
+    bar := "main bar"
+    foo(1)
+    go foo(1)
+}
+
+func foo(y int) {
+    bar := "foo bar"
+    x = x + y // breakpoint
+    return
+}
+```
+
+---
+
+### Function Calls / Go routines
+
+- functions as first class objects
+- support expressions as args or as functions
+- applicative-order evaluation
+
+<img src="https://hackmd.io/_uploads/Hy7KKnigC.png" height="300" />
+
+---
+
+### Runtime Stack (`foo()`)
+
+![image](https://hackmd.io/_uploads/HJ2_LjoxA.png)
+
+---
+
+### Runtime Stack (`go foo()`)
+
+![image](https://hackmd.io/_uploads/B1HzDioxA.png)
 
 ---
 
 ### Memory Management
 
-- Heap is used as our central memory storage
-- Heap is a collection of fixed size heap node, decode and encode to bytes format
-- Data on heap node are of 4 types: Int, Bool, String and Binary Pointer
-- Binary Pointer is heavily utilised to create more complex composite types (e.g. lists, queue, stack, function lambda,...)
-- Our run time stacks and operands stacks are built on top of the heap
+- our heap is a collection of fixed size nodes
+- types: `Int`, `Bool`, `String` and `Binary Pointer`
+- composite types (e.g. list, queue, stack, function ptr) are built with `Binary Pointer`
+- runtime stacks (incl. environment) and operands stacks are stored in the heap
 
 ---
 
 ### Garbage Collection
 
-The garbage collection scheme we use is Stop and Copy, based loosely on Cheney algorithm with some modification (reason is low memory residency -> have graph to show):
+- Stop and Copy (Cheney's) due to low memory residency
 
-- Follow tricolor marking scheme to explore all nodes reachable from roots (RTS and OS):
-  - Maintain a forward address mapping table
-  - If node address not in table, create copy in new memory region
-  - If is in table, skip
-- Modified step: Iterate through newly copied memory, and fix pointers in the binary pointers to the new address in the forward address table
+- space: $O(1)$
+- time: $O(\text{liveNodes})$
 
 ---
 
 ### Concurrency Control
 
-General idea
-
-- Using event queue architecture with time slices to simulate concurrency constructs.
-- Threads are picked up and executed by the event loop in a round robin sequence
+![image](https://hackmd.io/_uploads/r16yVhjg0.png)
 
 ---
 
-### Goroutine creation
+### Key Concurrency Instructions:
 
-On goroutine creation, we spawn new thread from existing thread by:
-
-```
-- LD A (or sequence of operations that result in OS.push arg A)
-- LD B (or sequence of operations that result in OS.push arg B)
-- ... (Some more expressions)
-- LD N (or sequence of operations that result in OS.push arg N)
-- LD f (or sequence of operations that result in OS.push arg f)
-- GOROUTINE N
-- CALL N
-- SYSCALL 'DONE'
-- ... (rest of program)
-```
-
-By using the OS, we can use function literals or function arguments that are expressions, e.g. `go (getFunction(foo, bar, baz))(getSomeIntParam(), &someGlobalVar)`
-
-`CALL N `and `SYSCALL 'DONE'` are the next two instructions for the goroutine.
-
-The rest of the program is the continuation of the main thread
-
-TODO: Explain how to does new thread copy old thread memory
+- `SysCall('done')`: terminate execution (if main, terminate all)
+- `SysCall('yield')`: relinquish CPU control
+- `TestAndSet`: key atomic instruction to implement `mutex` and `semaphore`.
 
 ---
 
-### Concurrency primitives:
+### Concurrency Constructs:
 
-We create these atomic instructions:
-
-- done() sysCall: when call done on main, also terminate other threads
-- yield() sysCall: set Timeslice of current thread to 0, relinquish control to other running threads
-- test and set: atomic instruction for test and set
+- `mutex`
+- `semaphore`: with explicit upper-bound
+- `waitgroup`: bounded semaphore
+- `channel`: bounded semaphore & mutex
 
 ---
 
-### Concurrency constructs:
-
-Base on the primitive concurrency instructions, we created:
-
-- mutex
-- semaphore: bounded range atomic integer semaphore
-- waitgroup: using semaphore
-- channel: using semaphore and mutex
+# Q & A
