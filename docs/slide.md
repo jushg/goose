@@ -12,13 +12,12 @@ Team:
 ## Table of Contents
 
 - Language Features Overview
-- Software Architecture Overview
 - Implementation Deepdive
   - Parsing and Compiling
   - Virtual Machine Runner
   - Memory Management
   - Concurrency Control
-- Other Dependencies:
+- Other Dependencies (If have time):
   - Frontend
   - Peggy
   - Jest for testing
@@ -36,16 +35,6 @@ Supported features:
 
 ---
 
-### Software Architecture Overview
-
-The Goose intepreter consist of 3 main parts:
-
-- Parser
-- Compiler
-- Executor
-
----
-
 ### Implementation Deepdive
 
 Details on the important aspect of our implementation
@@ -60,18 +49,13 @@ Compiling logic is recursively calling the parsed object to create new instructi
 
 ---
 
-### Virtual Machine Runner
-
----
-
 ### Memory Management
 
-Heap is used as our central memory storage:
-
+- Heap is used as our central memory storage
 - Heap is a collection of fixed size heap node, decode and encode to bytes format
 - Data on heap node are of 4 types: Int, Bool, String and Binary Pointer
-- Binary Pointer is heavily utilised to create more complex composite types
-- Build our run time environments and operands stacks on top of the heap
+- Binary Pointer is heavily utilised to create more complex composite types (e.g. lists, queue, stack, function lambda,...)
+- Our run time stacks and operands stacks are built on top of the heap
 
 ---
 
@@ -100,7 +84,25 @@ General idea
 
 On goroutine creation, we spawn new thread from existing thread by:
 
-- Insert details
+```
+- LD A (or sequence of operations that result in OS.push arg A)
+- LD B (or sequence of operations that result in OS.push arg B)
+- ... (Some more expressions)
+- LD N (or sequence of operations that result in OS.push arg N)
+- LD f (or sequence of operations that result in OS.push arg f)
+- GOROUTINE N
+- CALL N
+- SYSCALL 'DONE'
+- ... (rest of program)
+```
+
+By using the OS, we can use function literals or function arguments that are expressions, e.g. `go (getFunction(foo, bar, baz))(getSomeIntParam(), &someGlobalVar)`
+
+`CALL N `and `SYSCALL 'DONE'` are the next two instructions for the goroutine.
+
+The rest of the program is the continuation of the main thread
+
+TODO: Explain how to does new thread copy old thread memory
 
 ---
 
@@ -122,7 +124,3 @@ Base on the primitive concurrency instructions, we created:
 - semaphore: bounded range atomic integer semaphore
 - waitgroup: using semaphore
 - channel: using semaphore and mutex
-
----
-
-### Other Dependencies
