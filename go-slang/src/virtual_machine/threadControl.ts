@@ -28,7 +28,7 @@ export type ThreadControlObject = {
   incrPC(): void;
 
   addFrame(decl: string[]): void;
-  execFn(obj: GoslingLambdaObj): void;
+  execFn(obj: GoslingLambdaObj, argCount: number): void;
   execFor(): void;
 
   print(s: string): void;
@@ -142,16 +142,43 @@ export function createThreadControlObject(
       memory.setThreadData(id, {
         rts: memory.allocNewFrame(getRTS(), f).getTopScopeAddr(),
       }),
-    execFn: (f) => {
+    execFn: (f, argCount) => {
       let rts = getRTS();
       const osAddr = memory.getThreadData(id).os;
+      const newOsAddr = argCount === 0 ? HeapAddr.getNull() : osAddr;
+      let lastOfNewOs: HeapAddr | null = null;
+      let osToRestore = osAddr;
+
+      // Find the OS address to preserve (after the arg list)
+      for (let i = 0; i < argCount; i++) {
+        lastOfNewOs = osToRestore;
+        const curr = memory.get(osToRestore);
+        assertGoslingType(HeapType.BinaryPtr, curr);
+        osToRestore = curr.child1;
+      }
+
+      if (lastOfNewOs) {
+        const last = memory.get(lastOfNewOs);
+        assertGoslingType(HeapType.BinaryPtr, last);
+        memory.set(lastOfNewOs, {
+          type: HeapType.BinaryPtr,
+          child1: HeapAddr.getNull(), // Cut off the OS after the arg list.
+          child2: last.child2,
+        });
+      }
+
+      _os = memory.getList(newOsAddr);
       rts = memory.allocNewCallFrame({
         callerPC: getPC(),
         callerRTS: rts,
-        osAddr,
+        postCallOsAddr: osToRestore,
         lambdaClosure: f.closure.getTopScopeAddr(),
       });
-      memory.setThreadData(id, { rts: rts.getTopScopeAddr(), pc: f.pcAddr });
+      memory.setThreadData(id, {
+        pc: f.pcAddr,
+        rts: rts.getTopScopeAddr(),
+        os: newOsAddr,
+      });
     },
     execFor: () => {
       let continueRTS = getRTS();
@@ -166,8 +193,35 @@ export function createThreadControlObject(
       memory.setThreadData(id, { rts: enclosing.getTopScopeAddr() });
     },
     exitSpecialFrame: (label) => {
-      const { pc, rts, os } = memory.getEnclosingSpecialFrame(getRTS(), label);
-      memory.setThreadData(id, { pc, rts, os });
+      const {
+        pc,
+        rts,
+        os: osToRestore,
+      } = memory.getEnclosingSpecialFrame(getRTS(), label);
+      let currOsAddr = memory.getThreadData(id).os;
+
+      // Attach return value if there is one
+      if (currOsAddr.isNull()) {
+        currOsAddr = osToRestore;
+      } else {
+        const node = memory.get(currOsAddr);
+        assertGoslingType(HeapType.BinaryPtr, node);
+        if (!node.child1.isNull()) {
+          throw new Error(
+            "Cannot exit a special frame with > 1 item in OS " +
+              JSON.stringify(
+                memory.getList(currOsAddr).map((a) => memory.get(a.nodeAddr))
+              )
+          );
+        }
+        memory.set(currOsAddr, {
+          type: HeapType.BinaryPtr,
+          child1: osToRestore,
+          child2: node.child2,
+        });
+      }
+      memory.setThreadData(id, { pc, rts, os: currOsAddr });
+      _os = memory.getList(currOsAddr);
     },
     setStatus: (status) => memory.setThreadData(id, { status }),
     getStatus,

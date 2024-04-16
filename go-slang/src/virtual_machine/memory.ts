@@ -315,13 +315,13 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     callerPC: InstrAddr;
     callerRTS: GoslingScopeObj;
     lambdaClosure: HeapAddr;
-    osAddr: HeapAddr;
+    postCallOsAddr: HeapAddr;
   }): GoslingScopeObj {
     const {
       callerPC: pc,
       callerRTS: rts,
       lambdaClosure: baseOfNewFrameAddr,
-      osAddr: os,
+      postCallOsAddr: os,
     } = args;
     return this.allocNewSpecialFrame({
       pc,

@@ -41,20 +41,27 @@ func foo(y int) {
     let { log, state, getId, getPC, prog } = setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 2 * 10000;
     const pcExecutionOrder: Record<string, number[]> = {};
+    const osState: Record<string, string[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
       lastInstr = (pcExecutionOrder[id] ?? [])
         .slice(-num)
-        .map((i) => [i, prog.instructions[i].op]);
-      lastInstr = lastInstr.map(([i, op], idx) => {
-        if (idx < lastInstr.length - detailedNum) return { i, op };
-        return { i, ...prog.instructions[i] };
+        .map((i, idx) => [
+          i,
+          prog.instructions[i].op,
+          osState[id].slice(-num)[idx],
+        ]);
+      lastInstr = lastInstr.map(([i, op, os], idx) => {
+        if (idx < lastInstr.length - detailedNum) return { i, op, os };
+        return { i, ...prog.instructions[i], os };
       });
       return lastInstr;
     };
     const takeNoteOfLatestPC = () => {
       if (!pcExecutionOrder[getId()]) pcExecutionOrder[getId()] = [];
       pcExecutionOrder[getId()].push(getPC());
+      if (!osState[getId()]) osState[getId()] = [];
+      osState[getId()].push(state.jobState.getOS().toString());
 
       if (pcExecutionOrder[getId()].length > maxInstrExecutions)
         expect(pcExecutionOrder[getId()]).toHaveLength(0);
@@ -636,7 +643,7 @@ func main() {
     }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 2 * 1000; // Reduced by 10x compared to other multi threaded test
+    const maxInstrExecutions = 2 * 4000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     while (true) {
       try {

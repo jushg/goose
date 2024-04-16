@@ -114,6 +114,7 @@ function getInstructionLogic(
 
     case OpCode.CALL:
       return (ins, es) => {
+        assertOpType(OpCode.CALL, ins);
         // Safe to allow the arguments to remain as is because the function called with run DECL + ASSIGN
         // to pop all values and copy the literals over
         let fn = es.jobState.getOS().pop();
@@ -122,7 +123,7 @@ function getInstructionLogic(
           throw new Error("Expected function pointer on top of stack");
         }
         const innerFnLambda = es.machineState.HEAP.getLambda(fn);
-        es.jobState.execFn(innerFnLambda);
+        es.jobState.execFn(innerFnLambda, ins.args);
       };
 
     case OpCode.TEST_AND_SET:

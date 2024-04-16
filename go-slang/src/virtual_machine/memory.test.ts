@@ -330,7 +330,7 @@ describe("GoslingMemoryManager", () => {
         callerPC: caller1PC,
         callerRTS: scopeObj,
         lambdaClosure: f1Addr,
-        osAddr: HeapAddr.getNull(),
+        postCallOsAddr: HeapAddr.getNull(),
       });
       expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
         "CALL"
@@ -434,7 +434,7 @@ describe("GoslingMemoryManager", () => {
         callerPC: caller2PC,
         callerRTS: scopeObj,
         lambdaClosure: f1Addr,
-        osAddr: HeapAddr.getNull(),
+        postCallOsAddr: HeapAddr.getNull(),
       });
       expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
         "CALL"
