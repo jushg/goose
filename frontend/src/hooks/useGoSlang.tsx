@@ -7,6 +7,7 @@ import {
   initializeVirtualMachine,
 } from "go-slang/src/virtual_machine";
 import { useCallback, useEffect, useState } from "react";
+import { VERBOSITY } from "../App";
 import { useVmLogs } from "./useVmLog";
 
 export type CompilationState =
@@ -19,7 +20,7 @@ export const useCompiler = () => {
   const [state, setState] = useState<CompilationState>("PARSE_FAILED");
 
   const setGooseCode = async (gooseCode: string) => {
-    console.info(`setting goose code: \n---\n${gooseCode}\n`);
+    VERBOSITY > 1 && console.info(`setting goose code: \n---\n${gooseCode}\n`);
 
     let parsedProg: ProgramObj;
     try {
@@ -33,7 +34,7 @@ export const useCompiler = () => {
     let cf: CompiledFile;
     try {
       cf = compileParsedProgram(parsedProg);
-      console.dir(cf);
+      VERBOSITY > 1 && console.dir(cf);
       setCompiledFile(cf);
     } catch (e) {
       setState("COMPILATION_FAILED");
@@ -75,14 +76,15 @@ const executeTillBreakHelper = (
         return [timepoint, vmState];
       }
 
-      console.info(
-        `[ ] Executing step!!` +
-          `\n  time left: ${vmState.machineState.TIME_SLICE}` +
-          `\n  thread: ${vmState.jobState.getId()}` +
-          `\n  executing step ${JSON.stringify(
-            vmState.program.instructions.at(vmState.jobState.getPC().addr)
-          )}`
-      );
+      VERBOSITY > 1 &&
+        console.info(
+          `[ ] Executing step!!` +
+            `\n  thread: ${vmState.jobState.getId()}` +
+            ` timeslice: ${vmState.machineState.TIME_SLICE}` +
+            `\n  executing step ${JSON.stringify(
+              vmState.program.instructions.at(vmState.jobState.getPC().addr)
+            )}`
+        );
 
       vmState = executeStep(vmState);
       incrementInstructionCount();
@@ -100,30 +102,29 @@ const executeTillBreakHelper = (
 
       if (breakpoints.includes(instructionIdx)) {
         const newResumeKey = `${instructionIdx}_${Math.random()}`;
-        console.info(
-          `[!] breakpoint hit: ${instructionIdx} in thread ${vmState.jobState.getId()}\n` +
-            `bt: [${breakpoints.join(
-              ", "
-            )}], setting resume key to ${newResumeKey}`
-        );
+        VERBOSITY > 0 &&
+          console.info(
+            `[!] breakpoint hit: ${instructionIdx} in thread ${vmState.jobState.getId()}\n` +
+              `bt: [${breakpoints.join(
+                ", "
+              )}], setting resume key to ${newResumeKey}`
+          );
         setResumeKey(`${instructionIdx}_${Math.random()}`);
         timepoint.status = "breakpoint";
         return [timepoint, vmState];
       }
 
-      console.info(
-        `[x] ~~executed step~~` +
-          `\n  time left: ${vmState.machineState.TIME_SLICE}` +
-          `\n  thread: ${vmState.jobState.getId()}`
-      );
+      VERBOSITY > 1 && console.info("[x] ~~executed step~~");
     } catch (e) {
       console.error(e);
+
+      const instructionIdx = vmState && vmState.jobState.getPC().addr;
       timepoint.status = "error";
       timepoint.errorMessage = vmState
         ? "--- error in execution: ---" +
           `\n  thread: ${vmState.jobState.getId()}` +
-          `\n  last executed step ${JSON.stringify(
-            vmState.program.instructions.at(vmState.jobState.getPC().addr)
+          `\n  last executed instr[${instructionIdx!}] ${JSON.stringify(
+            vmState.program.instructions.at(instructionIdx!)
           )}` +
           `\n  error: ${JSON.stringify(e)}`
         : "--- error in execution: ---\n  but vmState is null";
@@ -146,7 +147,7 @@ export const useVm = (args: useVmOptions) => {
   const [instructionCount, setInstructionCount] = useState<number>(0);
   const [vmState, setVmState] = useState<ExecutionState | null>(null);
 
-  useEffect(() => {
+  const resetVm = useCallback(() => {
     if (!compiledFile) return;
 
     console.info("initializing vm");
@@ -160,12 +161,24 @@ export const useVm = (args: useVmOptions) => {
     );
 
     setVmState(initState);
+    setInstructionCount(0);
   }, [
     memorySizeInNodes,
     compiledFile,
     gcTriggerMemoryUsageThreshold,
     resetLog,
     appendLog,
+    setInstructionCount,
+  ]);
+
+  useEffect(resetVm, [
+    memorySizeInNodes,
+    compiledFile,
+    gcTriggerMemoryUsageThreshold,
+    resetVm,
+    resetLog,
+    appendLog,
+    setInstructionCount,
   ]);
 
   const executeTillBreak = useCallback(
@@ -212,5 +225,5 @@ export const useVm = (args: useVmOptions) => {
     [resumeKey, vmState, executeTillBreak]
   );
 
-  return { log, executeStep: executor, resumeKey, instructionCount };
+  return { log, executeStep: executor, resumeKey, instructionCount, resetVm };
 };
