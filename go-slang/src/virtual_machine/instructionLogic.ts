@@ -230,6 +230,14 @@ function getInstructionLogic(
         es.jobState.incrPC();
       };
 
+    case OpCode.CLEAR_OS:
+      return (ins, es) => {
+        while (es.jobState.getOS().length) {
+          es.jobState.getOS().pop();
+        }
+        es.jobState.incrPC();
+      };
+
     default: {
       const _: never = key;
       throw new Error(`Unhandled OpCode: ${key}`);

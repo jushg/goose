@@ -45,7 +45,7 @@ describe("basic single threaded program", () => {
     let { log, state, getPC, prog } = setUpTest(progStr);
 
     const pcExecutionOrder: number[] = [];
-    const maxInstrExecutions = 1200;
+    const maxInstrExecutions = 2 * 1200;
 
     let lastHundredInstr: any[] = [];
     const updateLastHundredInstr = () => {

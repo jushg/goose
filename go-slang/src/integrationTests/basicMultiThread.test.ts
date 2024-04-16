@@ -39,7 +39,7 @@ func foo(y int) {
 
   test.concurrent("should execute correctly", async () => {
     let { log, state, getId, getPC, prog } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 10000;
+    const maxInstrExecutions = 2 * 10000;
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
@@ -169,7 +169,7 @@ func foo(y int) {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const maxInstrExecutions = 2 * 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
@@ -276,7 +276,7 @@ func main() {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1200;
+    const maxInstrExecutions = 2 * 1200;
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
@@ -365,7 +365,7 @@ func main() {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1200;
+    const maxInstrExecutions = 2 * 1200;
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
@@ -442,7 +442,7 @@ func main() {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const maxInstrExecutions = 2 * 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
@@ -519,7 +519,7 @@ func main() {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const maxInstrExecutions = 2 * 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     const printLast = (id: string, num: number, detailedNum: number = 10) => {
       let lastInstr: any[] = [];
@@ -593,7 +593,7 @@ func main() {
 }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const maxInstrExecutions = 2 * 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     while (true) {
       try {
@@ -636,7 +636,7 @@ func main() {
     }
     `;
     let { log, state, getId, prog, getPC } = setUpMultiThreadedTest(progStr);
-    const maxInstrExecutions = 1000; // Reduced by 10x compared to other multi threaded test
+    const maxInstrExecutions = 2 * 1000; // Reduced by 10x compared to other multi threaded test
     const pcExecutionOrder: Record<string, number[]> = {};
     while (true) {
       try {
