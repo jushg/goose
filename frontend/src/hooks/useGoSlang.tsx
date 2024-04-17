@@ -100,14 +100,24 @@ const executeTillBreakHelper = (
         instructionIdx,
       };
 
-      if (breakpoints.includes(instructionIdx)) {
+      const hasTriggeredSysCallBreakPoint =
+        vmState.jobState.getStatus() === "BREAKPOINT";
+      if (hasTriggeredSysCallBreakPoint) {
+        vmState.jobState.setStatus("RUNNABLE");
+        vmState.machineState.TIME_SLICE += 20;
+      }
+
+      if (
+        breakpoints.includes(instructionIdx) ||
+        hasTriggeredSysCallBreakPoint
+      ) {
         const newResumeKey = `${instructionIdx}_${Math.random()}`;
         VERBOSITY > 0 &&
           console.info(
             `[!] breakpoint hit: ${instructionIdx} in thread ${vmState.jobState.getId()}\n` +
-              `bt: [${breakpoints.join(
-                ", "
-              )}], setting resume key to ${newResumeKey}`
+              ` isSysCall:${hasTriggeredSysCallBreakPoint} ` +
+              `bt: [${breakpoints.join(", ")}], ` +
+              `setting resume key to ${newResumeKey}`
           );
         setResumeKey(`${instructionIdx}_${Math.random()}`);
         timepoint.status = "breakpoint";

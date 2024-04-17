@@ -81,7 +81,7 @@ export function executeStep(currState: ExecutionState): ExecutionState | null {
 
   const status = currJob.getStatus();
 
-  if (status === "RUNNABLE") return currState;
+  if (status === "RUNNABLE" || status === "BREAKPOINT") return currState;
 
   if (status === "TIME_SLICE_EXCEEDED") {
     currJob.setStatus("RUNNABLE");
