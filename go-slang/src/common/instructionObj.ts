@@ -36,6 +36,7 @@ export enum OpCode {
   LD = "LD",
   ASSIGN = "ASSIGN",
   CALL = "CALL", // Now call instr doesn't create stack space
+  CLEAR_OS = "CLEAR_OS",
 
   // Concurrent instructs, atomic, use for concurrent constructs
   TEST_AND_SET = "TEST_AND_SET",
@@ -49,6 +50,11 @@ export type InstructionObj<T extends OpCode, Data = {}> = {
   tag: "INSTR";
   op: T;
 } & Data;
+
+export type ClearOsInstructionObj = InstructionObj<OpCode.CLEAR_OS>;
+export function makeClearOsInstruction(): ClearOsInstructionObj {
+  return { tag: "INSTR", op: OpCode.CLEAR_OS };
+}
 
 export type DeclareInstructionObj = InstructionObj<
   OpCode.DECL,
@@ -217,6 +223,7 @@ export function makeUnaryAluInstruction(
 }
 
 export type AnyInstructionObj =
+  | ClearOsInstructionObj
   | NopInstructionObj
   | LdcInstructionObj
   | DeclareInstructionObj

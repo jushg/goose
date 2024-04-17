@@ -326,7 +326,12 @@ describe("GoslingMemoryManager", () => {
         return f1Frame;
       })().getTopScopeAddr();
 
-      scopeObj = memoryManager.allocNewCallFrame(caller1PC, scopeObj, f1Addr);
+      scopeObj = memoryManager.allocNewCallFrame({
+        callerPC: caller1PC,
+        callerRTS: scopeObj,
+        lambdaClosure: f1Addr,
+        postCallOsAddr: HeapAddr.getNull(),
+      });
       expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
         "CALL"
       );
@@ -360,7 +365,9 @@ describe("GoslingMemoryManager", () => {
           "CALL"
         );
         expect(pc.addr).toBe(caller1PC.addr);
-        expect(rts.getTopScopeAddr().toNum()).toBe(caller1RTS.toNum());
+        expect(memoryManager.getEnvs(rts).getTopScopeAddr().toNum()).toBe(
+          caller1RTS.toNum()
+        );
         // scopeObj = enclosing;
 
         // Note, usually here we would reset scopeObj = enclosing, but we want to stay in the call for
@@ -423,7 +430,12 @@ describe("GoslingMemoryManager", () => {
 
       const caller2PC = InstrAddr.fromNum(128);
       const caller2RTS = scopeObj.getTopScopeAddr();
-      scopeObj = memoryManager.allocNewCallFrame(caller2PC, scopeObj, f1Addr);
+      scopeObj = memoryManager.allocNewCallFrame({
+        callerPC: caller2PC,
+        callerRTS: scopeObj,
+        lambdaClosure: f1Addr,
+        postCallOsAddr: HeapAddr.getNull(),
+      });
       expect((scopeObj.lookup("__label") as GoslingStringObj).data).toBe(
         "CALL"
       );
@@ -458,7 +470,7 @@ describe("GoslingMemoryManager", () => {
           "CALL"
         );
         expect(pc.addr).toBe(caller2PC.addr);
-        scopeObj = rts;
+        scopeObj = memoryManager.getEnvs(rts);
       }
 
       // Exit scope back to one level above
@@ -468,7 +480,7 @@ describe("GoslingMemoryManager", () => {
           "CALL"
         );
         expect(pc.addr).toBe(caller1PC.addr);
-        scopeObj = rts;
+        scopeObj = memoryManager.getEnvs(rts);
       }
     });
   });

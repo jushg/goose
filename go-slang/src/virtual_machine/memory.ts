@@ -276,20 +276,28 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return this.getEnvs(newFrameAddr.at(0)?.nodeAddr || HeapAddr.getNull());
   }
 
-  allocNewSpecialFrame(
-    pc: InstrAddr,
-    rts: GoslingScopeObj,
-    label: SpecialFrameLabels,
-    baseOfNewFrameAddr: HeapAddr
-  ): GoslingScopeObj {
+  allocNewSpecialFrame(args: {
+    pc: InstrAddr;
+    rts: GoslingScopeObj;
+    os: HeapAddr;
+    label: SpecialFrameLabels;
+    baseOfNewFrameAddr: HeapAddr;
+  }): GoslingScopeObj {
+    const { pc, rts, os, label, baseOfNewFrameAddr } = args;
     const pcObj = { type: HeapType.Int, data: pc.addr } as const;
     const ptrToRts = {
       type: HeapType.BinaryPtr,
       child1: rts.getTopScopeAddr(),
       child2: HeapAddr.getNull(),
     } as const;
+    const ptrToOs = {
+      type: HeapType.BinaryPtr,
+      child1: os,
+      child2: HeapAddr.getNull(),
+    } as const;
     const symbolAndValues: Record<string, Literal<AnyGoslingObject>> = {};
     symbolAndValues["__pc"] = pcObj;
+    symbolAndValues["__os"] = ptrToOs;
     symbolAndValues["__ptrToRts"] = ptrToRts;
     symbolAndValues["__label"] = { type: HeapType.String, data: label };
     const baseOfNewFrame = this.getEnvs(baseOfNewFrameAddr);
@@ -303,24 +311,39 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     return newSpecialFrame;
   }
 
-  allocNewCallFrame(
-    callerPC: InstrAddr,
-    callerRTS: GoslingScopeObj,
-    newFrame: HeapAddr
-  ): GoslingScopeObj {
-    return this.allocNewSpecialFrame(callerPC, callerRTS, "CALL", newFrame);
+  allocNewCallFrame(args: {
+    callerPC: InstrAddr;
+    callerRTS: GoslingScopeObj;
+    lambdaClosure: HeapAddr;
+    postCallOsAddr: HeapAddr;
+  }): GoslingScopeObj {
+    const {
+      callerPC: pc,
+      callerRTS: rts,
+      lambdaClosure: baseOfNewFrameAddr,
+      postCallOsAddr: os,
+    } = args;
+    return this.allocNewSpecialFrame({
+      pc,
+      rts,
+      baseOfNewFrameAddr,
+      os,
+      label: "CALL",
+    });
   }
 
-  allocNewForFrame(
-    continuePC: InstrAddr,
-    continueRTS: GoslingScopeObj
-  ): GoslingScopeObj {
-    return this.allocNewSpecialFrame(
-      continuePC,
-      continueRTS,
-      "FOR",
-      continueRTS.getTopScopeAddr()
-    );
+  allocNewForFrame(args: {
+    continuePC: InstrAddr;
+    continueRTS: GoslingScopeObj;
+  }): GoslingScopeObj {
+    const { continuePC, continueRTS } = args;
+    return this.allocNewSpecialFrame({
+      pc: continuePC,
+      rts: continueRTS,
+      label: "FOR",
+      baseOfNewFrameAddr: continueRTS.getTopScopeAddr(),
+      os: HeapAddr.getNull(),
+    });
   }
 
   getEnclosingFrame(prev: GoslingScopeObj): GoslingScopeObj {
@@ -363,12 +386,15 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     const {
       __pc: { valueListPtr: nodeOfPcAddr },
       __ptrToRts: { valueListPtr: nodeOfRtsPtrAddr },
+      __os: { valueListPtr: nodeOfOsPtrAddr },
     } = envs[id].env;
 
     const nodeOfPc = this.get(nodeOfPcAddr);
     assertGoslingType(HeapType.BinaryPtr, nodeOfPc);
     const nodeOfRtsPtr = this.get(nodeOfRtsPtrAddr);
     assertGoslingType(HeapType.BinaryPtr, nodeOfRtsPtr);
+    const nodeOfOsPtr = this.get(nodeOfOsPtrAddr);
+    assertGoslingType(HeapType.BinaryPtr, nodeOfOsPtr);
 
     const pc = this.get(nodeOfPc.child2);
     assertGoslingType(HeapType.Int, pc);
@@ -376,7 +402,14 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
     const rtsPtr = this.get(nodeOfRtsPtr.child2);
     assertGoslingType(HeapType.BinaryPtr, rtsPtr);
 
-    return { pc: InstrAddr.fromNum(pc.data), rts: this.getEnvs(rtsPtr.child1) };
+    const osPtr = this.get(nodeOfOsPtr.child2);
+    assertGoslingType(HeapType.BinaryPtr, osPtr);
+
+    return {
+      pc: InstrAddr.fromNum(pc.data),
+      rts: rtsPtr.child1,
+      os: osPtr.child1,
+    };
   }
 
   runGarbageCollection() {

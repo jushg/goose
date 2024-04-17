@@ -2,10 +2,7 @@ import {
   AnyInstructionObj,
   OpCode,
   SysCallInstructionObj,
-  makeLdInstruction,
-  makeLdcInstruction,
 } from "../common/instructionObj";
-import { makeNilLiteralObj } from "../parser";
 import { sysCallLogic } from "./sysCalls";
 
 const _builtinsFnDef: {
@@ -59,7 +56,7 @@ const sysCallFunctionDefs = Object.keys(sysCallLogic)
     ] as const;
   })
   .map(([sysCallName, sysCallInstr]) => {
-    const fn = `func ${sysCallName}() { __noop(${sysCallName}); }`;
+    const fn = `func ${sysCallName}() { return __noop(${sysCallName}); }`;
     updateBuiltinsFnDef(fn, { [sysCallName]: [sysCallInstr] });
   });
 
@@ -199,10 +196,8 @@ updateBuiltinsFnDef(
     *newBackPtr = val
 
     setBinPtrChild2(&(*getBinPtrChild2(*queue)), &newBackPtr)
-
     setBinPtrChild2(&(*queue), &newBackPtr)
 
-    
     updateQueueSize(queue, size + 1)
     return true
   }

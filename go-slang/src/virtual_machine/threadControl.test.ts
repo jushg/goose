@@ -1,6 +1,6 @@
 import { AnyGoslingObject, assertGoslingType, Literal } from ".";
 import { InstrAddr } from "../common/instructionObj";
-import { createHeapManager, HeapAddr, HeapType } from "../memory";
+import { HeapAddr, HeapType } from "../memory";
 import { createGoslingMemoryManager, GoslingMemoryManager } from "./memory";
 import {
   createThreadControlObject,
@@ -153,7 +153,7 @@ describe("Test memory manager and thread control object", () => {
         assertGoslingType(HeapType.BinaryPtr, innerFnPtr);
         const innerFnLambda = m.getLambda(innerFnPtr);
 
-        t.execFn(innerFnLambda); // Sets RTS and PC as necessary for call.
+        t.execFn(innerFnLambda, 0); // Sets RTS and PC as necessary for call.
       },
 
       9: (m, t) => {
@@ -164,7 +164,7 @@ describe("Test memory manager and thread control object", () => {
         const fooLambda = m.getLambda(fooPtr);
 
         t.getOS().push({ type: HeapType.Int, data: 10 }); // Add argument to OS
-        t.execFn(fooLambda); // Sets RTS and PC as necessary for call.
+        t.execFn(fooLambda, 1); // Sets RTS and PC as necessary for call.
       },
 
       10: (m, t) => {
@@ -241,7 +241,7 @@ describe("Test memory manager and thread control object", () => {
         assertGoslingType(HeapType.Int, y);
         t.getOS().push({ type: HeapType.Int, data: 2 * y.data });
 
-        t.execFn(fooLambda); // Sets RTS and PC as necessary for call.
+        t.execFn(fooLambda, 1); // Sets RTS and PC as necessary for call.
         // once returned, will have gone to 17.
       },
 
@@ -262,7 +262,7 @@ describe("Test memory manager and thread control object", () => {
         assertGoslingType(HeapType.BinaryPtr, mainPtr);
 
         const mainLambda = m.getLambda(mainPtr);
-        t.execFn(mainLambda); // Sets RTS and PC as necessary for call.
+        t.execFn(mainLambda, 0); // Sets RTS and PC as necessary for call.
       },
 
       20: () => (isDone = true),
