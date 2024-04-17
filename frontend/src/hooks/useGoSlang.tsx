@@ -1,4 +1,5 @@
 import { CompiledFile } from "go-slang/src/common/compiledFile";
+import { InstrAddr } from "go-slang/src/common/instructionObj";
 import { ExecutionState } from "go-slang/src/common/state";
 import { compileParsedProgram } from "go-slang/src/compiler";
 import { ProgramObj, parse } from "go-slang/src/parser";
@@ -6,8 +7,10 @@ import {
   executeStep,
   initializeVirtualMachine,
 } from "go-slang/src/virtual_machine";
+import { ThreadStatus } from "go-slang/src/virtual_machine/threadControl";
 import { useCallback, useEffect, useState } from "react";
 import { VERBOSITY } from "../App";
+import { getMemState } from "./useMemState";
 import { useVmLogs } from "./useVmLog";
 
 export type CompilationState =
@@ -145,6 +148,16 @@ const executeTillBreakHelper = (
   }
 };
 
+export type ExposeStateReturnType = {
+  id: string;
+  status: ThreadStatus;
+  isCurrentThread: boolean;
+  isMainThread: boolean;
+  pc: InstrAddr;
+  rts: ReturnType<typeof getMemState>;
+  os: ReturnType<typeof getMemState>;
+}[];
+
 export const useVm = (args: useVmOptions) => {
   const {
     compiledFile,
@@ -235,5 +248,39 @@ export const useVm = (args: useVmOptions) => {
     [resumeKey, vmState, executeTillBreak]
   );
 
-  return { log, executeStep: executor, resumeKey, instructionCount, resetVm };
+  const exposeState = useCallback(async (): Promise<ExposeStateReturnType> => {
+    if (!vmState) {
+      console.info("vm not initialized");
+      return [];
+    }
+
+    console.info("exposing state");
+    const memory = vmState.machineState.HEAP;
+    const currentThread = vmState.jobState.getId();
+    const mainThreadId = vmState.mainThreadId;
+
+    return [...memory.threadDataMap.entries()].map(
+      ([id, { status, pc, rts, os }]) => {
+        console.info(`exposing state for thread ${id}`);
+        return {
+          id,
+          isCurrentThread: id === currentThread,
+          isMainThread: id === mainThreadId,
+          status,
+          pc,
+          os: getMemState(os, memory),
+          rts: getMemState(rts, memory),
+        };
+      }
+    );
+  }, [vmState]);
+
+  return {
+    log,
+    executeStep: executor,
+    resumeKey,
+    instructionCount,
+    resetVm,
+    exposeState,
+  };
 };

@@ -2,6 +2,7 @@ import { Box, Paper, Stack } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import "./App.css";
 import { Editor } from "./components/Editor";
+import { MemoryVisualiser } from "./components/MemoryVisualiser";
 import { VmStatus, VmVisualizer } from "./components/VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
 
@@ -18,8 +19,14 @@ function App() {
     () => ({ compiledFile, breakpoints }),
     [compiledFile, breakpoints]
   );
-  const { executeStep, log, resumeKey, instructionCount, resetVm } =
-    useVm(vmOptions);
+  const {
+    executeStep,
+    log,
+    resumeKey,
+    instructionCount,
+    resetVm,
+    exposeState,
+  } = useVm(vmOptions);
   const setIsCompiled = useCallback(
     (isCompiled: boolean) =>
       isCompiled ? setVmState("COMPILED") : setVmState("NOT_COMPILED"),
@@ -49,43 +56,59 @@ function App() {
         const _: never = t.status;
       }
     });
-  }, [setErrorMessageIfAny, executeStep, setErrorMessageIfAny, resumeKey]);
+  }, [setErrorMessageIfAny, executeStep, resumeKey]);
   console.info("App rendered");
 
   return (
-    <Stack
-      spacing={2}
-      width={"100vw"}
-      height={"100vh"}
-      bgcolor={"slategray"}
-      alignItems={"center"}
-      paddingTop={"2%"}
-    >
-      <Box sx={{ width: "95%", height: "60%" }}>
-        <Paper elevation={3} style={{ height: "100%" }}>
-          <Editor
-            isCompiled={vmStatus !== "NOT_COMPILED"}
-            setIsCompiled={setIsCompiled}
-            compilationState={compilationState}
-            setGooseCode={setGooseCode}
-            compiledFile={compiledFile}
-            setBreakpoints={setBreakpoints}
-          />
-        </Paper>
-      </Box>
-      <Box sx={{ width: "95%", height: "30%" }}>
-        <Paper elevation={3} style={{ height: "100%" }}>
-          <VmVisualizer
-            vmStatus={vmStatus}
-            logs={log}
-            errorMessageIfAny={errorMessageIfAny}
-            instructionCount={instructionCount}
-            resumeHandler={resumeHandler}
-            resetVm={resetVm}
-          />
-        </Paper>
-      </Box>
-    </Stack>
+    <>
+      <Stack
+        spacing={2}
+        width={"100vw"}
+        height={"100vh"}
+        bgcolor={"slategray"}
+        alignItems={"center"}
+        paddingTop={"2%"}
+      >
+        <Box sx={{ width: "95%", height: "60%" }}>
+          <Paper elevation={3} style={{ height: "100%" }}>
+            <Editor
+              isCompiled={vmStatus !== "NOT_COMPILED"}
+              setIsCompiled={setIsCompiled}
+              compilationState={compilationState}
+              setGooseCode={setGooseCode}
+              compiledFile={compiledFile}
+              setBreakpoints={setBreakpoints}
+            />
+          </Paper>
+        </Box>
+        <Box sx={{ width: "95%", height: "30%" }}>
+          <Paper elevation={3} style={{ height: "100%" }}>
+            <VmVisualizer
+              vmStatus={vmStatus}
+              logs={log}
+              errorMessageIfAny={errorMessageIfAny}
+              instructionCount={instructionCount}
+              resumeHandler={resumeHandler}
+              resetVm={resetVm}
+            />
+          </Paper>
+        </Box>
+      </Stack>
+      <Stack
+        spacing={2}
+        width={"100vw"}
+        height={"100vh"}
+        bgcolor={"skyblue"}
+        alignItems={"center"}
+        paddingTop={"2%"}
+      >
+        <Box sx={{ width: "95%", height: "90%" }}>
+          <Paper elevation={3} style={{ height: "100%" }}>
+            <MemoryVisualiser exposeState={exposeState} />
+          </Paper>
+        </Box>
+      </Stack>
+    </>
   );
 }
 
