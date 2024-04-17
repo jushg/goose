@@ -64,7 +64,7 @@ function App() {
       <Box sx={{ width: "95%", height: "60%" }}>
         <Paper elevation={3} style={{ height: "100%" }}>
           <Editor
-            isCompiled={vmStatus === "COMPILED"}
+            isCompiled={vmStatus !== "NOT_COMPILED"}
             setIsCompiled={setIsCompiled}
             compilationState={compilationState}
             setGooseCode={setGooseCode}

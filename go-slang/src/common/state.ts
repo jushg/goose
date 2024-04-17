@@ -57,4 +57,8 @@ export class JobQueue {
   print(): string {
     return "JOBS: [" + this.items.map((item) => item.getId()).join(", ") + "]";
   }
+
+  *[Symbol.iterator]() {
+    yield* this.items;
+  }
 }

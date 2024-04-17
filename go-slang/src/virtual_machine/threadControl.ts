@@ -19,6 +19,7 @@ export type ThreadStatus =
   | "TIME_SLICE_EXCEEDED";
 
 export type ThreadControlObject = {
+  onGarbageCollection(): void;
   getId(): string;
   getOS(): GoslingOperandStackObj;
   getRTS(): GoslingScopeObj;
@@ -129,6 +130,10 @@ export function createThreadControlObject(
   };
 
   const t: ThreadControlObject = {
+    onGarbageCollection: () => {
+      _os = memory.getList(memory.getThreadData(id).os);
+      // rts is anyway queried on demand
+    },
     getId: () => id,
     getOS: () => os,
     getRTS,
