@@ -58,6 +58,10 @@ export function executeStep(currState: ExecutionState): ExecutionState | null {
   if (needMemoryCleanup(currState)) {
     const memUsage = currState.machineState.HEAP.getMemoryAllocated();
     machineState.HEAP.runGarbageCollection();
+    for (const job of [...machineState.JOB_QUEUE, currJob]) {
+      job.onGarbageCollection();
+    }
+
     const newMemUsage = currState.machineState.HEAP.getMemoryAllocated();
     currState.vmPrinter(
       { component: "GC" },

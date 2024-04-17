@@ -460,8 +460,8 @@ export class GoslingMemoryManager implements IGoslingMemoryManager {
   }
 
   private copy(addr: HeapAddr) {
+    if (addr.isNull()) return addr;
     const node = this.getHeapValue(addr);
-    if (node === null) return addr;
     if (node.gcFlag === GcFlag.Marked) {
       assertHeapType(HeapType.BinaryPtr, node);
       return node.child1;
