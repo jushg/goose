@@ -6,6 +6,8 @@ import { StreamLanguage } from '@codemirror/language';
 import { go } from '@codemirror/legacy-modes/mode/go';
 import { EditorView } from "@codemirror/view";
 import { VmStatus } from "./VmVisualizer";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBook, faForward, faRefresh } from '@fortawesome/free-solid-svg-icons';
 
 export const Editor = ({
   vmStatus,
@@ -62,30 +64,35 @@ func main() {
 
   console.info("Editor rendered");
   return (
-      <Box height={"100%"} width={"100%"}>
-        <Stack direction="column" spacing={2}>
-        <Stack direction="row" spacing={2}>
-          <Button variant="contained" onClick={compileBtnHandler}>Compile </Button>
+      <Box height={"100%"} width={"100%"} >
+        <Stack direction="column" spacing={1}>
+        <Stack direction="row" spacing={1} paddingTop={1} paddingLeft={1}>
+          <Button variant="contained" onClick={compileBtnHandler}>
+            <FontAwesomeIcon icon={faBook} style={{ marginRight: '5px' }} />
+              Compile 
+          </Button>
+
           <Button
-              variant="contained"
-              onClick={resumeHandler}
-              disabled={vmStatus !== "COMPILED" && vmStatus !== "PAUSED"}
-            >
+            variant="contained"
+            onClick={resumeHandler}
+            disabled={vmStatus !== "COMPILED" && vmStatus !== "PAUSED"}
+          >
+            <FontAwesomeIcon icon={faForward} style={{ marginRight: '5px' }} />
               {vmStatus === "PAUSED" ? "Resume" : "Start"}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={resetVm}
-              disabled={vmStatus === "NOT_COMPILED"}
-            >
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={resetVm}
+            disabled={vmStatus === "NOT_COMPILED"}
+          >
+            <FontAwesomeIcon icon={faRefresh} style={{ marginRight: '5px' }} />
               Reset
-            </Button>
+          </Button>
 
         </Stack>
-        <div style={{ height: 'calc(100% - 40px)', float: 'left' }}>
         <CodeMirror
             value={codeStr}
-            style={{ maxHeight: "80vh", overflow: "auto"}}
+            style={{ maxHeight: "80vh", height: "100%", overflow: "auto"}}
             onChange={(value) => {
                 setCodeStr(value);
                 setIsCompiled(false);
@@ -94,7 +101,6 @@ func main() {
             extensions={[EditorView.lineWrapping]}
             theme={basicDark}
         />
-        </div>        
       </Stack>  
     </Box>
   );
