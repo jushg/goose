@@ -10,7 +10,7 @@ import {
 import { ThreadStatus } from "go-slang/src/virtual_machine/threadControl";
 import { useCallback, useEffect, useState } from "react";
 import { VERBOSITY } from "../App";
-import { getMemState } from "./useMemState";
+import { MemoryState, getMemState } from "./useMemState";
 import { useVmLogs } from "./useVmLog";
 
 export type CompilationState =
@@ -154,8 +154,8 @@ export type ExposeStateReturnType = {
   isCurrentThread: boolean;
   isMainThread: boolean;
   pc: InstrAddr;
-  rts: ReturnType<typeof getMemState>;
-  os: ReturnType<typeof getMemState>;
+  rts: MemoryState;
+  os: MemoryState;
 }[];
 
 export const useVm = (args: useVmOptions) => {
@@ -259,6 +259,13 @@ export const useVm = (args: useVmOptions) => {
     const currentThread = vmState.jobState.getId();
     const mainThreadId = vmState.mainThreadId;
 
+    const roots = [...memory.threadDataMap.entries()].flatMap(
+      ([_, { rts, os }]) => [rts, os]
+    );
+
+    console.info(`getting memory state from ${roots.length} roots`);
+    const memState = getMemState(roots, memory);
+
     return [...memory.threadDataMap.entries()].map(
       ([id, { status, pc, rts, os }]) => {
         console.info(`exposing state for thread ${id}`);
@@ -268,8 +275,8 @@ export const useVm = (args: useVmOptions) => {
           isMainThread: id === mainThreadId,
           status,
           pc,
-          os: getMemState(os, memory),
-          rts: getMemState(rts, memory),
+          os: memState[os.toString()],
+          rts: memState[rts.toString()],
         };
       }
     );
