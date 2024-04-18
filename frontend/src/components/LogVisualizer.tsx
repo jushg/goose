@@ -5,9 +5,9 @@ import { LogItem } from "../hooks/useVmLog";
 export const LogVisualizer = ({ logs }: { logs: LogItem[] }) => {
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 10 },
-    { field: "timestamp", headerName: "Time", width: 160 },
-    { field: "from", headerName: "From", width: 240 },
-    { field: "log", headerName: "Log", width: 400 },
+    { field: "timestamp", headerName: "Time", width: 150 },
+    { field: "from", headerName: "From", width: 200 },
+    { field: "log", headerName: "Log", width: 150 },
   ];
   const rows = logs.map((log, id) => ({
     id,
@@ -20,7 +20,7 @@ export const LogVisualizer = ({ logs }: { logs: LogItem[] }) => {
   return (
     <>
       <Typography variant="h6" marginTop="-24px">
-        Logs
+        Output Logs
       </Typography>
       <DataGrid rows={rows} columns={columns}></DataGrid>
     </>

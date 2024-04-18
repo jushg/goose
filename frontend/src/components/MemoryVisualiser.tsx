@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { TreeItem } from "@mui/x-tree-view";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { HeapAddr, HeapType } from "go-slang/src/memory";
@@ -67,8 +67,7 @@ export const MemoryVisualiser: React.FC<{
 
   return (
     <div>
-      <Stack direction="column" spacing={2} alignItems="left">
-        <Typography variant="h4">Memory Visualiser</Typography>
+      <Stack direction="column" spacing={1} alignItems="left" padding={1}>
         <button onClick={refreshHandler}>Expose State</button>
         <DataTreeView tree={memState} />
       </Stack>

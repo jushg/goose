@@ -1,23 +1,29 @@
-import { Box, Button, Stack, TextField, Typography } from "@mui/material";
-import { CompiledFile } from "go-slang/src/common/compiledFile";
+import { Box, Button, Stack } from "@mui/material";
 import { useCallback, useState } from "react";
-import { CompilationState } from "../hooks/useGoSlang";
-import { InstrVisualiser } from "./InstrVisualiser";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
+import { basicDark } from "@uiw/codemirror-theme-basic";
+import { StreamLanguage } from "@codemirror/language";
+import { go } from "@codemirror/legacy-modes/mode/go";
+import { VmStatus } from "./VmVisualizer";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBook,
+  faForward,
+  faRefresh,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const Editor = ({
-  isCompiled,
+  vmStatus,
   setIsCompiled,
   setGooseCode,
-  compiledFile,
-  compilationState,
-  setBreakpoints,
+  resetVm,
+  resumeHandler,
 }: {
-  isCompiled: boolean;
+  vmStatus: VmStatus;
   setIsCompiled: (e: boolean) => void;
   setGooseCode: (code: string) => void;
-  compiledFile: CompiledFile | null;
-  compilationState: CompilationState;
-  setBreakpoints: (breakpoints: number[]) => void;
+  resetVm: () => void;
+  resumeHandler: () => void;
 }) => {
   const [codeStr, setCodeStr] = useState<string>(`
 func worker(inputCh *int, outputCh *int) {
@@ -52,13 +58,6 @@ func main() {
 }
   `);
 
-  const textFieldHandler = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setCodeStr(e.target.value);
-      setIsCompiled(false);
-    },
-    [setCodeStr, setIsCompiled]
-  );
   const compileBtnHandler = useCallback(() => {
     setIsCompiled(true);
     setGooseCode(codeStr);
@@ -66,65 +65,44 @@ func main() {
 
   console.info("Editor rendered");
   return (
-    <>
-      <Stack direction={"row"} style={{ height: "100%", padding: "2%" }}>
-        <Box height={"100%"} width={"100%"}>
-          <TextField
-            multiline
-            sx={{
-              width: "100%",
-              minHeight: "50vh",
-              maxHeight: "50vh",
-              paddingBottom: "2%",
-              spellcheck: "false",
-            }}
-            inputProps={{
-              style: {
-                minHeight: "50vh",
-                maxHeight: "50vh",
-                fontFamily: "monospace",
-                overflow: "scroll",
-              },
-              spellCheck: false,
-            }}
-            InputProps={{
-              style: {
-                minHeight: "50vh",
-                maxHeight: "50vh",
-                fontFamily: "monospace",
-                overflow: "scroll",
-              },
-            }}
-            value={codeStr}
-            onChange={textFieldHandler}
-          />
+    <Box height={"100%"} width={"100%"}>
+      <Stack direction="column" spacing={1}>
+        <Stack direction="row" spacing={1} paddingTop={1} paddingLeft={1}>
           <Button variant="contained" onClick={compileBtnHandler}>
+            <FontAwesomeIcon icon={faBook} style={{ marginRight: "5px" }} />
             Compile
           </Button>
-        </Box>
-        <Box
-          p="2%"
-          style={{
-            height: "80%",
-            width: "100%",
-            overflow: "scroll",
+
+          <Button
+            variant="contained"
+            onClick={resumeHandler}
+            disabled={vmStatus !== "COMPILED" && vmStatus !== "PAUSED"}
+          >
+            <FontAwesomeIcon icon={faForward} style={{ marginRight: "5px" }} />
+            {vmStatus === "PAUSED" ? "Resume" : "Start"}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={resetVm}
+            disabled={vmStatus === "NOT_COMPILED"}
+          >
+            <FontAwesomeIcon icon={faRefresh} style={{ marginRight: "5px" }} />
+            Reset
+          </Button>
+        </Stack>
+        <CodeMirror
+          value={codeStr}
+          maxHeight="85vh"
+          minHeight="85vh"
+          onChange={(value) => {
+            setCodeStr(value);
+            setIsCompiled(false);
+            localStorage.setItem("code", value);
           }}
-        >
-          <Typography variant="h6">Instructions</Typography>
-          {!isCompiled ? (
-            <Typography>Compile to see instructions</Typography>
-          ) : compilationState === "PARSE_FAILED" ? (
-            <Typography>Parse failed</Typography>
-          ) : compilationState === "COMPILATION_FAILED" ? (
-            <Typography>Compilation failed</Typography>
-          ) : (
-            <InstrVisualiser
-              compiledFile={compiledFile!}
-              setBreakpoints={setBreakpoints}
-            />
-          )}
-        </Box>
+          extensions={[EditorView.lineWrapping, StreamLanguage.define(go)]}
+          theme={basicDark}
+        />
       </Stack>
-    </>
+    </Box>
   );
 };
