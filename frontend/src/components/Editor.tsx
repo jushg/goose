@@ -1,9 +1,9 @@
 import { Box, Button, Stack } from "@mui/material";
 import { useCallback, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import CodeMirror, { EditorView } from "@uiw/react-codemirror";
 import { basicDark } from "@uiw/codemirror-theme-basic";
-import { go } from "@codemirror/lang-go";
-import { basicSetup } from "codemirror";
+import { StreamLanguage } from "@codemirror/language";
+import { go } from "@codemirror/legacy-modes/mode/go";
 import { VmStatus } from "./VmVisualizer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -99,7 +99,7 @@ func main() {
             setIsCompiled(false);
             localStorage.setItem("code", value);
           }}
-          extensions={[basicSetup, go().extension]}
+          extensions={[EditorView.lineWrapping, StreamLanguage.define(go)]}
           theme={basicDark}
         />
       </Stack>
