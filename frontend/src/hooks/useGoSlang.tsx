@@ -1,5 +1,4 @@
 import { CompiledFile } from "go-slang/src/common/compiledFile";
-import { InstrAddr } from "go-slang/src/common/instructionObj";
 import { ExecutionState } from "go-slang/src/common/state";
 import { compileParsedProgram } from "go-slang/src/compiler";
 import { ProgramObj, parse } from "go-slang/src/parser";
@@ -149,14 +148,15 @@ const executeTillBreakHelper = (
 };
 
 export type ExposeStateReturnType = {
-  id: string;
-  status: ThreadStatus;
-  isCurrentThread: boolean;
-  isMainThread: boolean;
-  pc: InstrAddr;
-  rts: MemoryState;
-  os: MemoryState;
-}[];
+  [id: string]: {
+    status: ThreadStatus;
+    isCurrentThread: boolean;
+    isMainThread: boolean;
+    pc: number;
+    rts: MemoryState | "DISABLED FOR PERFORMANCE";
+    os: MemoryState;
+  };
+};
 
 export const useVm = (args: useVmOptions) => {
   const {
@@ -251,7 +251,7 @@ export const useVm = (args: useVmOptions) => {
   const exposeState = useCallback(async (): Promise<ExposeStateReturnType> => {
     if (!vmState) {
       console.info("vm not initialized");
-      return [];
+      return {};
     }
 
     console.info("exposing state");
@@ -266,20 +266,19 @@ export const useVm = (args: useVmOptions) => {
     console.info(`getting memory state from ${roots.length} roots`);
     const memState = getMemState(roots, memory);
 
-    return [...memory.threadDataMap.entries()].map(
-      ([id, { status, pc, rts, os }]) => {
-        console.info(`exposing state for thread ${id}`);
-        return {
-          id,
-          isCurrentThread: id === currentThread,
-          isMainThread: id === mainThreadId,
-          status,
-          pc,
-          os: memState[os.toString()],
-          rts: memState[rts.toString()],
-        };
-      }
-    );
+    const exposedState: ExposeStateReturnType = {};
+    [...memory.threadDataMap.entries()].map(([id, { status, pc, rts, os }]) => {
+      console.info(`exposing state for thread ${id}`);
+      exposedState[id] = {
+        isCurrentThread: id === currentThread,
+        isMainThread: id === mainThreadId,
+        status,
+        pc: pc.addr,
+        os: memState[os.toString()],
+        rts: /* memState[rts.toString()] */ "DISABLED FOR PERFORMANCE",
+      };
+    });
+    return exposedState;
   }, [vmState]);
 
   return {
