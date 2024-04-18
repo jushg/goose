@@ -15,20 +15,9 @@ export type MemoryState =
   | {
       addr: HeapAddr;
       type: HeapType.BinaryPtr;
-      child1: null;
-      child2: MemoryState | null;
-    }
-  | (
-      | GoslingIntObj
-      | GoslingStringObj
-      | GoslingBoolObj
-      | {
-          addr: HeapAddr;
-          type: HeapType.BinaryPtr;
-          child1: HeapAddr;
-          child2: MemoryState | null;
-        }
-    )[];
+      child1: MemoryState | HeapAddr | null;
+      child2: MemoryState | HeapAddr | null;
+    };
 
 export const getMemState = (
   roots: HeapAddr[],
@@ -80,6 +69,7 @@ export const getMemState = (
     for (const key in node) {
       (val as any)[key] = (node as any)[key];
     }
+
     (val as any).child1 = map.get(node.child1.toString())! as any;
     (val as any).child2 = map.get(node.child2.toString())! as any;
   }
@@ -87,8 +77,7 @@ export const getMemState = (
   const result: Record<string, MemoryState> = {};
   for (const [addr, val] of map.entries()) {
     if ("isToBeDetermined" in val) throw new Error("Unexpected state");
-    if (!result[addr.toString()]) result[addr.toString()] = [];
-    result[addr.toString()] = val as MemoryState;
+    result[addr.toString()] = require("json-cycle").decycle(val) as MemoryState;
   }
   return result;
 };
