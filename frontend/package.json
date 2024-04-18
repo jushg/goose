@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@codemirror/lang-go": "6.0.0",
+    "@codemirror/lang-go": "^6.0.0",
     "@codemirror/language": "6.6.0",
     "@codemirror/legacy-modes": "6.3.2",
     "@emotion/react": "^11.11.4",

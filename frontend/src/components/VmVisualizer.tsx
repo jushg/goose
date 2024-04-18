@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { LogItem } from "../hooks/useVmLog";
 import { LogVisualizer } from "./LogVisualizer";
 
@@ -23,25 +23,26 @@ export const VmVisualizer = ({
 }) => {
   console.info("VmVisualizer rendered");
   return (
-    <Stack direction={"column"} spacing={2}>
-            {vmStatus === "NOT_COMPILED" ? (
-              <Typography variant="h6">Compile program first</Typography>
-            ) : (
-              <Typography variant="h6">
-                Instructions Executed: {instructionCount} ({vmStatus})
-              </Typography>
-            )}
-          {errorMessageIfAny && (
-            <>
-              <br />
-              <br />
-              <Typography variant="h6" color="error" marginTop={"-50px"}>
-                {errorMessageIfAny}
-              </Typography>
-            </>
-          )}
-           <LogVisualizer logs={logs} />
-            
-   </Stack>
+    <Stack direction={"column"} spacing={1} padding={1}>
+      <Typography variant="caption">Execution Status: {vmStatus}</Typography>
+      {vmStatus === "NOT_COMPILED" ? (
+        <Typography variant="caption">Compile program first</Typography>
+      ) : (
+        <Typography variant="caption">
+          Instructions Executed: {instructionCount}
+        </Typography>
+      )}
+
+      {errorMessageIfAny && (
+        <>
+          <br />
+          <br />
+          <Typography variant="h6" color="error" marginTop={"-50px"}>
+            {errorMessageIfAny}
+          </Typography>
+        </>
+      )}
+      <LogVisualizer logs={logs} />
+    </Stack>
   );
 };

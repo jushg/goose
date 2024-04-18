@@ -5,9 +5,9 @@ import { Editor } from "./components/Editor";
 import { MemoryVisualiser } from "./components/MemoryVisualiser";
 import { VmStatus, VmVisualizer } from "./components/VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { InstrVisualiser } from "./components/InstrVisualiser";
-import 'react-tabs/style/react-tabs.css';
+import "react-tabs/style/react-tabs.css";
 
 export const VERBOSITY: 0 | 1 | 2 = 2;
 
@@ -63,35 +63,35 @@ function App() {
   console.info("App rendered");
 
   return (
-    <div className="App" style={{ height: '92vh', color: '#ffffff' }}>
-            <header className="App-header">
-                <h3 style={{ marginLeft: '10px' }}>
-                    Goose - Go Interpreter with Virtual Machine (VM)
-                </h3>
-            </header>
-    <Stack direction="row" spacing={2} maxHeight={'90vh'}>
-    <Box width={"70%"} height={"100%"}>
-        <Paper elevation={3} style={{ height: "100%" }}>
-          <Editor
-            vmStatus={vmStatus}
-            setIsCompiled={setIsCompiled}
-            setGooseCode={setGooseCode}
-            resetVm={resetVm}
-            resumeHandler={resumeHandler}
-          />
-        </Paper>
-      </Box>
+    <div className="App" style={{ height: "92vh", color: "lightgray" }}>
+      <header className="App-header">
+        <h3 style={{ marginLeft: "10px" }}>
+          Goose - Go Interpreter with Virtual Machine (VM)
+        </h3>
+      </header>
+      <Stack direction="row" spacing={2} maxHeight={"90vh"}>
+        <Box width={"70%"} height={"100%"}>
+          <Paper elevation={3} style={{ height: "100%" }}>
+            <Editor
+              vmStatus={vmStatus}
+              setIsCompiled={setIsCompiled}
+              setGooseCode={setGooseCode}
+              resetVm={resetVm}
+              resumeHandler={resumeHandler}
+            />
+          </Paper>
+        </Box>
 
-      <Box width={"50%"} height={"100%"}>
-      <Tabs>
-        <TabList>
-            <Tab>Instructions</Tab>
-            <Tab> Output Log</Tab>
-            <Tab> Visualization</Tab>
-        </TabList>
-        <TabPanel>
-            <Paper elevation={3}>
-                {vmStatus === "NOT_COMPILED"? (
+        <Box width={"50%"} height={"100%"}>
+          <Tabs>
+            <TabList>
+              <Tab>Instructions</Tab>
+              <Tab> Output Log</Tab>
+              <Tab> Visualization</Tab>
+            </TabList>
+            <TabPanel>
+              <Paper elevation={3}>
+                {vmStatus === "NOT_COMPILED" ? (
                   <Typography>Compile to see instructions</Typography>
                 ) : compilationState === "PARSE_FAILED" ? (
                   <Typography>Parse failed</Typography>
@@ -103,24 +103,34 @@ function App() {
                     setBreakpoints={setBreakpoints}
                   />
                 )}
-            </Paper>
-        </TabPanel>
+              </Paper>
+            </TabPanel>
 
-        <TabPanel>
-            <Paper elevation={3}>
+            <TabPanel>
+              <Paper elevation={3}>
                 {vmStatus === "NOT_COMPILED" ? (
                   <Typography>Compile program first</Typography>
-                ) : (<VmVisualizer
+                ) : (
+                  <VmVisualizer
                     errorMessageIfAny={errorMessageIfAny}
                     vmStatus={vmStatus}
                     logs={log}
                     instructionCount={instructionCount}
-                  />)
-                }                
-          </Paper>
-        </TabPanel>
-      </Tabs>
-      </Box>
+                  />
+                )}
+              </Paper>
+            </TabPanel>
+            <TabPanel>
+              <Paper elevation={3}>
+                {vmStatus === "NOT_COMPILED" ? (
+                  <Typography>Compile program first</Typography>
+                ) : (
+                  <MemoryVisualiser exposeState={exposeState} />
+                )}
+              </Paper>
+            </TabPanel>
+          </Tabs>
+        </Box>
       </Stack>
     </div>
   );

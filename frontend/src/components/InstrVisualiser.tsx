@@ -63,7 +63,7 @@ export const InstrVisualiser = ({
         rows={rows}
         columns={columns}
         checkboxSelection
-        style={{ maxHeight: "80vh", overflow: "auto"}}
+        style={{ maxHeight: "80vh", overflow: "auto" }}
         onRowSelectionModelChange={handleSelectionModelChange}
       ></DataGrid>
     </>

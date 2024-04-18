@@ -1,13 +1,16 @@
-import { Box, Button, Stack} from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import { useCallback, useState } from "react";
-import CodeMirror from '@uiw/react-codemirror';
-import { basicDark } from '@uiw/codemirror-theme-basic';
-import { StreamLanguage } from '@codemirror/language';
-import { go } from '@codemirror/legacy-modes/mode/go';
-import { EditorView } from "@codemirror/view";
+import CodeMirror from "@uiw/react-codemirror";
+import { basicDark } from "@uiw/codemirror-theme-basic";
+import { go } from "@codemirror/lang-go";
+import { basicSetup } from "codemirror";
 import { VmStatus } from "./VmVisualizer";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faForward, faRefresh } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBook,
+  faForward,
+  faRefresh,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const Editor = ({
   vmStatus,
@@ -62,12 +65,12 @@ func main() {
 
   console.info("Editor rendered");
   return (
-      <Box height={"100%"} width={"100%"} >
-        <Stack direction="column" spacing={1}>
+    <Box height={"100%"} width={"100%"}>
+      <Stack direction="column" spacing={1}>
         <Stack direction="row" spacing={1} paddingTop={1} paddingLeft={1}>
           <Button variant="contained" onClick={compileBtnHandler}>
-            <FontAwesomeIcon icon={faBook} style={{ marginRight: '5px' }} />
-              Compile 
+            <FontAwesomeIcon icon={faBook} style={{ marginRight: "5px" }} />
+            Compile
           </Button>
 
           <Button
@@ -75,31 +78,31 @@ func main() {
             onClick={resumeHandler}
             disabled={vmStatus !== "COMPILED" && vmStatus !== "PAUSED"}
           >
-            <FontAwesomeIcon icon={faForward} style={{ marginRight: '5px' }} />
-              {vmStatus === "PAUSED" ? "Resume" : "Start"}
+            <FontAwesomeIcon icon={faForward} style={{ marginRight: "5px" }} />
+            {vmStatus === "PAUSED" ? "Resume" : "Start"}
           </Button>
           <Button
-            variant="outlined"
+            variant="contained"
             onClick={resetVm}
             disabled={vmStatus === "NOT_COMPILED"}
           >
-            <FontAwesomeIcon icon={faRefresh} style={{ marginRight: '5px' }} />
-              Reset
+            <FontAwesomeIcon icon={faRefresh} style={{ marginRight: "5px" }} />
+            Reset
           </Button>
-
         </Stack>
         <CodeMirror
-            value={codeStr}
-            style={{ maxHeight: "80vh", height: "100%", overflow: "auto"}}
-            onChange={(value) => {
-                setCodeStr(value);
-                setIsCompiled(false);
-                localStorage.setItem("code", value);
-            }}
-            extensions={[EditorView.lineWrapping]}
-            theme={basicDark}
+          value={codeStr}
+          maxHeight="85vh"
+          minHeight="85vh"
+          onChange={(value) => {
+            setCodeStr(value);
+            setIsCompiled(false);
+            localStorage.setItem("code", value);
+          }}
+          extensions={[basicSetup, go().extension]}
+          theme={basicDark}
         />
-      </Stack>  
+      </Stack>
     </Box>
   );
 };

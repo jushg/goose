@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useCallback, useState } from "react";
 import { ExposeStateReturnType } from "../hooks/useGoSlang";
 
@@ -13,8 +13,7 @@ export const MemoryVisualiser: React.FC<{
 
   return (
     <div>
-      <Stack direction="column" spacing={2} alignItems="left">
-        <Typography variant="h4">Memory Visualiser</Typography>
+      <Stack direction="column" spacing={1} alignItems="left" padding={1}>
         <button onClick={refreshHandler}>Expose State</button>
         <div>{memState}</div>
       </Stack>
