@@ -13,14 +13,12 @@ export const Editor = ({
   vmStatus,
   setIsCompiled,
   setGooseCode,
-  setBreakpoints,
   resetVm,
   resumeHandler,
 }: {
   vmStatus: VmStatus;
   setIsCompiled: (e: boolean) => void;
   setGooseCode: (code: string) => void;
-  setBreakpoints: (breakpoints: number[]) => void;
   resetVm: () => void;
   resumeHandler: () => void;
 }) => {

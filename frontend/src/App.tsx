@@ -76,7 +76,6 @@ function App() {
             vmStatus={vmStatus}
             setIsCompiled={setIsCompiled}
             setGooseCode={setGooseCode}
-            setBreakpoints={setBreakpoints}
             resetVm={resetVm}
             resumeHandler={resumeHandler}
           />
@@ -92,7 +91,6 @@ function App() {
         </TabList>
         <TabPanel>
             <Paper elevation={3}>
-              <Typography variant="h6">Instructions</Typography>
                 {vmStatus === "NOT_COMPILED"? (
                   <Typography>Compile to see instructions</Typography>
                 ) : compilationState === "PARSE_FAILED" ? (
@@ -110,7 +108,6 @@ function App() {
 
         <TabPanel>
             <Paper elevation={3}>
-              <Typography variant="h6">Output Log</Typography>
                 {vmStatus === "NOT_COMPILED" ? (
                   <Typography>Compile program first</Typography>
                 ) : (<VmVisualizer
