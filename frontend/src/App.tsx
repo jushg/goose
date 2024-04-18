@@ -1,10 +1,13 @@
-import { Box, Paper, Stack } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import "./App.css";
 import { Editor } from "./components/Editor";
 import { MemoryVisualiser } from "./components/MemoryVisualiser";
 import { VmStatus, VmVisualizer } from "./components/VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
+import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
+import { InstrVisualiser } from "./components/InstrVisualiser";
+import "react-tabs/style/react-tabs.css";
 
 export const VERBOSITY: 0 | 1 | 2 = 2;
 
@@ -60,55 +63,76 @@ function App() {
   console.info("App rendered");
 
   return (
-    <>
-      <Stack
-        spacing={2}
-        width={"100vw"}
-        height={"100vh"}
-        bgcolor={"slategray"}
-        alignItems={"center"}
-        paddingTop={"2%"}
-      >
-        <Box sx={{ width: "95%", height: "60%" }}>
+    <div className="App" style={{ height: "92vh", color: "lightgray" }}>
+      <header className="App-header">
+        <h3 style={{ marginLeft: "10px" }}>
+          Goose - Go Interpreter with Virtual Machine (VM)
+        </h3>
+      </header>
+      <Stack direction="row" spacing={2} maxHeight={"90vh"}>
+        <Box width={"70%"} height={"100%"}>
           <Paper elevation={3} style={{ height: "100%" }}>
             <Editor
-              isCompiled={vmStatus !== "NOT_COMPILED"}
-              setIsCompiled={setIsCompiled}
-              compilationState={compilationState}
-              setGooseCode={setGooseCode}
-              compiledFile={compiledFile}
-              setBreakpoints={setBreakpoints}
-            />
-          </Paper>
-        </Box>
-        <Box sx={{ width: "95%", height: "30%" }}>
-          <Paper elevation={3} style={{ height: "100%" }}>
-            <VmVisualizer
               vmStatus={vmStatus}
-              logs={log}
-              errorMessageIfAny={errorMessageIfAny}
-              instructionCount={instructionCount}
-              resumeHandler={resumeHandler}
+              setIsCompiled={setIsCompiled}
+              setGooseCode={setGooseCode}
               resetVm={resetVm}
+              resumeHandler={resumeHandler}
             />
           </Paper>
         </Box>
-      </Stack>
-      <Stack
-        spacing={2}
-        width={"100vw"}
-        height={"100vh"}
-        bgcolor={"skyblue"}
-        alignItems={"center"}
-        paddingTop={"2%"}
-      >
-        <Box sx={{ width: "95%", height: "90%" }}>
-          <Paper elevation={3} style={{ height: "100%" }}>
-            <MemoryVisualiser exposeState={exposeState} />
-          </Paper>
+
+        <Box width={"50%"} height={"100%"}>
+          <Tabs>
+            <TabList>
+              <Tab>Instructions</Tab>
+              <Tab> Output Log</Tab>
+              <Tab> Visualization</Tab>
+            </TabList>
+            <TabPanel>
+              <Paper elevation={3}>
+                {vmStatus === "NOT_COMPILED" ? (
+                  <Typography>Compile to see instructions</Typography>
+                ) : compilationState === "PARSE_FAILED" ? (
+                  <Typography>Parse failed</Typography>
+                ) : compilationState === "COMPILATION_FAILED" ? (
+                  <Typography>Compilation failed</Typography>
+                ) : (
+                  <InstrVisualiser
+                    compiledFile={compiledFile!}
+                    setBreakpoints={setBreakpoints}
+                  />
+                )}
+              </Paper>
+            </TabPanel>
+
+            <TabPanel>
+              <Paper elevation={3}>
+                {vmStatus === "NOT_COMPILED" ? (
+                  <Typography>Compile program first</Typography>
+                ) : (
+                  <VmVisualizer
+                    errorMessageIfAny={errorMessageIfAny}
+                    vmStatus={vmStatus}
+                    logs={log}
+                    instructionCount={instructionCount}
+                  />
+                )}
+              </Paper>
+            </TabPanel>
+            <TabPanel>
+              <Paper elevation={3}>
+                {vmStatus === "NOT_COMPILED" ? (
+                  <Typography>Compile program first</Typography>
+                ) : (
+                  <MemoryVisualiser exposeState={exposeState} />
+                )}
+              </Paper>
+            </TabPanel>
+          </Tabs>
         </Box>
       </Stack>
-    </>
+    </div>
   );
 }
 

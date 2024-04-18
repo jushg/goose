@@ -35,9 +35,9 @@ export const InstrVisualiser = ({
   setBreakpoints: (breakpoints: number[]) => void;
 }) => {
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 60 },
-    { field: "op", headerName: "OpCode", width: 120 },
-    { field: "data", headerName: "Data", width: 420 },
+    { field: "id", headerName: "ID", width: 30 },
+    { field: "op", headerName: "OpCode", width: 100 },
+    { field: "data", headerName: "Data", width: 350 },
   ];
   const rows = compiledFile.instructions.map((instr, id) => ({
     id,
@@ -62,8 +62,8 @@ export const InstrVisualiser = ({
       <DataGrid
         rows={rows}
         columns={columns}
-        style={{ height: "90%" }}
         checkboxSelection
+        style={{ maxHeight: "80vh", overflow: "auto" }}
         onRowSelectionModelChange={handleSelectionModelChange}
       ></DataGrid>
     </>
