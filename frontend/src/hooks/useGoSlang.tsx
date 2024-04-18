@@ -1,4 +1,5 @@
 import { CompiledFile } from "go-slang/src/common/compiledFile";
+import { InstrAddr } from "go-slang/src/common/instructionObj";
 import { ExecutionState } from "go-slang/src/common/state";
 import { compileParsedProgram } from "go-slang/src/compiler";
 import { ProgramObj, parse } from "go-slang/src/parser";
@@ -6,8 +7,10 @@ import {
   executeStep,
   initializeVirtualMachine,
 } from "go-slang/src/virtual_machine";
+import { ThreadStatus } from "go-slang/src/virtual_machine/threadControl";
 import { useCallback, useEffect, useState } from "react";
 import { VERBOSITY } from "../App";
+import { MemoryState, getMemState } from "./useMemState";
 import { useVmLogs } from "./useVmLog";
 
 export type CompilationState =
@@ -100,14 +103,24 @@ const executeTillBreakHelper = (
         instructionIdx,
       };
 
-      if (breakpoints.includes(instructionIdx)) {
+      const hasTriggeredSysCallBreakPoint =
+        vmState.jobState.getStatus() === "BREAKPOINT";
+      if (hasTriggeredSysCallBreakPoint) {
+        vmState.jobState.setStatus("RUNNABLE");
+        vmState.machineState.TIME_SLICE += 20;
+      }
+
+      if (
+        breakpoints.includes(instructionIdx) ||
+        hasTriggeredSysCallBreakPoint
+      ) {
         const newResumeKey = `${instructionIdx}_${Math.random()}`;
         VERBOSITY > 0 &&
           console.info(
             `[!] breakpoint hit: ${instructionIdx} in thread ${vmState.jobState.getId()}\n` +
-              `bt: [${breakpoints.join(
-                ", "
-              )}], setting resume key to ${newResumeKey}`
+              ` isSysCall:${hasTriggeredSysCallBreakPoint} ` +
+              `bt: [${breakpoints.join(", ")}], ` +
+              `setting resume key to ${newResumeKey}`
           );
         setResumeKey(`${instructionIdx}_${Math.random()}`);
         timepoint.status = "breakpoint";
@@ -134,6 +147,16 @@ const executeTillBreakHelper = (
     }
   }
 };
+
+export type ExposeStateReturnType = {
+  id: string;
+  status: ThreadStatus;
+  isCurrentThread: boolean;
+  isMainThread: boolean;
+  pc: InstrAddr;
+  rts: MemoryState;
+  os: MemoryState;
+}[];
 
 export const useVm = (args: useVmOptions) => {
   const {
@@ -225,5 +248,46 @@ export const useVm = (args: useVmOptions) => {
     [resumeKey, vmState, executeTillBreak]
   );
 
-  return { log, executeStep: executor, resumeKey, instructionCount, resetVm };
+  const exposeState = useCallback(async (): Promise<ExposeStateReturnType> => {
+    if (!vmState) {
+      console.info("vm not initialized");
+      return [];
+    }
+
+    console.info("exposing state");
+    const memory = vmState.machineState.HEAP;
+    const currentThread = vmState.jobState.getId();
+    const mainThreadId = vmState.mainThreadId;
+
+    const roots = [...memory.threadDataMap.entries()].flatMap(
+      ([_, { rts, os }]) => [rts, os]
+    );
+
+    console.info(`getting memory state from ${roots.length} roots`);
+    const memState = getMemState(roots, memory);
+
+    return [...memory.threadDataMap.entries()].map(
+      ([id, { status, pc, rts, os }]) => {
+        console.info(`exposing state for thread ${id}`);
+        return {
+          id,
+          isCurrentThread: id === currentThread,
+          isMainThread: id === mainThreadId,
+          status,
+          pc,
+          os: memState[os.toString()],
+          rts: memState[rts.toString()],
+        };
+      }
+    );
+  }, [vmState]);
+
+  return {
+    log,
+    executeStep: executor,
+    resumeKey,
+    instructionCount,
+    resetVm,
+    exposeState,
+  };
 };
