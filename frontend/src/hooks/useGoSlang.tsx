@@ -259,8 +259,9 @@ export const useVm = (args: useVmOptions) => {
     const currentThread = vmState.jobState.getId();
     const mainThreadId = vmState.mainThreadId;
 
+    const isRtsDisabled = true;
     const roots = [...memory.threadDataMap.entries()].flatMap(
-      ([_, { rts, os }]) => [rts, os]
+      ([_, { rts, os }]) => (isRtsDisabled ? [os] : [rts, os])
     );
 
     console.info(`getting memory state from ${roots.length} roots`);
@@ -275,7 +276,9 @@ export const useVm = (args: useVmOptions) => {
         status,
         pc: pc.addr,
         os: memState[os.toString()],
-        rts: /* memState[rts.toString()] */ "DISABLED FOR PERFORMANCE",
+        rts: isRtsDisabled
+          ? "DISABLED FOR PERFORMANCE"
+          : memState[rts.toString()],
       };
     });
     return exposedState;
