@@ -75,6 +75,9 @@ func foo(y int) {
     const mainId = state.machineState.MAIN_ID;
     // console.dir(printLast(mainId, 100, 20));
 
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(Object.keys(log)).toHaveLength(1 + /* getFn */ 10 + /* foo */ 1);
 
     const otherIdsAndPc = Object.keys(log)

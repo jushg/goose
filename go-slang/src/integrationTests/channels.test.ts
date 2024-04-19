@@ -37,6 +37,9 @@ func main() {
       // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(Object.keys(log)).toHaveLength(2);
 
     let barId = Object.keys(log).filter(
@@ -79,6 +82,9 @@ func main() {
       // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
       // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
+    }
+    if (log["GC"]) {
+      delete log["GC"];
     }
     expect(log[state.machineState.MAIN_ID]).toEqual(["1", "2"]);
   });

@@ -58,6 +58,9 @@ func main() {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(Object.keys(log)).toHaveLength(6);
     const mainId = state.machineState.MAIN_ID;
     // console.dir(printLast(mainId, 100, 20));
@@ -135,6 +138,9 @@ func main() {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(Object.keys(log)).toHaveLength(6);
     const mainId = state.machineState.MAIN_ID;
     // console.dir(printLast(mainId, 100, 20));
