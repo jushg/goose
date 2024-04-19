@@ -18,11 +18,10 @@ export const LogVisualizer = ({ logs }: { logs: LogItem[] }) => {
   }));
 
   return (
-    <>
-      <Typography variant="h6" marginTop="-24px">
-        Output Logs
-      </Typography>
-      <DataGrid rows={rows} columns={columns}></DataGrid>
-    </>
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      style={{ minHeight: "30vh" }}
+    ></DataGrid>
   );
 };
