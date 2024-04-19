@@ -21,9 +21,7 @@ export const LogVisualizer = ({ logs }: { logs: LogItem[] }) => {
     <DataGrid
       rows={rows}
       columns={columns}
-      slots={{
-        noRowsOverlay: () => <Typography>No logs to display</Typography>,
-      }}
+      style={{ minHeight: "30vh" }}
     ></DataGrid>
   );
 };
