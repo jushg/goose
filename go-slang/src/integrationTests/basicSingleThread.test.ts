@@ -79,6 +79,9 @@ describe("basic single threaded program", () => {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(log[state.mainThreadId]).toEqual([
       "1",
       "3",

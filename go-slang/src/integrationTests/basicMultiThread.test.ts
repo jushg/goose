@@ -85,6 +85,9 @@ func foo(y int) {
     }
 
     // console.dir(lastHundredInstr);
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(Object.keys(log)).toHaveLength(1 + /* getFn */ 100 + /* foo */ 1);
 
     const mainId = state.machineState.MAIN_ID;

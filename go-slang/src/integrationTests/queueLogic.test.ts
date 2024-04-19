@@ -35,6 +35,9 @@ func main() {
         throw e;
       }
     }
+    if (log["GC"]) {
+      delete log["GC"];
+    }
     expect(log[mainId]).toEqual([
       "0",
       "4",
