@@ -1,46 +1,50 @@
-# Getting Started with Create React App
+# Frontend for Goose Compiler / Gosling VM
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Set Up `go-slang` ⚠️
 
-## Available Scripts
+### Recommended: local `yarn` link
 
-In the project directory, you can run:
+Set up [go-slang](../go-slang/README.md) before proceeding. This necessary includes running `yarn link` in "../go-slang".
 
-### `npm start`
+```sh
+# working directory: REPO_ROOT/frontend
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+# tells yarn to create a sym-link to the yarn package in "go-slang"
+yarn link "go-slang"
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+# Runs build in the go-slang package so that the frontend accesses the latest go-slang build.
+( cd ../go-slang ; yarn build )
+```
 
-### `npm test`
+If the above does not work on your machine, feel free to use any other means to save the dependency.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+For example:
 
-### `npm run build`
+### Alternative: Adding a local package as a path
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```json
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    //...
+    "go-slang": "../go-slang", // insert this line
+    //...
+  },
+  //...
+}
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Note that this requires you to clean cache and reinstall to get changes to your "./go-slang" folder as this is not a sym-link, but an installed dependency.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Build and Run
 
-### `npm run eject`
+Once `go-slang` is accessible from this directory, we can follow typical ReactJS instructions:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```sh
+# working directory: REPO_ROOT/frontend
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+yarn # installs all dependencies
+yarn start # runs the webapp locally
+```
