@@ -1,13 +1,13 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
+import "react-tabs/style/react-tabs.css";
 import "./App.css";
 import { Editor } from "./components/Editor";
+import { InstrVisualiser } from "./components/InstrVisualiser";
 import { MemoryVisualiser } from "./components/MemoryVisualiser";
 import { VmStatus, VmVisualizer } from "./components/VmVisualizer";
 import { useCompiler, useVm, useVmOptions } from "./hooks/useGoSlang";
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import { InstrVisualiser } from "./components/InstrVisualiser";
-import "react-tabs/style/react-tabs.css";
 
 export const VERBOSITY: 0 | 1 | 2 = 2;
 
@@ -60,6 +60,11 @@ function App() {
       }
     });
   }, [setErrorMessageIfAny, executeStep, resumeKey]);
+  const resetVmHandler = useCallback(() => {
+    resetVm();
+    setVmState("COMPILED");
+  }, [resetVm, setVmState]);
+
   console.info("App rendered");
 
   return (
@@ -76,7 +81,7 @@ function App() {
               vmStatus={vmStatus}
               setIsCompiled={setIsCompiled}
               setGooseCode={setGooseCode}
-              resetVm={resetVm}
+              resetVm={resetVmHandler}
               resumeHandler={resumeHandler}
             />
           </Paper>
