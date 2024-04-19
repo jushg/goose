@@ -58,7 +58,7 @@ func main() {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
-    expect(Object.keys(log)).toHaveLength(6);
+    expect(Object.keys(log)).toHaveLength(7);
     const mainId = state.machineState.MAIN_ID;
     // console.dir(printLast(mainId, 100, 20));
 
@@ -135,7 +135,7 @@ func main() {
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
 
-    expect(Object.keys(log)).toHaveLength(6);
+    expect(Object.keys(log)).toHaveLength(7);
     const mainId = state.machineState.MAIN_ID;
     // console.dir(printLast(mainId, 100, 20));
 

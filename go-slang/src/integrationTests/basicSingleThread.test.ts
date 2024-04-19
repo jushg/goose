@@ -42,7 +42,7 @@ func foo(y int) {
 
 describe("basic single threaded program", () => {
   it("should execute correctly", () => {
-    let { log, state, getPC, prog } = setUpTest(progStr);
+    let { log, state, getPC, prog, getMemory } = setUpTest(progStr);
 
     const pcExecutionOrder: number[] = [];
     const maxInstrExecutions = 2 * 1200;
@@ -74,11 +74,10 @@ describe("basic single threaded program", () => {
         throw e;
       }
 
-      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
+      // const _memUsage = `${getMemory().getMemoryAllocated()} / ${getMemory().getMemorySize()}`;
       // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
-
     expect(log[state.mainThreadId]).toEqual([
       "1",
       "3",

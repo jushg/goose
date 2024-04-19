@@ -37,7 +37,7 @@ func main() {
       // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
       // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
-    expect(Object.keys(log)).toHaveLength(2);
+    expect(Object.keys(log)).toHaveLength(3);
 
     let barId = Object.keys(log).filter(
       (id) => id !== state.machineState.MAIN_ID

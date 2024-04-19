@@ -38,7 +38,8 @@ func foo(y int) {
 `;
 
   test.concurrent("should execute correctly", async () => {
-    let { log, state, getId, getPC, prog } = setUpMultiThreadedTest(progStr);
+    let { log, state, getId, getPC, prog, getMemory } =
+      setUpMultiThreadedTest(progStr);
     const maxInstrExecutions = 2 * 10000;
     const pcExecutionOrder: Record<string, number[]> = {};
     const osState: Record<string, string[]> = {};
@@ -78,14 +79,11 @@ func foo(y int) {
         console.dir(printLast(getId(), 100, 20));
         throw e;
       }
-
-      // const _memUsage = `${getMemory().getMemoryUsed()} / ${getMemory().getMemorySize()}`;
-      // const _memResidency = `${getMemory().getMemoryResidency()} / ${getMemory().getMemorySize()}`;
-      // console.dir({ i: pcExecutionOrder.length, _memUsage, _memResidency });
     }
-
     // console.dir(lastHundredInstr);
-    expect(Object.keys(log)).toHaveLength(1 + /* getFn */ 100 + /* foo */ 1);
+    expect(Object.keys(log)).toHaveLength(
+      1 + /* getFn */ 100 + /* foo */ 1 + /*GC*/ 1
+    );
 
     const mainId = state.machineState.MAIN_ID;
     const otherIdsAndPc = Object.keys(log)
