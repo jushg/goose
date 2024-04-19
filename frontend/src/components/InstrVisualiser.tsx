@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import { DataGrid, DataGridProps, GridColDef } from "@mui/x-data-grid";
 import { CompiledFile } from "go-slang/src/common/compiledFile";
 import { useCallback } from "react";
@@ -58,14 +59,14 @@ export const InstrVisualiser = ({
     );
 
   return (
-    <>
+    <Box maxHeight={"85vh"} minHeight={"85vh"} overflow={"auto"}>
       <DataGrid
         rows={rows}
         columns={columns}
         checkboxSelection
-        style={{ maxHeight: "80vh", overflow: "auto" }}
+        // style={{ maxHeight: "85vh", overflow: "auto" }}
         onRowSelectionModelChange={handleSelectionModelChange}
       ></DataGrid>
-    </>
+    </Box>
   );
 };

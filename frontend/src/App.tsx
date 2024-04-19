@@ -63,15 +63,15 @@ function App() {
   console.info("App rendered");
 
   return (
-    <div className="App" style={{ height: "92vh", color: "lightgray" }}>
+    <div className="App" style={{ color: "lightgray" }}>
       <header className="App-header">
         <h3 style={{ marginLeft: "10px" }}>
           Goose - Go Interpreter with Virtual Machine (VM)
         </h3>
       </header>
-      <Stack direction="row" spacing={2} maxHeight={"90vh"}>
-        <Box width={"70%"} height={"100%"}>
-          <Paper elevation={3} style={{ height: "100%" }}>
+      <Stack direction="row" spacing={2}>
+        <Box width={"70%"}>
+          <Paper elevation={3}>
             <Editor
               vmStatus={vmStatus}
               setIsCompiled={setIsCompiled}
@@ -82,7 +82,7 @@ function App() {
           </Paper>
         </Box>
 
-        <Box width={"50%"} height={"100%"}>
+        <Box width={"50%"}>
           <Tabs>
             <TabList>
               <Tab>Instructions</Tab>
@@ -92,11 +92,13 @@ function App() {
             <TabPanel>
               <Paper elevation={3}>
                 {vmStatus === "NOT_COMPILED" ? (
-                  <Typography>Compile to see instructions</Typography>
+                  <Typography variant="caption">
+                    Compile to see instructions
+                  </Typography>
                 ) : compilationState === "PARSE_FAILED" ? (
-                  <Typography>Parse failed</Typography>
+                  <Typography variant="h6">Parse failed</Typography>
                 ) : compilationState === "COMPILATION_FAILED" ? (
-                  <Typography>Compilation failed</Typography>
+                  <Typography variant="h6">Compilation failed</Typography>
                 ) : (
                   <InstrVisualiser
                     compiledFile={compiledFile!}
@@ -108,8 +110,12 @@ function App() {
 
             <TabPanel>
               <Paper elevation={3}>
-                {vmStatus === "NOT_COMPILED" ? (
-                  <Typography>Compile program first</Typography>
+                {vmStatus === "NOT_COMPILED" ||
+                compilationState === "PARSE_FAILED" ||
+                compilationState === "COMPILATION_FAILED" ? (
+                  <Typography variant="caption">
+                    Compile program first
+                  </Typography>
                 ) : (
                   <VmVisualizer
                     errorMessageIfAny={errorMessageIfAny}
@@ -122,8 +128,12 @@ function App() {
             </TabPanel>
             <TabPanel>
               <Paper elevation={3}>
-                {vmStatus === "NOT_COMPILED" ? (
-                  <Typography>Compile program first</Typography>
+                {vmStatus === "NOT_COMPILED" ||
+                compilationState === "PARSE_FAILED" ||
+                compilationState === "COMPILATION_FAILED" ? (
+                  <Typography variant="caption">
+                    Compile program first
+                  </Typography>
                 ) : (
                   <MemoryVisualiser exposeState={exposeState} />
                 )}
