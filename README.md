@@ -2,7 +2,7 @@
 
 ![T diagram for project](./docs/t-diag.png)
 
-This is a CS4215 Project that demonstrates a compiler and a concurrent virtual machine. It consists of a Goose (our sublanguage of Golang) compiler, a Gosling (our VM's instruction language) interpreter, as well as a frontend to demonstrates its use. You can also find our presentation [here](https://hackmd.io/@oTAS25NTSSOiOfG0ri-H5A/HJXb9Pol0) (and [slides.md](./docs/slides.md))
+This is a CS4215 Project that demonstrates a compiler and a concurrent virtual machine. It consists of a Goose (our sublanguage of Golang) compiler, a Gosling (our VM's instruction language) interpreter, as well as a frontend to demonstrates its use. You can also find our presentation [here](https://hackmd.io/@oTAS25NTSSOiOfG0ri-H5A/HJXb9Pol0) (and [slides.md](./docs/slides.md)). Our project can be found [here](./docs/CS4215_Project_Report.pdf)
 
 Authors:
 
